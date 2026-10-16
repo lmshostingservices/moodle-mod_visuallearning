@@ -1,0 +1,523 @@
+<?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+namespace mod_visuallearning;
+
+use mod_visuallearning\local\ai\lmslabs;
+use mod_visuallearning\local\ai\requests;
+use mod_visuallearning\local\media;
+
+/**
+ * Tests for paid LMS Labs requests: price first, stored before sending, never sent twice, fail closed.
+ *
+ * LMS Labs is replaced by a fake server; nothing leaves the test site.
+ *
+ * @package    mod_visuallearning
+ * @category   test
+ * @copyright  2026 LMS Hosting Services
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+#[\PHPUnit\Framework\Attributes\CoversClass(requests::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(lmslabs::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
+final class requests_test extends \advanced_testcase {
+    /** @var array Calls made to the fake LMS Labs: [url, headers, body]. */
+    protected $calls = [];
+
+    /** @var array Queued answers per route suffix: list of [status, headers, body]. */
+    protected $answers = [];
+
+    /** @var array Published capabilities per kind. */
+    protected $caps = [];
+
+    /** @var string A tiny PNG. */
+    protected const PNG = "\x89PNG\r\n\x1a\n" . 'fakepngbytes';
+
+    /** @var string A tiny MP3 (ID3 tag). */
+    protected const MP3 = 'ID3' . "\x03\x00" . 'fakemp3bytes';
+
+    /**
+     * A connected, unlocked site with the approved prices published and a fake LMS Labs.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        set_config('lmslabssiteid', 'site-123', 'mod_visuallearning');
+        set_config('lmslabsapikey', 'secret-key', 'mod_visuallearning');
+        set_config('unlockstate', json_encode(['status' => 'unlocked']), 'mod_visuallearning');
+        \mod_visuallearning\local\credentials::$central = fn() => null;
+        $this->caps = [
+            'pages' => ['tariff' => ['page' => lmslabs::PAGE_CREDITS]],
+            'images' => ['tariff' => ['image' => lmslabs::IMAGE_CREDITS]],
+            'speech' => [
+                'tariff' => ['tts' => lmslabs::VOICE_CREDITS],
+                'locales' => [
+                    ['locale' => 'en-AU', 'ttsLanguageCode' => 'en-AU',
+                        'voices' => [['name' => 'en-AU-Chirp3-HD-Aoede'], ['name' => 'en-AU-Chirp3-HD-Charon'],
+                            ['name' => 'Made-up-voice']]],
+                ],
+            ],
+        ];
+        lmslabs::$transport = function (string $url, array $headers): array {
+            $this->calls[] = [$url, $headers, ''];
+            foreach ($this->caps as $kind => $data) {
+                if (str_ends_with($url, '/' . $kind . '/capabilities')) {
+                    return $data === null ? [404, '{}'] : [200, json_encode($data)];
+                }
+            }
+            if (str_contains($url, '/api/credits')) {
+                return [200, json_encode(['creditsRaw' => 500])];
+            }
+            return [404, '{}'];
+        };
+        lmslabs::$posttransport = function (string $url, array $headers, string $body): array {
+            $this->calls[] = [$url, $headers, $body];
+            foreach ($this->answers as $suffix => $list) {
+                if (str_ends_with($url, $suffix) && $list) {
+                    return array_shift($this->answers[$suffix]);
+                }
+            }
+            return [0, [], ''];
+        };
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+    }
+
+    protected function tearDown(): void {
+        lmslabs::$transport = null;
+        lmslabs::$posttransport = null;
+        \mod_visuallearning\local\credentials::$central = null;
+        parent::tearDown();
+    }
+
+    /**
+     * A book with pages, its context and a teacher.
+     *
+     * @param int $pages
+     * @param array $settings
+     * @return array [book, context, teacher]
+     */
+    protected function book(int $pages = 1, array $settings = []): array {
+        global $DB;
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $gen = $this->getDataGenerator()->get_plugin_generator('mod_visuallearning');
+        $book = $gen->create_instance(['course' => $course->id] + $settings);
+        for ($i = 0; $i < $pages; $i++) {
+            $gen->create_page($book->id);
+        }
+        $book = $DB->get_record('visuallearning', ['id' => $book->id]);
+        return [$book, \context_module::instance($book->cmid ?? get_coursemodule_from_instance('visuallearning', $book->id)->id),
+            $teacher];
+    }
+
+    /**
+     * POST calls made to the fake LMS Labs (not the free GETs).
+     *
+     * @param string $suffix
+     * @return array
+     */
+    protected function posts(string $suffix): array {
+        return array_values(array_filter($this->calls, fn($c) => $c[2] !== '' && str_ends_with($c[0], $suffix)));
+    }
+
+    /**
+     * Runs the queued background tasks.
+     */
+    protected function run_tasks(): void {
+        ob_start();
+        $this->runAdhocTasks('\mod_visuallearning\task\generate_media');
+        ob_end_clean();
+    }
+
+    public function test_quote_stores_requests_and_sends_nothing(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(2);
+        $plans = media::plan($book, $context, 'missing', 0, ['image', 'voice']);
+        // 2 illustrations and 2 × 5 clips (three cards, recap, true/false).
+        $this->assertCount(12, $plans);
+        $summary = requests::quote($book, (int)$teacher->id, $plans);
+        $this->assertNull($summary['hold']);
+        $this->assertSame(2 * lmslabs::IMAGE_CREDITS + 10 * lmslabs::VOICE_CREDITS, $summary['credits']);
+        $this->assertSame([], $this->posts('/images'));
+        $this->assertSame([], $this->posts('/speech/tts'));
+        $rows = $DB->get_records('visuallearning_aireq', ['batch' => $summary['batch']]);
+        $this->assertCount(12, $rows);
+        foreach ($rows as $row) {
+            $this->assertSame('quoted', $row->status);
+            $this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', $row->idemkey);
+            $this->assertNotEmpty(json_decode($row->body, true));
+            $this->assertStringNotContainsString('secret-key', $row->body);
+        }
+        // The recap clip speaks its number in the recap.
+        $summaryclip = $DB->get_record('visuallearning_aireq', ['batch' => $summary['batch'], 'part' => 'summary',
+            'targetid' => array_key_first(visuallearning_get_pages($book->id))]);
+        $this->assertStringStartsWith('1. ', json_decode($summaryclip->body, true)['text']);
+        requests::cancel_quote((int)$book->id, $summary['batch']);
+        $this->assertSame(0, $DB->count_records('visuallearning_aireq'));
+    }
+
+    public function test_confirm_sends_once_and_saves_media(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1);
+        $pages = visuallearning_get_pages($book->id);
+        $page = reset($pages);
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['image', 'voice']));
+        $this->answers['/images'] = [[200, ['content-type' => 'image/png', 'x-credits-charged' => '2',
+            'x-credits-balance' => '98'], self::PNG]];
+        $this->answers['/speech/tts'] = array_fill(0, 5, [200, ['content-type' => 'audio/mpeg', 'x-credits-charged' => '2'],
+            self::MP3]);
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $this->assertCount(1, $this->posts('/images'));
+        $this->assertCount(5, $this->posts('/speech/tts'));
+        foreach ($DB->get_records('visuallearning_aireq') as $row) {
+            $this->assertSame('completed', $row->status);
+            $this->assertEquals(1, $row->tries);
+        }
+        // Keys are sent in headers only, never in the body, and every request has its own Idempotency-Key.
+        $keys = [];
+        foreach (array_merge($this->posts('/images'), $this->posts('/speech/tts')) as [$url, $headers, $body]) {
+            $this->assertContains('X-API-Key: secret-key', $headers);
+            $this->assertStringNotContainsString('secret-key', $body . $url);
+            $keys[] = implode('', preg_grep('/^Idempotency-Key: /', $headers));
+        }
+        $this->assertCount(6, array_unique($keys));
+        $page = $DB->get_record('visuallearning_pages', ['id' => $page->id]);
+        $this->assertEquals(VISUALLEARNING_MEDIA_READY, $page->imagestatus);
+        $this->assertEquals(VISUALLEARNING_MEDIA_READY, $page->audiostatus);
+        $image = $DB->get_record('visuallearning_aireq', ['operation' => 'image']);
+        $this->assertEquals(2, $image->charged);
+        $this->assertEquals(98, $image->balance);
+        // Nothing more is needed, so nothing more is quoted.
+        $this->assertSame([], media::plan($book, $context, 'missing', 0, ['image', 'voice']));
+    }
+
+    public function test_timeout_is_uncertain_and_check_again_reuses_key_and_body(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1);
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['image']));
+        // No answer at all (timeout).
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $row = $DB->get_record('visuallearning_aireq', ['operation' => 'image']);
+        $this->assertSame('uncertain', $row->status);
+        $this->assertSame('network', $row->errorcode);
+        $this->assertNull($row->charged);
+        // Never sent again on its own.
+        $this->run_tasks();
+        $this->assertCount(1, $this->posts('/images'));
+        // A new quote does not ask for it again with a new key while it is unresolved.
+        $again = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['image']));
+        $this->assertSame([], $again['items']);
+        $this->assertSame(1, $again['skipped']);
+        // Check again: the same key and the same body.
+        $this->answers['/images'] = [[200, ['content-type' => 'image/png'], self::PNG]];
+        requests::check($row, $book, (int)$teacher->id);
+        $this->run_tasks();
+        [$first, $second] = $this->posts('/images');
+        $this->assertSame($first[2], $second[2]);
+        $this->assertSame(preg_grep('/^Idempotency-Key/', $first[1]), preg_grep('/^Idempotency-Key/', $second[1]));
+        $row = $DB->get_record('visuallearning_aireq', ['id' => $row->id]);
+        $this->assertSame('completed', $row->status);
+        // The charge was not reported, so it stays unknown (never assumed to be the confirmed maximum).
+        $this->assertNull($row->charged);
+        $this->assertStringContainsString('did not say what it charged', requests::export($row, $context)['message']);
+    }
+
+    public function test_error_answers(): void {
+        global $DB;
+        $cases = [
+            [402, '{"error":"INSUFFICIENT_CREDITS","balance":1}', 'failed', 'insufficient_credits'],
+            [404, '{}', 'failed', 'not_live'],
+            [409, '{"error":"IDEMPOTENCY_CONFLICT"}', 'conflict', 'idempotency_conflict'],
+            [410, '{"error":"RESULT_NOT_RETAINED"}', 'lost', 'result_not_retained'],
+            [502, '{"error":"PROVIDER_FAILED"}', 'failed', 'provider_failed'],
+            [500, '{}', 'uncertain', 'http_500'],
+            [503, '{"error":"SETTLEMENT_UNCONFIRMED"}', 'uncertain', 'settlement_unconfirmed'],
+        ];
+        foreach ($cases as [$status, $body, $state, $code]) {
+            [$book, $context, $teacher] = $this->book(1);
+            $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['image']));
+            $this->answers['/images'] = [[$status, ['content-type' => 'application/json'], $body]];
+            requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+            $this->run_tasks();
+            $row = $DB->get_record('visuallearning_aireq', ['visuallearningid' => $book->id, 'operation' => 'image']);
+            $this->assertSame($state, $row->status, "HTTP $status");
+            $this->assertSame($code, $row->errorcode, "HTTP $status");
+            // A 410 alone is never recorded as a charge.
+            $this->assertNull($row->charged);
+            $this->assertNotEmpty(requests::export($row, $context)['message']);
+            $this->assertFalse(media::image_current(
+                $context,
+                media::AREA_IMAGE,
+                (int)$row->targetid,
+                json_decode($row->body, true)['prompt']
+            ));
+        }
+    }
+
+    public function test_in_progress_is_asked_again_with_the_same_key(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1);
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['image']));
+        $this->answers['/images'] = [[202, ['retry-after' => '1'], '{}'],
+            [200, ['content-type' => 'image/png'], self::PNG]];
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $this->assertSame('pending', $DB->get_field('visuallearning_aireq', 'status', ['operation' => 'image']));
+        $DB->set_field('task_adhoc', 'nextruntime', time() - 1, ['classname' => '\mod_visuallearning\task\generate_media']);
+        $this->run_tasks();
+        $this->assertSame('completed', $DB->get_field('visuallearning_aireq', 'status', ['operation' => 'image']));
+        [$first, $second] = $this->posts('/images');
+        $this->assertSame(preg_grep('/^Idempotency-Key/', $first[1]), preg_grep('/^Idempotency-Key/', $second[1]));
+    }
+
+    public function test_failed_new_voiceover_keeps_the_old_one(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1);
+        $pages = visuallearning_get_pages($book->id);
+        $page = reset($pages);
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['voice']));
+        $this->answers['/speech/tts'] = array_fill(0, 5, [200, ['content-type' => 'audio/mpeg'], self::MP3]);
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $clips = media::clips($book, $page, 0);
+        $before = media::clip_file($context, $book, $page, 'concept', $clips['concept']);
+        $this->assertNotNull($before);
+        $refs = $DB->get_fieldset_sql("SELECT body FROM {visuallearning_aireq} WHERE part = ? ORDER BY id", ['concept']);
+        // A new voice: the old clip keeps playing until the new one is made, and the new one fails.
+        $DB->set_field('visuallearning', 'voice', 'Charon', ['id' => $book->id]);
+        $book->voice = 'Charon';
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['voice']));
+        $this->assertSame(5, $summary['items']['voice']);
+        $this->answers['/speech/tts'] = array_fill(0, 5, [502, [], '{"error":"PROVIDER_FAILED"}']);
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $this->assertFalse(media::clip_current($context, $book, $page, 'concept', $clips['concept']));
+        $after = media::clip_file($context, $book, $page, 'concept', $clips['concept']);
+        $this->assertNotNull($after);
+        $this->assertSame($before->get_id(), $after->get_id());
+        // The clip identity did not change with the voice.
+        $bodies = $DB->get_fieldset_sql("SELECT body FROM {visuallearning_aireq} WHERE part = ? ORDER BY id", ['concept']);
+        $this->assertCount(2, $bodies);
+        $this->assertSame(json_decode($refs[0], true)['clipRef'], json_decode($bodies[1], true)['clipRef']);
+        $this->assertSame('en-AU-Chirp3-HD-Charon', json_decode($bodies[1], true)['voice']);
+    }
+
+    public function test_prices_of_every_operation(): void {
+        foreach (['write', 'import', 'image', 'cover', 'voice'] as $operation) {
+            $op = requests::price_operation($operation);
+            $this->assertSame(lmslabs::approved_price($op), lmslabs::published_price($op), $operation);
+            $this->assertNull(lmslabs::hold($op), $operation);
+        }
+        $this->assertSame(lmslabs::PAGE_CREDITS, lmslabs::approved_price('import'));
+    }
+
+    public function test_clip_identity(): void {
+        [$book] = $this->book(2);
+        $pages = array_values(visuallearning_get_pages($book->id));
+        $ref = requests::clipref($book, (int)$pages[0]->id, 'concept');
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $ref);
+        // Same place, same identity, whatever the text or the voice.
+        $book->voice = 'Charon';
+        $this->assertSame($ref, requests::clipref($book, (int)$pages[0]->id, 'concept'));
+        // Another place, another identity.
+        $this->assertNotSame($ref, requests::clipref($book, (int)$pages[1]->id, 'concept'));
+        $this->assertNotSame($ref, requests::clipref($book, (int)$pages[0]->id, 'action'));
+    }
+
+    public function test_edit_after_confirmation_cancels_the_unsent_request(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1);
+        $pages = visuallearning_get_pages($book->id);
+        $page = reset($pages);
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['image']));
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $DB->set_field('visuallearning_pages', 'imageprompt', 'A different scene.', ['id' => $page->id]);
+        $this->run_tasks();
+        $this->assertSame([], $this->posts('/images'));
+        $row = $DB->get_record('visuallearning_aireq', ['operation' => 'image']);
+        $this->assertSame('cancelled', $row->status);
+        $this->assertSame('changed', $row->errorcode);
+    }
+
+    public function test_confirm_refuses_a_changed_total(): void {
+        [$book, $context, $teacher] = $this->book(1);
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['image']));
+        $this->expectException(\moodle_exception::class);
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits'] + 1);
+    }
+
+    public function test_fail_closed(): void {
+        [$book, $context, $teacher] = $this->book(1);
+        $plans = media::plan($book, $context, 'missing', 0, ['image']);
+
+        // No price published: nothing can be bought.
+        $this->caps['images'] = null;
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        $this->assertSame('priceunknown', lmslabs::hold('image'));
+        $this->assertSame('priceunknown', requests::quote($book, (int)$teacher->id, $plans)['hold']);
+
+        // A different price published.
+        $this->caps['images'] = ['tariff' => ['image' => lmslabs::IMAGE_CREDITS + 3]];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        $this->assertSame('pricechanged', lmslabs::hold('image'));
+
+        // Switched off.
+        $this->caps['images'] = ['tariff' => ['image' => lmslabs::IMAGE_CREDITS]];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        $this->assertNull(lmslabs::hold('image'));
+        set_config('aiimages', 0, 'mod_visuallearning');
+        $this->assertSame('off', lmslabs::hold('image'));
+        set_config('aiimages', 1, 'mod_visuallearning');
+
+        // Not activated (locked, or never checked).
+        set_config('unlockstate', json_encode(['status' => 'locked']), 'mod_visuallearning');
+        $this->assertSame('notactivated', lmslabs::hold('image'));
+        set_config('unlockstate', '', 'mod_visuallearning');
+        $this->assertSame('notactivated', lmslabs::hold('image'));
+        // An access check that got no answer keeps an unlocked site usable, as in the other LMS Labs plugins.
+        set_config('unlockstate', json_encode(['status' => 'unknown', 'wasunlocked' => true]), 'mod_visuallearning');
+        $this->assertNull(lmslabs::hold('image'));
+
+        // No credentials.
+        set_config('lmslabsapikey', '', 'mod_visuallearning');
+        $this->assertSame('nocredentials', lmslabs::hold('image'));
+        $this->assertSame('nocredentials', requests::quote($book, (int)$teacher->id, $plans)['hold']);
+        $this->assertSame([], $this->posts('/images'));
+    }
+
+    public function test_voice_catalogue_only_lists_offered_voices(): void {
+        $catalogue = lmslabs::voice_catalogue();
+        $this->assertSame(['en-AU' => ['Aoede' => 'en-AU-Chirp3-HD-Aoede', 'Charon' => 'en-AU-Chirp3-HD-Charon']], $catalogue);
+        $this->assertNull(lmslabs::voice_name('en-AU', 'Puck'));
+        [$book, $context, $teacher] = $this->book(1, ['voice' => 'Puck']);
+        $this->expectException(\moodle_exception::class);
+        requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['voice']));
+    }
+
+    public function test_free_remakes_are_quoted_and_confirmed_as_free(): void {
+        global $DB;
+        $this->caps['speech']['tariff'] += ['clipRefSupported' => true, 'maxCreditsRequired' => true, 'ttsRemakeLimit' => 10,
+            'ttsRemakeWindowDays' => 30];
+        [$book, $context, $teacher] = $this->book(1);
+        $this->answers['/speech/quote'] = array_merge(
+            [[200, [], json_encode(['credits' => 0, 'firstClip' => false, 'freeRemakesRemaining' => 9])]],
+            array_fill(0, 4, [200, [], json_encode(['credits' => lmslabs::VOICE_CREDITS])])
+        );
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['voice']));
+        $this->assertSame(4 * lmslabs::VOICE_CREDITS, $summary['credits']);
+        $this->assertSame(1, $summary['free']);
+        $free = $DB->get_record_select('visuallearning_aireq', 'maxcredits = 0');
+        $this->assertSame(0, json_decode($free->body, true)['maxCredits']);
+        // A quote failure counts at the full price (never confirmed as less than it can cost).
+        $this->answers['/speech/quote'] = [];
+        requests::cancel_quote((int)$book->id, $summary['batch']);
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', 0, ['voice']));
+        $this->assertSame(5 * lmslabs::VOICE_CREDITS, $summary['credits']);
+    }
+
+    public function test_import_creates_pages_only_after_the_charge_is_confirmed(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(0);
+        $parsed = [
+            'book_title' => '', 'industry' => '', 'subindustry' => '', 'style_guide' => '', 'characters' => [],
+            'cover_image_prompt' => '',
+            'pages' => [[
+                'title' => 'One', 'concept' => 'C.', 'action' => 'A.', 'outcome' => 'O.', 'image_prompt' => 'Scene.',
+                'alt_text' => 'Alt', 'summary' => 'S.', 'tf_statement' => 'T.', 'tf_answer' => true,
+            ]],
+        ];
+        $plan = ['operation' => requests::IMPORT,
+            'body' => ['pageCount' => 1, 'titles' => ['One'], 'maxCredits' => lmslabs::PAGE_CREDITS]];
+        $summary = requests::quote($book, (int)$teacher->id, [$plan], json_encode($parsed));
+        $this->assertSame(lmslabs::PAGE_CREDITS, $summary['credits']);
+
+        // Refused (not enough credits): nothing is created.
+        $this->answers['/pages/import'] = [[402, [], '{"error":{"code":"insufficient_credits"}}']];
+        $rows = requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->assertSame('failed', $rows[0]->status);
+        $this->assertSame(0, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
+        // Only the page count and titles are sent, never the pages themselves.
+        $this->assertSame(
+            ['pageCount' => 1, 'titles' => ['One'], 'maxCredits' => lmslabs::PAGE_CREDITS],
+            json_decode($this->posts('/pages/import')[0][2], true)
+        );
+
+        // Confirmed: the pages are created.
+        $summary = requests::quote($book, (int)$teacher->id, [$plan], json_encode($parsed));
+        $this->answers['/pages/import'] = [[200, [], '{"creditsCharged":2,"creditsBalance":40}']];
+        $rows = requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->assertSame('completed', $rows[0]->status);
+        $this->assertEquals(2, $rows[0]->charged);
+        $this->assertSame(1, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
+    }
+
+    public function test_written_pages_are_imported_when_delivered(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(0, ['maxpages' => 3]);
+        $summary = requests::quote($book, (int)$teacher->id, [['operation' => requests::WRITE]]);
+        $this->assertSame(3 * lmslabs::PAGE_CREDITS, $summary['credits']);
+        $draft = ['pages' => [['title' => 'One', 'concept' => 'C.', 'action' => 'A.', 'outcome' => 'O.',
+            'image_prompt' => 'Scene.', 'summary' => 'S.', 'tf_statement' => 'T.', 'tf_answer' => false]]];
+        $this->answers['/pages/draft'] = [[200, [], json_encode(['draft' => $draft, 'creditsCharged' => 2])]];
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $sent = json_decode($this->posts('/pages/draft')[0][2], true);
+        $this->assertSame(3, $sent['maxPages']);
+        $this->assertSame(3 * lmslabs::PAGE_CREDITS, $sent['maxCredits']);
+        $this->assertSame('Australia', $sent['culture']);
+        $this->assertSame(1, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
+        $this->assertSame('completed', $DB->get_field('visuallearning_aireq', 'status', ['operation' => 'write']));
+    }
+
+    public function test_image_prompt_fits_the_route(): void {
+        [$book] = $this->book(1);
+        $book->styleguide = str_repeat('Soft gouache textures. ', 60);
+        $book->characters = json_encode([['name' => 'Maya', 'description' => str_repeat('tall, ', 80)],
+            ['name' => 'Tom', 'description' => 'short']]);
+        $pages = visuallearning_get_pages($book->id);
+        $page = reset($pages);
+        $page->imageprompt = 'Maya greets a guest. ' . str_repeat('Warm light. ', 100);
+        $prompt = media::image_prompt($book, $page);
+        $this->assertLessThanOrEqual(lmslabs::MAX_PROMPT, \core_text::strlen($prompt));
+        // The rules are never cut.
+        $this->assertStringContainsString(\mod_visuallearning\local\prompt_builder::IMAGE_GUARDRAILS, $prompt);
+        $this->assertStringNotContainsString('Tom - short', $prompt);
+    }
+
+    public function test_learner_page_never_calls_lms_labs(): void {
+        global $USER;
+        [$book, $context] = $this->book(2);
+        $cm = get_coursemodule_from_instance('visuallearning', $book->id);
+        $this->calls = [];
+        \mod_visuallearning\local\book_data::player($book, $cm, $context, (int)$USER->id);
+        $this->assertSame([], $this->calls);
+    }
+
+    public function test_only_editing_teachers_may_spend_credits(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $book = $this->getDataGenerator()->create_module('visuallearning', ['course' => $course->id]);
+        $context = \context_module::instance($book->cmid);
+        $editor = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'teacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->assertTrue(has_capability('mod/visuallearning:useai', $context, $editor));
+        $this->assertFalse(has_capability('mod/visuallearning:useai', $context, $teacher));
+        $this->assertFalse(has_capability('mod/visuallearning:useai', $context, $student));
+        $this->assertFalse(has_capability('mod/visuallearning:manage', $context, $student));
+    }
+}

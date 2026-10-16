@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/visuallearning/db" VERSION="20261017" COMMENT="XMLDB file for Moodle mod/visuallearning"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="visuallearning" COMMENT="AI Visual Learning activity instances">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="industry" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="subindustry" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="sourcecontent" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Teaching content pasted by the teacher"/>
+        <FIELD NAME="maxpages" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="20" SEQUENCE="false"/>
+        <FIELD NAME="language" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="en-AU" SEQUENCE="false"/>
+        <FIELD NAME="voice" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="Aoede" SEQUENCE="false"/>
+        <FIELD NAME="speakingrate" TYPE="number" LENGTH="4" NOTNULL="true" DEFAULT="1.00" SEQUENCE="false" DECIMALS="2"/>
+        <FIELD NAME="imagestyle" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="navmode" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 linear, 1 free"/>
+        <FIELD NAME="autoplay" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Start narration automatically on page turn"/>
+        <FIELD NAME="imageculture" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="language" SEQUENCE="false" COMMENT="language or international"/>
+        <FIELD NAME="enablerecap" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Recap slide after every five concepts"/>
+        <FIELD NAME="enablequiz" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="True/false check after every five concepts"/>
+        <FIELD NAME="styleguide" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Art direction returned by ChatGPT"/>
+        <FIELD NAME="characters" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Recurring cast descriptions"/>
+        <FIELD NAME="coverprompt" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="coverstatus" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="covererror" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="completionlistened" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="completionquiz" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="visuallearning_pages" COMMENT="One concept per page">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="visuallearningid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="pagenum" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="concepttext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="actiontext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="outcometext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="imageprompt" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="alttext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="summarytext" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="One-sentence recap of the concept"/>
+        <FIELD NAME="tfstatement" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="True/false statement about the concept"/>
+        <FIELD NAME="tfanswer" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1 true, 0 false"/>
+        <FIELD NAME="imagestatus" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 pending, 1 queued, 2 ready, 3 failed"/>
+        <FIELD NAME="audiostatus" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 pending, 1 queued, 2 ready, 3 failed"/>
+        <FIELD NAME="lasterror" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="visuallearningid" TYPE="foreign" FIELDS="visuallearningid" REFTABLE="visuallearning" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="bookpage" UNIQUE="false" FIELDS="visuallearningid, pagenum"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="visuallearning_progress" COMMENT="Per-user per-page listening and time tracking">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="visuallearningid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="pageid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="views" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="listened" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timespent" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Seconds on page"/>
+        <FIELD NAME="timefirstviewed" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timelistened" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lastping" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="tfattempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="True/false answers given"/>
+        <FIELD NAME="tfpassed" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="True/false answered correctly"/>
+        <FIELD NAME="timepassed" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="visuallearningid" TYPE="foreign" FIELDS="visuallearningid" REFTABLE="visuallearning" REFFIELDS="id"/>
+        <KEY NAME="pageid" TYPE="foreign" FIELDS="pageid" REFTABLE="visuallearning_pages" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="pageuser" UNIQUE="true" FIELDS="pageid, userid"/>
+        <INDEX NAME="bookuser" UNIQUE="false" FIELDS="visuallearningid, userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="visuallearning_aireq" COMMENT="Paid LMS Labs requests, stored with their Idempotency-Key and exact body before they are sent">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="visuallearningid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Teacher who confirmed the request"/>
+        <FIELD NAME="batch" TYPE="char" LENGTH="36" NOTNULL="true" SEQUENCE="false" COMMENT="One confirmation (quote) groups its requests"/>
+        <FIELD NAME="operation" TYPE="char" LENGTH="16" NOTNULL="true" SEQUENCE="false" COMMENT="write, import, image, cover or voice"/>
+        <FIELD NAME="targetid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Page id (0 for the book)"/>
+        <FIELD NAME="part" TYPE="char" LENGTH="16" NOTNULL="true" SEQUENCE="false" COMMENT="Clip part for voice requests"/>
+        <FIELD NAME="idemkey" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" COMMENT="Idempotency-Key sent with every try"/>
+        <FIELD NAME="sitehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="SHA-1 of the LMS Labs Site ID the key belongs to"/>
+        <FIELD NAME="body" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Exact JSON body sent with every try"/>
+        <FIELD NAME="maxcredits" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Most the teacher confirmed for this request"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="quoted" SEQUENCE="false" COMMENT="quoted, pending, uncertain, completed, failed, conflict, lost, expired, cancelled or dismissed"/>
+        <FIELD NAME="errorcode" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="requestid" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="LMS Labs request id"/>
+        <FIELD NAME="result" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Pages an import creates once LMS Labs confirms the charge"/>
+        <FIELD NAME="charged" TYPE="int" LENGTH="6" NOTNULL="false" SEQUENCE="false" COMMENT="Credits LMS Labs reported; null when not reported"/>
+        <FIELD NAME="balance" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="tries" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="retryafter" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="visuallearningid" TYPE="foreign" FIELDS="visuallearningid" REFTABLE="visuallearning" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idemkey" UNIQUE="true" FIELDS="idemkey"/>
+        <INDEX NAME="bookstatus" UNIQUE="false" FIELDS="visuallearningid, status"/>
+        <INDEX NAME="batch" UNIQUE="false" FIELDS="batch"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

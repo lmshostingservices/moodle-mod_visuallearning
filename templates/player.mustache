@@ -1,0 +1,193 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_visuallearning/player
+
+    AI Visual Learning player shell. Slides are rendered by mod_visuallearning/player.
+
+    Context variables required for this template:
+    * uniqid - Unique id
+    * cmid - Course module id
+    * json - JSON payload from \mod_visuallearning\local\book_data::player()
+
+    Example context (json):
+    {
+        "uniqid": "visuallearning123",
+        "cmid": 5,
+        "json": "{\"pages\":[]}"
+    }
+}}
+<div class="mod-visuallearning" id="{{uniqid}}" data-cmid="{{cmid}}">
+    <script type="application/json" class="pb-data">{{{json}}}</script>
+
+    <div class="pb-topbar">
+        <div class="pb-topbar-title">
+            <span class="pb-booktitle"></span>
+            <span class="pb-pageindicator" aria-live="polite"></span>
+        </div>
+        <div class="pb-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="pb-progress-track"><div class="pb-progress-fill"></div></div>
+            <span class="pb-progress-label"></span>
+        </div>
+        <button type="button" class="pb-toc-toggle" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon"><path d="M4 6h16M4 12h16M4 18h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span class="pb-toc-toggle-label"></span>
+        </button>
+    </div>
+
+    <div class="pb-stage">
+        <section class="pb-cover">
+            <figure class="pb-figure pb-cover-figure"><img class="pb-cover-image" alt=""></figure>
+            <div class="pb-cover-text">
+                <div class="pb-chips"></div>
+                <h2 class="pb-cover-title"></h2>
+                <div class="pb-cover-intro"></div>
+                <p class="pb-cover-meta"></p>
+                <div class="pb-cover-actions"></div>
+            </div>
+        </section>
+
+        <section class="pb-spread" hidden>
+            <figure class="pb-figure pb-page-figure">
+                <img class="pb-page-image" alt="">
+                <div class="pb-image-placeholder" hidden></div>
+            </figure>
+            <div class="pb-text">
+                <div class="pb-text-inner">
+                    <div class="pb-banner" role="status" hidden></div>
+                    <div class="pb-slide-head">
+                        <div class="pb-slide-headings">
+                            <div class="pb-page-label"></div>
+                            <h2 class="pb-page-title"></h2>
+                        </div>
+                        <button type="button" class="pb-listen">
+                            <span class="pb-listen-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            </span>
+                            <span class="pb-listen-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                            <span class="pb-listen-label"></span>
+                        </button>
+                    </div>
+                    <div class="pb-cards"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pb-recap" hidden>
+            <div class="pb-recap-mosaic" aria-hidden="true"></div>
+            <div class="pb-text">
+                <div class="pb-text-inner">
+                    <div class="pb-slide-head">
+                        <div class="pb-slide-headings">
+                            <div class="pb-page-label pb-recap-label"></div>
+                            <h2 class="pb-page-title pb-recap-title"></h2>
+                        </div>
+                        <button type="button" class="pb-listen">
+                            <span class="pb-listen-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            </span>
+                            <span class="pb-listen-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                            <span class="pb-listen-label"></span>
+                        </button>
+                    </div>
+                    <ol class="pb-recap-list"></ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="pb-quiz" hidden>
+            <figure class="pb-figure pb-quiz-figure">
+                <img class="pb-quiz-image" alt="">
+            </figure>
+            <div class="pb-text">
+                <div class="pb-text-inner">
+                    <div class="pb-slide-head">
+                        <div class="pb-slide-headings">
+                            <div class="pb-page-label pb-quiz-label"></div>
+                            <h2 class="pb-page-title pb-quiz-title"></h2>
+                        </div>
+                        <button type="button" class="pb-listen">
+                            <span class="pb-listen-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            </span>
+                            <span class="pb-listen-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                            <span class="pb-listen-label"></span>
+                        </button>
+                    </div>
+                    <div class="pb-quiz-dots" aria-hidden="true"></div>
+                    <p class="pb-quiz-statement"></p>
+                    <div class="pb-quiz-answers">
+                        <button type="button" class="pb-answer pb-answer--true" data-answer="1">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="pb-answer-label"></span>
+                        </button>
+                        <button type="button" class="pb-answer pb-answer--false" data-answer="0">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                            <span class="pb-answer-label"></span>
+                        </button>
+                    </div>
+                    <div class="pb-quiz-feedback" role="status" aria-live="assertive"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pb-end" hidden>
+            <div class="pb-end-inner">
+                <div class="pb-end-badge" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h2 class="pb-end-title"></h2>
+                <p class="pb-end-text"></p>
+                <div class="pb-end-actions"></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="pb-controls" hidden>
+        <button type="button" class="pb-btn pb-prev">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="pb-prev-label"></span>
+        </button>
+        <div class="pb-audio-controls">
+            <button type="button" class="pb-btn pb-btn-round pb-playpause">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon pb-icon-pause"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon pb-icon-play"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="pb-btn pb-btn-round pb-replay">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+        <div class="pb-next-wrap">
+            <span class="pb-listen-hint"></span>
+            <button type="button" class="pb-btn pb-btn-primary pb-next">
+                <span class="pb-next-label"></span>
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="pb-toc-backdrop" hidden></div>
+    <aside class="pb-toc" aria-hidden="true" tabindex="-1">
+        <div class="pb-toc-head">
+            <h3 class="pb-toc-title"></h3>
+            <button type="button" class="pb-toc-close">&times;</button>
+        </div>
+        <ol class="pb-toc-list"></ol>
+    </aside>
+
+    <audio class="pb-audio" preload="auto"></audio>
+</div>
