@@ -206,14 +206,16 @@ class requests {
      * @param int $userid
      * @param array $plans from {@see media::plan()}, or one write plan
      * @param string|null $result kept with an import (the pages it creates once LMS Labs confirms the charge)
-     * @return array ['batch', 'items' => count by operation, 'credits' => total, 'free' => free clips, 'hold' => reason|null,
+     * @return array ['batch', 'items' => count by operation, 'credits' => total, 'free' => free clips,
+     *     'included' => count by operation already paid for in the slide price, 'hold' => reason|null,
      *     'skipped' => already waiting, 'dropped' => option pictures left out, 'droppedhold' => why]
      */
     public static function quote(stdClass $book, int $userid, array $plans, ?string $result = null): array {
         global $DB;
         self::expire_quotes((int)$book->id);
         $batch = \core\uuid::generate();
-        $summary = ['batch' => $batch, 'items' => [], 'credits' => 0, 'free' => 0, 'hold' => null, 'skipped' => 0,
+        $summary = ['batch' => $batch, 'items' => [], 'credits' => 0, 'free' => 0, 'included' => [], 'hold' => null,
+            'skipped' => 0,
             'dropped' => 0, 'droppedhold' => null];
         $options = array_filter($plans, fn($p) => $p['operation'] === self::OPTION);
         if ($options && count($options) < count($plans) && ($hold = lmslabs::hold('option')) !== null) {
@@ -265,8 +267,12 @@ class requests {
                 $body = $plan['body'];
                 $price = (int)$body['maxCredits'];
             }
+            $included = false;
             if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION], true)) {
+                $listprice = $price;
                 [$body, $price] = bundles::media_quote((int)$book->id, $operation, $targetid, $part, $body);
+                // Covered by the slide price the teacher already paid (not a free remake).
+                $included = $price === 0 && $listprice > 0;
             } else {
                 $body['_contract'] = 'bundle-1';
             }
@@ -290,7 +296,9 @@ class requests {
             ]);
             $summary['items'][$operation] = ($summary['items'][$operation] ?? 0) + 1;
             $summary['credits'] += $price;
-            if ($operation === self::VOICE && $price === 0) {
+            if ($included) {
+                $summary['included'][$operation] = ($summary['included'][$operation] ?? 0) + 1;
+            } else if ($operation === self::VOICE && $price === 0) {
                 $summary['free']++;
             }
         }
@@ -692,8 +700,9 @@ class requests {
                 }
                 return media::option_current($context, (int)$page->id, (int)$row->part, $prompt) ? 'alreadymade' : '';
             }
-            $position = array_search((int)$page->id, array_map('intval', array_keys(visuallearning_get_pages((int)$book->id))));
-            $text = media::clips($book, $page, (int)$position)[$row->part] ?? null;
+            $ids = array_map('intval', array_keys(visuallearning_get_pages((int)$book->id)));
+            $position = array_search((int)$page->id, $ids);
+            $text = media::clips($book, $page, (int)$position, count($ids))[$row->part] ?? null;
             $voice = lmslabs::voice_name((string)$book->language, (string)$book->voice);
             if (
                 $text !== ($sent['text'] ?? null) || $voice !== ($sent['voice'] ?? null)

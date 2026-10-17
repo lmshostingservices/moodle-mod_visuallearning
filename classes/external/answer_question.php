@@ -135,8 +135,9 @@ class answer_question extends external_api {
         if ($correct) {
             $feedback = $q['feedback'] === '' ? '' : format_text($q['feedback'], FORMAT_PLAIN, ['context' => $context,
                 'para' => false]);
-            $position = array_search((int)$page->id, array_map('intval', array_keys(visuallearning_get_pages((int)$book->id))));
-            $clips = media::clips($book, $page, (int)$position);
+            $ids = array_map('intval', array_keys(visuallearning_get_pages((int)$book->id)));
+            $position = array_search((int)$page->id, $ids);
+            $clips = media::clips($book, $page, (int)$position, count($ids));
             if (isset($clips['feedback'])) {
                 $audio = visuallearning_file_url(media::clip_file($context, $book, $page, 'feedback', $clips['feedback']));
             }

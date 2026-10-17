@@ -60,10 +60,22 @@ class quote_page {
         echo $intro;
         $lines = [];
         foreach ($summary['items'] as $operation => $count) {
-            $a = (object)['count' => $count, 'price' => lmslabs::approved_price(requests::price_operation($operation)),
-                'free' => $summary['free']];
-            $key = $operation === requests::VOICE && $summary['free'] ? 'quote_line_voicefree' : 'quote_line_' . $operation;
-            $lines[] = html_writer::tag('li', get_string($key, 'mod_visuallearning', $a));
+            $included = (int)($summary['included'][$operation] ?? 0);
+            $free = $operation === requests::VOICE ? (int)$summary['free'] : 0;
+            $a = (object)['count' => $count - $included, 'free' => $free,
+                'price' => lmslabs::approved_price(requests::price_operation($operation))];
+            $parts = [];
+            if ($count - $included > 0) {
+                $key = $free ? 'quote_line_voicefree' : 'quote_line_' . $operation;
+                $parts[] = get_string($key, 'mod_visuallearning', $a);
+            }
+            if ($included) {
+                $parts[] = get_string('quote_line_included', 'mod_visuallearning', (object)['count' => $included,
+                    'what' => get_string('quote_what_' . $operation, 'mod_visuallearning')]);
+            }
+            foreach ($parts as $part) {
+                $lines[] = html_writer::tag('li', $part);
+            }
         }
         echo html_writer::tag('ul', implode('', $lines));
         if (!empty($summary['dropped'])) {
@@ -82,6 +94,9 @@ class quote_page {
                 : ($balance['unlimited'] ? get_string('balance_unlimited', 'mod_visuallearning') : $balance['credits']),
         ];
         echo html_writer::tag('p', html_writer::tag('strong', get_string('quote_total', 'mod_visuallearning', $a)));
+        if ((int)$summary['credits'] === 0) {
+            echo html_writer::tag('p', get_string('quote_nocharge', 'mod_visuallearning'));
+        }
         if ($balance !== null && !$balance['unlimited'] && $balance['credits'] < $summary['credits']) {
             $low = get_string('quote_lowbalance', 'mod_visuallearning', $a);
             echo $OUTPUT->notification($low, \core\output\notification::NOTIFY_WARNING);
@@ -92,11 +107,13 @@ class quote_page {
             ['action' => 'confirm', 'batch' => $summary['batch'], 'credits' => $summary['credits'], 'sesskey' => sesskey()]
         );
         $cancel = new moodle_url($baseurl, ['action' => 'cancelquote', 'batch' => $summary['batch'], 'sesskey' => sesskey()]);
+        $nocharge = (int)$summary['credits'] === 0;
         echo $OUTPUT->confirm(
-            get_string('quote_confirm', 'mod_visuallearning', $a),
+            get_string($nocharge ? 'quote_confirmfree' : 'quote_confirm', 'mod_visuallearning', $a),
             new single_button(
                 $confirm,
-                get_string('quote_confirmbutton', 'mod_visuallearning', $summary['credits']),
+                $nocharge ? get_string('quote_confirmbuttonfree', 'mod_visuallearning')
+                    : get_string('quote_confirmbutton', 'mod_visuallearning', $summary['credits']),
                 'post',
                 single_button::BUTTON_PRIMARY
             ),

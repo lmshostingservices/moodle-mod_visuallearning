@@ -2,6 +2,30 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.2.5] - 2026-10-17
+
+- Build step 3 redesigned: one status panel (page pictures, page voiceover, cover, progress bar and what LMS Labs is
+  doing now), a page-by-page grid with each page's picture and Picture/Voice status, and remakes on each page card.
+  Only requests that need the teacher are listed in full; requests still running are collapsed into one line. The
+  pricing detail moved under "How pricing works".
+
+## [1.2.4] - 2026-10-17
+
+- The price screen now says which pictures and clips are included in the slide price already paid, instead of
+  listing them at 2 credits each (and calling included clips "free remakes") above a total of 0. When nothing is
+  charged, the confirm button reads "Make them (no charge)".
+
+## [1.2.3] - 2026-10-17
+
+- Check questions show the page's illustration beside the question (above it on phones). Picture-pick questions with
+  picture answers keep the full width and show no page illustration, so it cannot give the answer away.
+
+## [1.2.2] - 2026-10-17
+
+- Every page is now recapped and checked. A single page left over after the groups of four joins the group before it
+  (5 pages make one recap of 5; 9 make 4 + 5) instead of being skipped. In existing lessons with 5, 9, 13... pages,
+  the last page's recap narration needs regenerating, because its spoken number changes from "1." to "5.".
+
 ## [1.2.1] - 2026-10-17
 
 - Recap slide spotlights the illustration for the concept being read aloud; the other illustrations frost over until

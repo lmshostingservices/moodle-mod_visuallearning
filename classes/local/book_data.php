@@ -53,7 +53,7 @@ class book_data {
         foreach ($pages as $page) {
             // Learners play what has been made; nothing here ever asks LMS Labs for anything.
             $image = media::image_file($context, media::AREA_IMAGE, (int)$page->id);
-            $clips = media::clips($book, $page, $position++);
+            $clips = media::clips($book, $page, $position++, count($pages));
             $clipurl = function (string $part) use ($context, $book, $page, $clips): string {
                 return isset($clips[$part])
                     ? visuallearning_file_url(media::clip_file($context, $book, $page, $part, $clips[$part])) : '';

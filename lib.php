@@ -56,6 +56,24 @@ define(
 define('VISUALLEARNING_GROUP_SIZE', 4);
 
 /**
+ * A page's number (1-based) within its recap group.
+ *
+ * Pages are grouped in fours. A single page left over at the end joins the group before it (5 pages make one
+ * group of 5, 9 make 4 + 5), so every page is recapped and checked. Must match buildSteps() in amd/src/player.js.
+ *
+ * @param int $position 0-based position of the page in the lesson
+ * @param int $total number of pages in the lesson
+ * @return int
+ */
+function visuallearning_recap_number(int $position, int $total): int {
+    $size = VISUALLEARNING_GROUP_SIZE;
+    if ($total > $size && $total % $size === 1 && $position >= $total - $size - 1) {
+        return $position - ($total - $size - 1) + 1;
+    }
+    return ($position % $size) + 1;
+}
+
+/**
  * Supported features.
  *
  * @param string $feature

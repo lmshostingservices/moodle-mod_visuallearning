@@ -387,7 +387,7 @@ class exporter {
                 }
             }
             $transcript .= get_string('pagex', 'mod_visuallearning', (int)$page->pagenum) . ': ' . $page->title . "\n";
-            foreach (media::clips($this->book, $page, $position++) as $part => $text) {
+            foreach (media::clips($this->book, $page, $position++, count($this->pages)) as $part => $text) {
                 $transcript .= '  [' . get_string('clip_' . $part, 'mod_visuallearning') . '] ' . $text . "\n";
                 if ($clip = media::clip_file($this->context, $this->book, $page, $part, $text)) {
                     $files['voiceover/page-' . $num . '-' . $part . '.mp3'] = $clip;

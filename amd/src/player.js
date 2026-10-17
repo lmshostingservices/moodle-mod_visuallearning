@@ -161,10 +161,22 @@ class Player {
     buildSteps() {
         const steps = [];
         const size = this.data.groupsize || 4;
+        const total = this.pages.length;
+        // Groups of four; a single page left over joins the group before it (5 pages: one group of 5; 9: 4 + 5),
+        // so every page gets its recap and check. Must match visuallearning_recap_number() in lib.php.
+        const ends = [];
+        for (let end = size; end < total; end += size) {
+            ends.push(end);
+        }
+        if (total > size && total % size === 1) {
+            ends.pop();
+        }
+        ends.push(total);
         let check = 0;
-        for (let start = 0; start < this.pages.length; start += size) {
+        let start = 0;
+        for (const end of ends) {
             const group = [];
-            for (let i = start; i < Math.min(start + size, this.pages.length); i++) {
+            for (let i = start; i < end; i++) {
                 steps.push({type: 'page', page: i});
                 group.push(i);
             }
@@ -182,6 +194,7 @@ class Player {
                     }
                 }
             }
+            start = end;
         }
         return steps;
     }
@@ -990,6 +1003,19 @@ class Player {
         const page = this.pages[step.page];
         const q = page.question;
         section.dataset.type = q.type;
+
+        // The page's own illustration sits beside the question, except when the answers are pictures themselves
+        // (it would sit next to them and could give the answer away).
+        const figure = this.q('.pb-q-figure');
+        const pictureAnswers = q.type === 'pick' && q.options.some((o) => o.image);
+        const showFigure = !!page.image && !pictureAnswers;
+        figure.hidden = !showFigure;
+        section.classList.toggle('has-figure', showFigure);
+        if (showFigure) {
+            const img = figure.querySelector('img');
+            img.src = page.image;
+            img.alt = page.alt || '';
+        }
 
         const banner = this.q('.pb-q-banner');
         banner.hidden = !this.welcomeBack;

@@ -459,7 +459,7 @@ echo html_writer::tag('p', get_string('wizard_intro_2', 'mod_visuallearning', $t
 echo html_writer::start_div('pb-manage-pages');
 $position = 0;
 foreach ($pages as $page) {
-    $clips = media::clips($book, $page, $position++);
+    $clips = media::clips($book, $page, $position++, count($pages));
     $image = media::image_file($context, media::AREA_IMAGE, (int)$page->id);
     echo html_writer::start_div('pb-manage-page');
     echo html_writer::div(
@@ -552,13 +552,19 @@ echo html_writer::end_tag('section');
 // Step 3: pictures and voiceover.
 echo html_writer::start_tag('section', ['class' => 'vl-slide', 'data-slide' => 3, 'aria-labelledby' => 'vl-slide-3']);
 echo html_writer::tag('h3', get_string('wizard_title_3', 'mod_visuallearning'), ['id' => 'vl-slide-3', 'tabindex' => '-1']);
+echo html_writer::tag('p', get_string('wizard_intro_3_short', 'mod_visuallearning'), ['class' => 'vl-slide-intro']);
 echo html_writer::tag(
-    'p',
-    get_string('wizard_intro_3', 'mod_visuallearning', (object)['image' => lmslabs::IMAGE_CREDITS,
-        'voice' => lmslabs::VOICE_CREDITS]) .
-        ($book->enablequiz && \mod_visuallearning\local\question::book_has_pick($pages) && $book->pickimages
-            ? ' ' . get_string('wizard_intro_3_options', 'mod_visuallearning', lmslabs::IMAGE_CREDITS) : ''),
-    ['class' => 'vl-slide-intro']
+    'details',
+    html_writer::tag('summary', get_string('wizard_pricing', 'mod_visuallearning')) .
+    html_writer::tag(
+        'p',
+        get_string('wizard_intro_3', 'mod_visuallearning', (object)['image' => lmslabs::IMAGE_CREDITS,
+            'voice' => lmslabs::VOICE_CREDITS]) .
+            ($book->enablequiz && \mod_visuallearning\local\question::book_has_pick($pages) && $book->pickimages
+                ? ' ' . get_string('wizard_intro_3_options', 'mod_visuallearning', lmslabs::IMAGE_CREDITS) : ''),
+        ['class' => 'small text-muted mb-0 mt-2']
+    ),
+    ['class' => 'vl-pricing']
 );
 $optioncount = 0;
 foreach ($pages as $p) {
@@ -566,114 +572,220 @@ foreach ($pages as $p) {
 }
 echo $holdnotice($optioncount ? ['image' => 'image', 'option' => 'option', 'voice' => 'voice'] : ['image' => 'image',
     'voice' => 'voice']);
-if ($total) {
-    $percent = (int)round(100 * ($ready['image'] + $ready['audio']) / (2 * $total));
-    echo html_writer::div(
-        html_writer::div('', 'vl-meter-fill', ['style' => 'width:' . $percent . '%']),
-        'vl-meter',
-        ['role' => 'progressbar', 'aria-valuenow' => $percent, 'aria-valuemin' => 0, 'aria-valuemax' => 100]
-    );
-    $status = (object)['images' => $ready['image'], 'audio' => $ready['audio'], 'total' => $total, 'queued' => $inprogress];
-    echo html_writer::tag('p', get_string('mediastatus', 'mod_visuallearning', $status), ['class' => 'fw-bold font-weight-bold']);
-    if ($inprogress) {
-        echo html_writer::tag('p', get_string('generating', 'mod_visuallearning'), ['class' => 'text-muted small']);
+
+// Open requests, by page: what is being made, and what needs the teacher.
+$pendingby = [];
+$problems = [];
+$pendingrows = [];
+foreach ($open as $row) {
+    if ($row->status === 'pending') {
+        if (!in_array($row->operation, [requests::IMAGE, requests::COVER, requests::OPTION, requests::VOICE], true)) {
+            $pendingrows[] = $row;
+            continue;
+        }
+        $kind = $row->operation === requests::VOICE ? 'audio' : 'image';
+        $pendingby[(int)$row->targetid][$kind] = ($pendingby[(int)$row->targetid][$kind] ?? 0) + 1;
+        $pendingrows[] = $row;
+    } else {
+        $problems[] = $row;
     }
-    if ($canai) {
-        $buttons = visuallearning_button(
+}
+// One status chip: Ready / Being made (n) / Needs attention / Not made yet.
+$chip = function (string $label, int $status, int $pending): string {
+    $map = [
+        VISUALLEARNING_MEDIA_READY => ['media_chip_ready', 'is-ready'],
+        VISUALLEARNING_MEDIA_QUEUED => ['media_chip_making', 'is-making'],
+        VISUALLEARNING_MEDIA_FAILED => ['media_chip_failed', 'is-failed'],
+        VISUALLEARNING_MEDIA_PENDING => ['media_chip_todo', 'is-todo'],
+    ];
+    if ($pending && $status !== VISUALLEARNING_MEDIA_FAILED) {
+        $status = VISUALLEARNING_MEDIA_QUEUED;
+    }
+    [$key, $class] = $map[$status] ?? $map[VISUALLEARNING_MEDIA_PENDING];
+    $text = get_string($key, 'mod_visuallearning') . ($pending > 1 ? ' (' . $pending . ')' : '');
+    return html_writer::span(
+        html_writer::span($label, 'vl-chip-label') . html_writer::span($text, 'vl-chip-state'),
+        'vl-chip ' . $class
+    );
+};
+// Request rows (compact): title, status message and the buttons that apply.
+$requestrow = function (stdClass $row) use ($context, $canai, $baseurl): string {
+    $item = requests::export($row, $context);
+    $buttons = '';
+    if ($canai && $item['canrecheck'] && $row->status !== 'pending') {
+        $buttons .= visuallearning_button(
+            new moodle_url($baseurl, ['action' => 'check', 'requestid' => $row->id, 'sesskey' => sesskey()]),
+            get_string('aireq_checkagain', 'mod_visuallearning'),
+            'post'
+        );
+    }
+    if ($canai && $item['candismiss']) {
+        $buttons .= visuallearning_button(
+            new moodle_url($baseurl, ['action' => 'dismiss', 'requestid' => $row->id, 'sesskey' => sesskey()]),
+            get_string('aireq_dismiss', 'mod_visuallearning'),
+            'post',
+            false,
+            in_array($row->status, requests::CHECKABLE, true) ? get_string('aireq_dismissconfirm', 'mod_visuallearning') : ''
+        );
+    }
+    return html_writer::tag(
+        'li',
+        html_writer::div(
+            html_writer::div(s($item['title']), 'vl-req-title') .
+            html_writer::div(s($item['message']) . ' · ' . s($item['time']), 'vl-req-meta'),
+            'vl-req-text'
+        ) . ($buttons !== '' ? html_writer::div($buttons, 'vl-req-actions') : ''),
+        ['class' => 'vl-req is-' . s($row->status)]
+    );
+};
+
+if ($total) {
+    // Status panel: the counts, one bar, and the one thing to do next.
+    $made = $ready['image'] + $ready['audio'] + ($hascover && $coverready ? 1 : 0);
+    $needed = 2 * $total + ($hascover ? 1 : 0);
+    $percent = (int)round(100 * $made / max(1, $needed));
+    $tile = function (string $label, string $value, string $class = ''): string {
+        return html_writer::div(
+            html_writer::div($value, 'vl-stat-value') . html_writer::div($label, 'vl-stat-label'),
+            'vl-stat ' . $class
+        );
+    };
+    $tiles = $tile(get_string('media_pictures', 'mod_visuallearning'), $ready['image'] . '/' . $total,
+        $ready['image'] === $total ? 'is-ready' : '');
+    $tiles .= $tile(get_string('media_voiceover', 'mod_visuallearning'), $ready['audio'] . '/' . $total,
+        $ready['audio'] === $total ? 'is-ready' : '');
+    if ($hascover) {
+        $tiles .= $tile(get_string('cover', 'mod_visuallearning'), get_string($coverready ? 'status_ready'
+            : ((int)$book->coverstatus === VISUALLEARNING_MEDIA_QUEUED ? 'status_queued' : 'status_pending'),
+            'mod_visuallearning'), $coverready ? 'is-ready' : '');
+    }
+    if ($inprogress) {
+        $live = html_writer::span('', 'vl-spinner', ['aria-hidden' => 'true']) .
+            get_string('media_making', 'mod_visuallearning', $inprogress);
+        $liveclass = 'is-making';
+    } else if ($mediadone) {
+        $live = get_string('media_alldone', 'mod_visuallearning');
+        $liveclass = 'is-ready';
+    } else {
+        $live = get_string('media_todo', 'mod_visuallearning', $needed - $made);
+        $liveclass = 'is-todo';
+    }
+    $actions = '';
+    if ($canai && !$mediadone) {
+        $actions .= visuallearning_button(
             new moodle_url($baseurl, ['action' => 'quote', 'what' => 'missing', 'sesskey' => sesskey()]),
             get_string('generatemissing', 'mod_visuallearning'),
             'post',
-            !$mediadone
-        );
-        $buttons .= visuallearning_button(
-            new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all', 'sesskey' => sesskey()]),
-            get_string('regenerateall', 'mod_visuallearning'),
-            'post'
-        );
-        echo html_writer::div($buttons, 'pb-manage-actions mb-3');
-    }
-}
-// LMS Labs requests that need attention.
-if ($open) {
-    echo html_writer::tag('h4', get_string('aireq_heading', 'mod_visuallearning'), ['class' => 'h6 mt-3']);
-    foreach ($open as $row) {
-        $item = requests::export($row, $context);
-        $buttons = '';
-        if ($canai && $item['canrecheck'] && $row->status !== 'pending') {
-            $buttons .= visuallearning_button(
-                new moodle_url($baseurl, ['action' => 'check', 'requestid' => $row->id, 'sesskey' => sesskey()]),
-                get_string('aireq_checkagain', 'mod_visuallearning'),
-                'post'
-            );
-        }
-        if ($canai && $item['candismiss']) {
-            $buttons .= visuallearning_button(
-                new moodle_url($baseurl, ['action' => 'dismiss', 'requestid' => $row->id, 'sesskey' => sesskey()]),
-                get_string('aireq_dismiss', 'mod_visuallearning'),
-                'post',
-                false,
-                in_array($row->status, requests::CHECKABLE, true) ? get_string('aireq_dismissconfirm', 'mod_visuallearning') : ''
-            );
-        }
-        $class = $row->status === 'pending' ? 'alert-info' : 'alert-warning';
-        echo html_writer::div(
-            html_writer::tag('strong', s($item['title'])) . ' ' . html_writer::span(s($item['time']), 'text-muted small') .
-            html_writer::div(s($item['message']), 'small') .
-            ($buttons !== '' ? html_writer::div($buttons, 'pb-manage-actions mt-1') : ''),
-            "alert $class py-2"
+            !$inprogress
         );
     }
+    echo html_writer::div(
+        html_writer::div($tiles, 'vl-stats') .
+        html_writer::div(
+            html_writer::div('', 'vl-meter-fill', ['style' => 'width:' . $percent . '%']),
+            'vl-meter',
+            ['role' => 'progressbar', 'aria-valuenow' => $percent, 'aria-valuemin' => 0, 'aria-valuemax' => 100]
+        ) .
+        html_writer::div(
+            html_writer::div($live, 'vl-live ' . $liveclass, ['role' => 'status']) .
+            ($actions !== '' ? html_writer::div($actions, 'vl-panel-actions') : ''),
+            'vl-panel-foot'
+        ),
+        'vl-media-panel'
+    );
 }
-// Per-page remakes.
-if ($total && $canai) {
-    echo html_writer::start_tag('details', ['class' => 'mt-3']);
-    echo html_writer::tag('summary', get_string('wizard_remake', 'mod_visuallearning'));
-    echo html_writer::start_tag('ul', ['class' => 'vl-remake-list']);
+
+// Only the requests that need the teacher are shown in full.
+if ($problems) {
+    echo html_writer::tag('h4', get_string('media_attention', 'mod_visuallearning', count($problems)), ['class' => 'vl-h4']);
+    echo html_writer::tag('ul', implode('', array_map($requestrow, $problems)), ['class' => 'vl-req-list is-problems']);
+}
+
+// Every page, with what it has and what is being made.
+if ($total) {
+    echo html_writer::tag('h4', get_string('media_bypage', 'mod_visuallearning'), ['class' => 'vl-h4']);
+    $cards = '';
+    $remake = function (array $buttons): string {
+        return html_writer::tag(
+            'details',
+            html_writer::tag('summary', get_string('media_remake', 'mod_visuallearning')) .
+            html_writer::div(implode('', $buttons), 'vl-remake-buttons'),
+            ['class' => 'vl-remake']
+        );
+    };
+    $quoteurl = fn(string $kinds, int $pageid = 0) => new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all',
+        'kinds' => $kinds, 'pageid' => $pageid, 'sesskey' => sesskey()]);
     if ($hascover) {
-        echo html_writer::tag(
-            'li',
-            html_writer::span(get_string('cover', 'mod_visuallearning') . ' ' .
-                visuallearning_status_label((int)$book->coverstatus)) .
-            visuallearning_button(
-                new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all', 'kinds' => 'cover', 'sesskey' => sesskey()]),
-                get_string('regenimage', 'mod_visuallearning'),
-                'post'
-            )
+        $cover = media::image_file($context, media::AREA_COVER, 0);
+        $coverpending = $pendingby[0]['image'] ?? 0;
+        $cards .= html_writer::div(
+            html_writer::div(
+                $cover ? html_writer::empty_tag('img', ['src' => visuallearning_file_url($cover), 'alt' => ''])
+                    : html_writer::span('', $coverpending ? 'vl-shimmer' : 'vl-empty'),
+                'vl-media-thumb'
+            ) .
+            html_writer::div(
+                html_writer::div(get_string('cover', 'mod_visuallearning'), 'vl-media-title') .
+                html_writer::div($chip(get_string('media_picture', 'mod_visuallearning'), (int)$book->coverstatus,
+                    $coverpending), 'vl-chips') .
+                ($canai ? $remake([visuallearning_button($quoteurl('cover'), get_string('regenimage', 'mod_visuallearning'),
+                    'post')]) : ''),
+                'vl-media-body'
+            ),
+            'vl-media-card is-cover'
         );
     }
     foreach ($pages as $page) {
-        echo html_writer::tag(
-            'li',
-            html_writer::span((int)$page->pagenum . '. ' . format_string($page->title)) .
+        $image = media::image_file($context, media::AREA_IMAGE, (int)$page->id);
+        $pend = $pendingby[(int)$page->id] ?? [];
+        $buttons = [visuallearning_button($quoteurl('image', (int)$page->id), get_string('regenpageimage', 'mod_visuallearning'),
+            'post')];
+        if (media::option_prompts($book, $page)) {
+            $buttons[] = visuallearning_button($quoteurl('option', (int)$page->id),
+                get_string('regenoptions', 'mod_visuallearning'), 'post');
+        }
+        $buttons[] = visuallearning_button($quoteurl('voice', (int)$page->id), get_string('regenaudio', 'mod_visuallearning'),
+            'post');
+        $cards .= html_writer::div(
             html_writer::div(
-                visuallearning_button(
-                    new moodle_url(
-                        $baseurl,
-                        ['action' => 'quote', 'what' => 'all', 'kinds' => 'image', 'pageid' => $page->id, 'sesskey' => sesskey()]
-                    ),
-                    get_string('regenpageimage', 'mod_visuallearning'),
-                    'post'
-                ) . (media::option_prompts($book, $page) ? visuallearning_button(
-                    new moodle_url(
-                        $baseurl,
-                        ['action' => 'quote', 'what' => 'all', 'kinds' => 'option', 'pageid' => $page->id, 'sesskey' => sesskey()]
-                    ),
-                    get_string('regenoptions', 'mod_visuallearning'),
-                    'post'
-                ) : '') . visuallearning_button(
-                    new moodle_url(
-                        $baseurl,
-                        ['action' => 'quote', 'what' => 'all', 'kinds' => 'voice', 'pageid' => $page->id, 'sesskey' => sesskey()]
-                    ),
-                    get_string('regenaudio', 'mod_visuallearning'),
-                    'post'
-                ),
-                'pb-manage-actions'
-            )
+                $image ? html_writer::empty_tag('img', ['src' => visuallearning_file_url($image), 'alt' => s($page->alttext)])
+                    : html_writer::span('', !empty($pend['image']) ? 'vl-shimmer' : 'vl-empty'),
+                'vl-media-thumb'
+            ) . html_writer::span((int)$page->pagenum, 'vl-media-num') .
+            html_writer::div(
+                html_writer::div(format_string($page->title, true, ['context' => $context]), 'vl-media-title') .
+                html_writer::div(
+                    $chip(get_string('media_picture', 'mod_visuallearning'), (int)$page->imagestatus, $pend['image'] ?? 0) .
+                    $chip(get_string('media_voice', 'mod_visuallearning'), (int)$page->audiostatus, $pend['audio'] ?? 0),
+                    'vl-chips'
+                ) .
+                ($canai ? $remake($buttons) : ''),
+                'vl-media-body'
+            ),
+            'vl-media-card'
         );
     }
-    echo html_writer::end_tag('ul');
-    echo html_writer::end_tag('details');
+    echo html_writer::div($cards, 'vl-media-grid');
+    if ($canai) {
+        echo html_writer::div(
+            visuallearning_button(
+                new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all', 'sesskey' => sesskey()]),
+                get_string('regenerateall', 'mod_visuallearning'),
+                'post'
+            ),
+            'vl-remake-all'
+        );
+    }
+}
+
+// Requests still running: one line, with the list behind it.
+if ($pendingrows) {
+    echo html_writer::tag(
+        'details',
+        html_writer::tag('summary', get_string('media_inprogresslist', 'mod_visuallearning', count($pendingrows))) .
+        html_writer::tag('ul', implode('', array_map($requestrow, $pendingrows)), ['class' => 'vl-req-list']),
+        ['class' => 'vl-inprogress']
+    );
 }
 echo $nav(3, $total > 0, $mediadone || !$total ? '' : get_string('wizard_hint_3', 'mod_visuallearning'));
 echo html_writer::end_tag('section');

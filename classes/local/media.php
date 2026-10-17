@@ -73,9 +73,11 @@ class media {
      * @param stdClass $book
      * @param stdClass $page
      * @param int $position 0-based position of the page in the lesson
+     * @param int $total number of pages in the lesson (0: count them)
      * @return array part => text
      */
-    public static function clips(stdClass $book, stdClass $page, int $position): array {
+    public static function clips(stdClass $book, stdClass $page, int $position, int $total = 0): array {
+        global $DB;
         $out = [];
         foreach (VISUALLEARNING_CARDS as $card) {
             $text = self::clean((string)$page->{$card . 'text'});
@@ -86,7 +88,10 @@ class media {
         if (!empty($book->enablerecap)) {
             $summary = self::clean((string)$page->summarytext) ?: self::clean((string)$page->concepttext);
             if ($summary !== '') {
-                $out['summary'] = (($position % VISUALLEARNING_GROUP_SIZE) + 1) . '. ' . $summary;
+                if ($total <= 0) {
+                    $total = $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]);
+                }
+                $out['summary'] = visuallearning_recap_number($position, $total) . '. ' . $summary;
             }
         }
         if (!empty($book->enablequiz) && ($q = question::of_page($page)) !== null) {
@@ -476,7 +481,8 @@ class media {
     public static function plan(stdClass $book, \context $context, string $scope, int $pageid, array $kinds): array {
         $out = [];
         $position = 0;
-        foreach (visuallearning_get_pages((int)$book->id) as $page) {
+        $pages = visuallearning_get_pages((int)$book->id);
+        foreach ($pages as $page) {
             $index = $position++;
             if ($pageid && (int)$page->id !== $pageid) {
                 continue;
@@ -496,7 +502,7 @@ class media {
                 }
             }
             if (in_array('voice', $kinds, true)) {
-                foreach (self::clips($book, $page, $index) as $part => $text) {
+                foreach (self::clips($book, $page, $index, count($pages)) as $part => $text) {
                     if ($scope === 'all' || !self::clip_current($context, $book, $page, $part, $text)) {
                         $out[] = ['operation' => 'voice', 'targetid' => (int)$page->id, 'part' => $part, 'text' => $text];
                     }
@@ -540,7 +546,8 @@ class media {
             return !empty($failed[$key]) ? VISUALLEARNING_MEDIA_FAILED : VISUALLEARNING_MEDIA_PENDING;
         };
         $position = 0;
-        foreach (visuallearning_get_pages((int)$book->id) as $page) {
+        $pages = visuallearning_get_pages((int)$book->id);
+        foreach ($pages as $page) {
             $index = $position++;
             $prompt = self::image_prompt($book, $page);
             $pictures = self::image_current($context, self::AREA_IMAGE, (int)$page->id, $prompt);
@@ -549,7 +556,7 @@ class media {
             }
             $image = $state($pictures, 'image:' . $page->id);
             $allclips = true;
-            foreach (self::clips($book, $page, $index) as $part => $text) {
+            foreach (self::clips($book, $page, $index, count($pages)) as $part => $text) {
                 $allclips = $allclips && self::clip_current($context, $book, $page, $part, $text);
             }
             $audio = $state($allclips, 'audio:' . $page->id);
