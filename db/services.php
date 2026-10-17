@@ -32,9 +32,9 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'mod/visuallearning:view',
     ],
-    'mod_visuallearning_answer_statement' => [
-        'classname' => 'mod_visuallearning\external\answer_statement',
-        'description' => 'Check a learner\'s true/false answer and record it.',
+    'mod_visuallearning_answer_question' => [
+        'classname' => 'mod_visuallearning\external\answer_question',
+        'description' => 'Check a learner\'s answer to a page\'s check question and record it.',
         'type' => 'write',
         'ajax' => true,
         'capabilities' => 'mod/visuallearning:view',

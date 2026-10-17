@@ -20,6 +20,7 @@ use mod_visuallearning\local\credentials;
 use mod_visuallearning\local\importer;
 use mod_visuallearning\local\media;
 use mod_visuallearning\local\prompt_builder;
+use mod_visuallearning\local\question;
 use moodle_exception;
 use stdClass;
 
@@ -59,6 +60,9 @@ class requests {
     /** @var string The cover illustration. */
     public const COVER = 'cover';
 
+    /** @var string The square picture of one picture-pick option (part: the option number). */
+    public const OPTION = 'option';
+
     /** @var string One voiceover clip. */
     public const VOICE = 'voice';
 
@@ -92,11 +96,11 @@ class requests {
      * The price operation of a request operation.
      *
      * @param string $operation
-     * @return string page, import, image or voice
+     * @return string page, import, image, option or voice
      */
     public static function price_operation(string $operation): string {
         return [self::WRITE => 'page', self::IMPORT => 'import', self::IMAGE => 'image', self::COVER => 'image',
-            self::VOICE => 'voice'][$operation];
+            self::OPTION => 'option', self::VOICE => 'voice'][$operation];
     }
 
     /**
@@ -110,7 +114,7 @@ class requests {
     }
 
     /**
-     * The stable identity of one clip: this component, this site, the book, the page and the part. It never contains
+     * The stable identity of one clip: this component, this site, the lesson, the page and the part. It never contains
      * the text or the voice, so a clip made again after an edit or a new voice keeps its identity (and any free
      * remake LMS Labs offers); a deleted page's id is never reused, so a deleted clip's identity is never reused.
      *
@@ -147,10 +151,18 @@ class requests {
      *
      * @param string $prompt
      * @param int $maxcredits
+     * @param string $aspect 4:3 (page, cover) or 1:1 (picture-pick option)
+     * @param string $purpose page, cover or option (for LMS Labs reporting only)
      * @return array
      */
-    public static function image_body(string $prompt, int $maxcredits): array {
-        return ['prompt' => $prompt, 'style' => 'illustration', 'aspectRatio' => media::ASPECT, 'maxCredits' => $maxcredits];
+    public static function image_body(
+        string $prompt,
+        int $maxcredits,
+        string $aspect = media::ASPECT,
+        string $purpose = 'page'
+    ): array {
+        return ['prompt' => $prompt, 'style' => 'illustration', 'aspectRatio' => $aspect, 'purpose' => $purpose,
+            'maxCredits' => $maxcredits];
     }
 
     /**
@@ -177,7 +189,9 @@ class requests {
             'imageStyle' => trim((string)$book->imagestyle),
             'maxPages' => $max,
             'recap' => (bool)$book->enablerecap,
-            'trueFalse' => (bool)$book->enablequiz,
+            // One check question per page, in the types the teacher allows and LMS Labs AI writes.
+            'questionTypes' => $book->enablequiz
+                ? array_values(array_intersect(question::allowed($book), lmslabs::question_types())) : [],
             'content' => $content,
             'maxCredits' => $max * lmslabs::PAGE_CREDITS,
         ];
@@ -192,13 +206,22 @@ class requests {
      * @param int $userid
      * @param array $plans from {@see media::plan()}, or one write plan
      * @param string|null $result kept with an import (the pages it creates once LMS Labs confirms the charge)
-     * @return array ['batch', 'items' => count by operation, 'credits' => total, 'free' => free clips, 'hold' => reason|null]
+     * @return array ['batch', 'items' => count by operation, 'credits' => total, 'free' => free clips, 'hold' => reason|null,
+     *     'skipped' => already waiting, 'dropped' => option pictures left out, 'droppedhold' => why]
      */
     public static function quote(stdClass $book, int $userid, array $plans, ?string $result = null): array {
         global $DB;
         self::expire_quotes((int)$book->id);
         $batch = \core\uuid::generate();
-        $summary = ['batch' => $batch, 'items' => [], 'credits' => 0, 'free' => 0, 'hold' => null, 'skipped' => 0];
+        $summary = ['batch' => $batch, 'items' => [], 'credits' => 0, 'free' => 0, 'hold' => null, 'skipped' => 0,
+            'dropped' => 0, 'droppedhold' => null];
+        $options = array_filter($plans, fn($p) => $p['operation'] === self::OPTION);
+        if ($options && count($options) < count($plans) && ($hold = lmslabs::hold('option')) !== null) {
+            // Option pictures cannot be made yet: everything else still can (options show as text cards meanwhile).
+            $plans = array_values(array_filter($plans, fn($p) => $p['operation'] !== self::OPTION));
+            $summary['dropped'] = count($options);
+            $summary['droppedhold'] = $hold;
+        }
         if (!$plans) {
             return $summary;
         }
@@ -223,20 +246,29 @@ class requests {
             }
             if ($operation === self::VOICE) {
                 $price = lmslabs::VOICE_CREDITS;
-                if ($remakes && time() < $until) {
+                if ($remakes && time() < $until && empty(bundles::page((int)$book->id, $targetid)->bundleid)) {
                     $quoted = lmslabs::voice_quote(self::clipref($book, $targetid, $part));
                     $price = $quoted ?? lmslabs::VOICE_CREDITS;
                 }
                 $body = self::voice_body($book, $targetid, $part, (string)$plan['text'], $price);
             } else if ($operation === self::IMAGE || $operation === self::COVER) {
                 $price = lmslabs::IMAGE_CREDITS;
-                $body = self::image_body((string)$plan['prompt'], $price);
+                $body = self::image_body((string)$plan['prompt'], $price, media::ASPECT, $operation === self::COVER ? 'cover'
+                    : 'page');
+            } else if ($operation === self::OPTION) {
+                $price = lmslabs::IMAGE_CREDITS;
+                $body = self::image_body((string)$plan['prompt'], $price, media::OPTION_ASPECT, 'option');
             } else if ($operation === self::WRITE) {
                 $body = self::write_body($book);
                 $price = (int)$body['maxCredits'];
             } else {
                 $body = $plan['body'];
                 $price = (int)$body['maxCredits'];
+            }
+            if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION], true)) {
+                [$body, $price] = bundles::media_quote((int)$book->id, $operation, $targetid, $part, $body);
+            } else {
+                $body['_contract'] = 'bundle-1';
             }
             $DB->insert_record('visuallearning_aireq', (object)[
                 'visuallearningid' => (int)$book->id,
@@ -312,8 +344,8 @@ class requests {
             $row->userid = $userid;
             $row->timemodified = $now;
             $DB->update_record('visuallearning_aireq', $row);
-            $tasks[$row->operation === self::VOICE || $row->operation === self::IMAGE ? 'page' . $row->targetid
-                : $row->operation][] = (int)$row->id;
+            $perpage = in_array($row->operation, [self::VOICE, self::IMAGE, self::OPTION], true);
+            $tasks[$perpage ? 'page' . $row->targetid : $row->operation][] = (int)$row->id;
         }
         if (count($rows) === 1 && $rows[0]->operation === self::IMPORT) {
             return [self::send($rows[0], $book)];
@@ -393,7 +425,7 @@ class requests {
     }
 
     /**
-     * Requests of a book that need the teacher's attention, newest first. Requests whose sending process stopped
+     * Requests of a lesson that need the teacher's attention, newest first. Requests whose sending process stopped
      * without an answer are marked uncertain here, so they can be checked again.
      *
      * @param int $bookid
@@ -417,7 +449,7 @@ class requests {
     }
 
     /**
-     * One request of a book.
+     * One request of a lesson.
      *
      * @param int $bookid
      * @param int $id
@@ -438,6 +470,9 @@ class requests {
      * @return stdClass
      */
     public static function check(stdClass $row, stdClass $book, int $userid): stdClass {
+        if (self::recoverable($row)) {
+            return self::recover($row, $book, $userid);
+        }
         if (!in_array($row->status, self::CHECKABLE, true)) {
             return $row;
         }
@@ -466,6 +501,69 @@ class requests {
     }
 
     /**
+     * Whether this missing bundle delivery can be explicitly recovered.
+     *
+     * @param stdClass $row Request
+     * @return bool
+     */
+    public static function recoverable(stdClass $row): bool {
+        $body = json_decode((string)$row->body, true);
+        return in_array($row->status, ['lost', 'failed'], true) && !empty($body['bundleId']);
+    }
+
+    /**
+     * An explicit recovery preserves the original receipt and uses the same entitled slot.
+     *
+     * @param stdClass $row Original request
+     * @param stdClass $book Activity
+     * @param int $userid Teacher
+     * @return stdClass
+     */
+    protected static function recover(stdClass $row, stdClass $book, int $userid): stdClass {
+        global $DB;
+        $lock = \core\lock\lock_config::get_lock_factory('mod_visuallearning_aireq')->get_lock('recover' . $row->id, 5);
+        if (!$lock) {
+            return $row;
+        }
+        try {
+            $row = self::get((int)$book->id, (int)$row->id);
+            if (!self::recoverable($row)) {
+                return $row;
+            }
+            if ($row->sitehash !== self::sitehash()) {
+                throw new moodle_exception('lmslabscredentialsmissing', 'mod_visuallearning');
+            }
+            [$body, $price] = bundles::media_quote(
+                (int)$book->id, $row->operation, (int)$row->targetid, $row->part,
+                json_decode($row->body, true), true
+            );
+            if ($price !== 0 || $body['remake']) {
+                throw new moodle_exception('bundlesupport', 'mod_visuallearning');
+            }
+            $transaction = $DB->start_delegated_transaction();
+            $next = clone $row;
+            unset($next->id);
+            $next->idemkey = \core\uuid::generate();
+            $next->body = json_encode($body);
+            $next->maxcredits = 0;
+            $next->charged = null;
+            $next->result = null;
+            $next->errorcode = null;
+            $next->status = 'pending';
+            $next->tries = 0;
+            $next->timecreated = $next->timemodified = time();
+            $next->id = $DB->insert_record('visuallearning_aireq', $next);
+            $row->status = 'dismissed';
+            $DB->update_record('visuallearning_aireq', $row);
+            $transaction->allow_commit();
+            self::queue($book, [(int)$next->id], $userid);
+            return $next;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
      * Sends a stored request (same key, same body) once and records the outcome.
      *
      * @param stdClass $row
@@ -479,7 +577,15 @@ class requests {
             // Another process is sending it right now.
             return $row;
         }
+        $booklock = null;
         try {
+            if (in_array($row->operation, [self::WRITE, self::IMPORT], true)) {
+                $booklock = \core\lock\lock_config::get_lock_factory('mod_visuallearning_aireq')
+                    ->get_lock('book' . $book->id, 5);
+                if (!$booklock) {
+                    return $row;
+                }
+            }
             $row = $DB->get_record('visuallearning_aireq', ['id' => $row->id], '*', MUST_EXIST);
             if (!in_array($row->status, self::CHECKABLE, true)) {
                 return $row;
@@ -508,20 +614,28 @@ class requests {
             $DB->update_record('visuallearning_aireq', $row);
 
             $routes = [self::WRITE => lmslabs::DRAFT_ROUTE, self::IMPORT => lmslabs::IMPORT_ROUTE,
-                self::IMAGE => lmslabs::IMAGE_ROUTE, self::COVER => lmslabs::IMAGE_ROUTE, self::VOICE => lmslabs::VOICE_ROUTE];
-            $image = in_array($row->operation, [self::IMAGE, self::COVER], true);
+                self::IMAGE => lmslabs::IMAGE_ROUTE, self::COVER => lmslabs::IMAGE_ROUTE, self::OPTION => lmslabs::IMAGE_ROUTE,
+                self::VOICE => lmslabs::VOICE_ROUTE];
+            $image = in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION], true);
             $accept = $image ? 'image/png, image/webp, image/jpeg, application/json'
                 : ($row->operation === self::VOICE ? 'audio/mpeg, application/json' : 'application/json');
             $timeout = $image ? lmslabs::IMAGE_TIMEOUT : ($row->operation === self::WRITE ? lmslabs::DRAFT_TIMEOUT : 100);
             \core_php_time_limit::raise($timeout + 60);
             try {
-                [$status, $headers, $body] = lmslabs::post(
-                    $routes[$row->operation],
+                $sent = json_decode($row->body, true);
+                if (($sent['_contract'] ?? '') === 'bundle-1') {
+                    [$status, $headers, $body] = bundles::text($row, $book);
+                } else {
+                    $route = empty($sent['bundleId']) ? $routes[$row->operation] :
+                        bundles::PREFIX . ($row->operation === self::VOICE ? '/speech/tts' : '/images');
+                    [$status, $headers, $body] = lmslabs::post(
+                    $route,
                     (string)$row->body,
                     (string)$row->idemkey,
                     $accept,
                     $timeout
                 );
+                }
             } catch (moodle_exception $e) {
                 // No credentials any more: nothing was sent this time.
                 $row->status = 'uncertain';
@@ -531,6 +645,9 @@ class requests {
             }
             $row->retryafter = max(1, min(60, (int)($headers['retry-after'] ?? 5)));
             self::outcome($row, $book, $context, $status, $headers, $body);
+            if ($row->status === 'completed' && !in_array($row->operation, [self::WRITE, self::IMPORT], true)) {
+                bundles::media_saved($row, $headers);
+            }
             $row->timemodified = time();
             $DB->update_record('visuallearning_aireq', $row);
             if ($row->operation !== self::WRITE && $row->operation !== self::IMPORT) {
@@ -538,6 +655,9 @@ class requests {
             }
             return $row;
         } finally {
+            if ($booklock) {
+                $booklock->release();
+            }
             $lock->release();
         }
     }
@@ -553,13 +673,24 @@ class requests {
     protected static function stale(stdClass $row, stdClass $book, \context_module $context): string {
         global $DB;
         $sent = json_decode((string)$row->body, true) ?: [];
-        if ($row->operation === self::IMAGE || $row->operation === self::VOICE) {
+        if ($row->operation === self::IMPORT && !empty($sent['_manual']) &&
+                $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]) >= 20) {
+            return 'maxpagesreached';
+        }
+        if (in_array($row->operation, [self::IMAGE, self::OPTION, self::VOICE], true)) {
             $page = $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]);
             if (!$page) {
                 return 'pagedeleted';
             }
             if ($row->operation === self::IMAGE) {
                 return media::image_prompt($book, $page) === ($sent['prompt'] ?? null) ? '' : 'changed';
+            }
+            if ($row->operation === self::OPTION) {
+                $prompt = media::option_prompts($book, $page)[(int)$row->part] ?? null;
+                if ($prompt !== ($sent['prompt'] ?? null)) {
+                    return 'changed';
+                }
+                return media::option_current($context, (int)$page->id, (int)$row->part, $prompt) ? 'alreadymade' : '';
             }
             $position = array_search((int)$page->id, array_map('intval', array_keys(visuallearning_get_pages((int)$book->id))));
             $text = media::clips($book, $page, (int)$position)[$row->part] ?? null;
@@ -635,7 +766,7 @@ class requests {
             return;
         }
         $sent = json_decode((string)$row->body, true) ?: [];
-        if (in_array($row->operation, [self::IMAGE, self::COVER, self::VOICE], true)) {
+        if (in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION, self::VOICE], true)) {
             $row->charged = self::reported($headers['x-credits-charged'] ?? null);
             $row->balance = isset($headers['x-credits-balance']) && is_numeric($headers['x-credits-balance'])
                 ? (int)$headers['x-credits-balance'] : null;
@@ -662,16 +793,21 @@ class requests {
             }
             $bytes = self::image_bytes($type, $body);
             $ext = $bytes === null ? '' : media::image_type($bytes);
-            $page = $row->operation === self::IMAGE
+            $perpage = $row->operation === self::IMAGE || $row->operation === self::OPTION;
+            $page = $perpage
                 ? $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]) : null;
-            if ($ext === '' || ($row->operation === self::IMAGE && !$page)) {
+            if ($ext === '' || ($perpage && !$page)) {
                 $row->status = 'lost';
                 $row->errorcode = $ext === '' ? 'unusable_image' : 'pagedeleted';
                 $row->result = json_encode(['contenttype' => substr($type, 0, 100), 'bytes' => strlen($body)]);
                 return;
             }
-            $area = $row->operation === self::COVER ? media::AREA_COVER : media::AREA_IMAGE;
-            media::save_image($context, $area, (int)$row->targetid, (string)$sent['prompt'], $bytes, $ext);
+            if ($row->operation === self::OPTION) {
+                media::save_option($context, (int)$row->targetid, (int)$row->part, (string)$sent['prompt'], $bytes, $ext);
+            } else {
+                $area = $row->operation === self::COVER ? media::AREA_COVER : media::AREA_IMAGE;
+                media::save_image($context, $area, (int)$row->targetid, (string)$sent['prompt'], $bytes, $ext);
+            }
             $row->status = 'completed';
             $row->errorcode = null;
             return;
@@ -699,7 +835,22 @@ class requests {
         }
         $transaction = $DB->start_delegated_transaction();
         $book = $DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST);
-        importer::import($book, $parsed, $context);
+        $bundle = $sent['_bundle'] ?? null;
+        foreach ($bundle ? $parsed['pages'] : [] as $i => $unused) {
+            $page = &$parsed['pages'][$i];
+            $slideid = $bundle['slides'][$i]['slideId'] ?? '';
+            if ($slideid === '') {
+                throw new \moodle_exception('bundleunavailable', 'mod_visuallearning');
+            }
+            $page['_bundle'] = ['bundleid' => $bundle['bundleId'], 'slideid' => $slideid,
+                'bundlesite' => self::sitehash()];
+        }
+        unset($page);
+        if (!empty($sent['_manual'])) {
+            importer::append($book, $parsed['pages'][0], $context);
+        } else {
+            importer::import($book, $parsed, $context);
+        }
         $row->status = 'completed';
         $row->errorcode = null;
         $DB->update_record('visuallearning_aireq', $row);
@@ -810,7 +961,9 @@ class requests {
                 );
             }
         }
-        if ($row->part !== '') {
+        if ($row->operation === self::OPTION) {
+            $title .= ' · ' . get_string('optionx', 'mod_visuallearning', chr(65 + (int)$row->part));
+        } else if ($row->part !== '') {
             $title .= ' · ' . get_string('clip_' . $row->part, 'mod_visuallearning');
         }
         return [
@@ -818,7 +971,7 @@ class requests {
             'status' => $status,
             'title' => $title,
             'message' => $message,
-            'canrecheck' => in_array($status, self::CHECKABLE, true),
+            'canrecheck' => in_array($status, self::CHECKABLE, true) || self::recoverable($row),
             'candismiss' => in_array($status, self::OPEN, true),
             'time' => userdate((int)$row->timecreated),
         ];

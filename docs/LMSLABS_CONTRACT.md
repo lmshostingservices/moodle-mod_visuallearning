@@ -1,4 +1,10 @@
-# AI Visual Learning: proposed LMS Labs server contract
+# AI Visual Learning: legacy server contract
+
+This document describes the legacy v1.0 per-operation protocol only. Version 1.2.0 uses
+`/api/moodle/ai-visuallearning/v2` with `X-VL-Contract: bundle-1` for new slides.
+New slides cost 10 credits inclusive of initial pictures and narration; text settlement creates durable
+media entitlements. See README.md for approved customer pricing. Do not apply the legacy page tariff
+below to new slides. Existing slides without bundle identifiers retain their legacy media routes.
 
 Status: **PROPOSED, not yet agreed or implemented by LMS Labs.** The plugin fails closed until these routes are live
 and publish the approved prices. It follows the conventions of the live AI Safety Hazards and AI Language Teacher
@@ -31,9 +37,13 @@ routes, so LMS Labs can reuse their handlers.
 
 ### Capabilities (free, cached by the plugin for one hour)
 
-`GET /pages/capabilities` → `{"tariff": {"page": 2}}`
+`GET /pages/capabilities` → `{"tariff": {"page": 2}, "questionTypes": ["truefalse", "pick", "match", "sort"]}`
 
-`GET /images/capabilities` → `{"tariff": {"image": 2}, "model": "gemini-nano-banana-2.1"}`
+`GET /images/capabilities` → `{"tariff": {"image": 2}, "model": "gemini-nano-banana-2.1", "aspectRatios": ["4:3", "1:1"]}`
+
+`questionTypes` lists the check-question types LMS Labs AI writes; when it is missing the plugin asks only for true or
+false. `aspectRatios` lists the picture shapes the image route makes; until it includes `1:1` the plugin makes no
+picture-pick option pictures (those options show as text cards) and still makes everything else.
 
 `GET /speech/capabilities` →
 
@@ -54,14 +64,34 @@ The plugin offers only the voices listed here. A missing or different price stop
 
 ```json
 {"title": "How to promote teamwork", "industry": "Hospitality", "subindustry": "", "language": "th-TH",
- "culture": "Thailand", "imageStyle": "…", "maxPages": 12, "recap": true, "trueFalse": true,
+ "culture": "Thailand", "imageStyle": "…", "maxPages": 12, "recap": true,
+ "questionTypes": ["truefalse", "pick", "match", "sort"],
  "content": "teacher's content, at most 60,000 characters", "maxCredits": 24}
 ```
 
+`questionTypes` is the types the teacher allows that LMS Labs also publishes (empty: no questions). Each page gets one
+question of one of these types; rotate them so no two pages in a row use the same type.
+
 `200` → `{"draft": {…}, "creditsCharged": 2 × pages delivered, "creditsBalance": n}`. `draft` uses exactly the JSON
 schema of the plugin's prompt file (`book_title, industry, subindustry, language, style_guide, characters[],
-cover_image_prompt, pages[page, title, concept, action, outcome, summary, tf_statement, tf_answer, image_prompt,
-alt_text]`). The plugin's `prompt_builder::chatgpt_prompt()` is the reference prompt. Proposed: LMS Labs runs it
+cover_image_prompt, pages[page, title, concept, action, outcome, summary, question, image_prompt, alt_text]`), where
+`question` is one of:
+
+```json
+{"type": "truefalse", "statement": "…", "answer": true, "feedback": "…"}
+{"type": "pick", "prompt": "…", "correct": 1, "feedback": "…",
+ "options": [{"label": "…", "image_prompt": "…", "alt_text": "…"}, … exactly 4]}
+{"type": "match", "prompt": "…", "feedback": "…", "pairs": [{"left": "…", "right": "…"}, … 3 or 4]}
+{"type": "sort", "prompt": "…", "feedback": "…", "groups": ["…", "…"],
+ "items": [{"text": "…", "group": 0}, … 4 to 6]}
+```
+
+Statements, prompts and feedback at most 160 characters; options, pair, group and item texts at most 60 characters;
+`correct` is the right option's position (0 to 3); every left and every right item different; both sort groups used;
+option `image_prompt` in English for a square picture of that option alone (empty when the lesson uses text cards);
+`feedback` is one sentence explaining the right answer. A question that breaks these rules is dropped by the plugin
+(the page then has no question), so it is still charged as a page. The older `tf_statement` / `tf_answer` fields are
+still accepted. The plugin's `prompt_builder::chatgpt_prompt()` is the reference prompt. Proposed: LMS Labs runs it
 server-side with Gemini, so the prompt cannot be changed from a Moodle site. Rules:
 
 - at most `maxPages` pages;
@@ -86,8 +116,12 @@ same cost"). A same-key replay after success returns the same `200` without a se
 `POST /images` (Accept: image/png, image/webp, image/jpeg, application/json; the plugin waits up to 170 s)
 
 ```json
-{"prompt": "at most 2,000 code points, English", "style": "illustration", "aspectRatio": "4:3", "maxCredits": 2}
+{"prompt": "at most 2,000 code points, English", "style": "illustration", "aspectRatio": "4:3 | 1:1",
+ "purpose": "page | cover | option", "maxCredits": 2}
 ```
+
+Page and cover pictures are `4:3`. Each option of a "Pick the picture" question is a separate `1:1` request
+(`purpose: "option"`): 4 per picture question, the same price as any picture. `purpose` is for reporting only.
 
 `200` → raw image bytes (PNG, WebP or JPEG, at most 10 MiB), with `X-Credits-Charged` and `X-Credits-Balance`.
 Owner direction: the provider is Google **Nano Banana** (`gemini-nano-banana-2.1`, 1K), not GPT Image 2. This differs
@@ -108,8 +142,9 @@ request after completion → `410 RESULT_NOT_RETAINED`, with no new generation a
 
 `200` → MP3 bytes, with `X-Credits-Charged` and `X-Credits-Balance`.
 
-`clipRef` = SHA-256 of `["mod_visuallearning", site identifier, book id, page id, part]`, where the part is concept,
-action, outcome, summary or statement. It never changes when the text or the voice changes. It is never reused after
+`clipRef` = SHA-256 of `["mod_visuallearning", site identifier, activity id, page id, part]`, where the part is concept,
+action, outcome, summary, question (the check question, read when it opens) or feedback (read after a right answer).
+Each page therefore has up to six clips. It never changes when the text or the voice changes. It is never reused after
 deletion, because page ids are never reused. Proposed billing, the Soft Skills reference:
 
 - 2 credits per clip;
@@ -145,11 +180,11 @@ after completion → 410.
    GPT Image 2) for this product.
 2. Register `mod_visuallearning` / `visuallearning` in the catalogue, with entitlement and the unlock price.
 3. Implement the routes above:
-   - draft, using the reference prompt and Gemini;
+   - draft, using the reference prompt and Gemini, writing one question per page in the requested types;
    - import settlement;
-   - a Nano Banana image route;
+   - a Nano Banana image route making 4:3 and 1:1 pictures (publish `aspectRatios`);
    - Chirp 3 HD capabilities, quote and tts with clipRef remakes;
-   - tariffs published in the capabilities.
+   - tariffs published in the capabilities, with `questionTypes` (pages) and `aspectRatios` (images).
 4. Create the docs page `https://lms-labs.com/docs/ai-visual-learning` (Discussion tab: `?tab=discussion`), the
    catalogue metadata and the Quick Links entry.
 5. Create the repository `LMSHostingServices/moodle-mod_visuallearning`.

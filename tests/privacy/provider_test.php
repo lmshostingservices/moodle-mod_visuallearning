@@ -42,7 +42,7 @@ final class provider_test extends provider_testcase {
     private $context;
 
     /**
-     * Two learners with progress in one book.
+     * Two learners with progress in one lesson.
      */
     protected function setUp(): void {
         global $DB;

@@ -52,7 +52,7 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_activity_record($book);
 $PAGE->activityheader->disable();
 
-// Setting up books needs this site to be unlocked with LMS Labs. Learners keep the books already made.
+// Setting up lessons needs this site to be unlocked with LMS Labs. Learners keep the lessons already made.
 if (!unlock::active()) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(format_string($book->name) . ' — ' . get_string('managepages', 'mod_visuallearning'));
@@ -77,8 +77,8 @@ if (in_array($action, ['quote', 'writequote', 'confirm', 'cancelquote', 'check',
     if ($action === 'quote') {
         $what = optional_param('what', 'missing', PARAM_ALPHA);
         $kinds = array_intersect(
-            explode(',', optional_param('kinds', 'image,cover,voice', PARAM_TEXT)),
-            ['image', 'cover', 'voice']
+            explode(',', optional_param('kinds', 'image,option,cover,voice', PARAM_TEXT)),
+            ['image', 'option', 'cover', 'voice']
         );
         $plans = media::plan($book, $context, $what === 'all' ? 'all' : 'missing', $pageid, array_values($kinds));
         \mod_visuallearning\local\quote_page::show(requests::quote($book, (int)$USER->id, $plans), $baseurl);
@@ -103,10 +103,12 @@ if (in_array($action, ['quote', 'writequote', 'confirm', 'cancelquote', 'check',
             $row = $rows[0];
             $type = $row->status === 'completed' ? \core\output\notification::NOTIFY_SUCCESS
                 : \core\output\notification::NOTIFY_WARNING;
-            redirect($baseurl, requests::export($row, $context)['message'], null, $type);
+            $next = new moodle_url($baseurl, ['step' => $row->status === 'completed' ? 2 : 1]);
+            redirect($next, requests::export($row, $context)['message'], null, $type);
         }
+        $written = count($rows) === 1 && $rows[0]->operation === requests::WRITE;
         redirect(
-            $baseurl,
+            new moodle_url($baseurl, ['step' => $written ? 1 : 3]),
             get_string('confirmed', 'mod_visuallearning', count($rows)),
             null,
             \core\output\notification::NOTIFY_SUCCESS
@@ -115,11 +117,11 @@ if (in_array($action, ['quote', 'writequote', 'confirm', 'cancelquote', 'check',
     $row = requests::get((int)$book->id, required_param('requestid', PARAM_INT));
     if ($action === 'check') {
         $row = requests::check($row, $book, (int)$USER->id);
-        redirect($baseurl, requests::export($row, $context)['message']);
+        redirect(new moodle_url($baseurl, ['step' => 3]), requests::export($row, $context)['message']);
     }
     requests::dismiss($row);
     media::refresh($book, $context);
-    redirect($baseurl);
+    redirect(new moodle_url($baseurl, ['step' => 3]));
 }
 
 // Free page actions.
@@ -131,6 +133,7 @@ if (in_array($action, ['delete', 'moveup', 'movedown'], true)) {
         $fs = get_file_storage();
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'image', $page->id);
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'audio', $page->id);
+        $fs->delete_area_files($context->id, 'mod_visuallearning', 'option', $page->id);
         $DB->delete_records('visuallearning_progress', ['pageid' => $page->id]);
         $DB->delete_records('visuallearning_pages', ['id' => $page->id]);
         visuallearning_renumber_pages($book->id);
@@ -153,7 +156,7 @@ if (in_array($action, ['delete', 'moveup', 'movedown'], true)) {
     media::refresh($book, $context);
     \course_modinfo::purge_course_module_cache($course->id, $cm->id);
     rebuild_course_cache($course->id, true);
-    redirect($baseurl, $msg, null, $msg ? \core\output\notification::NOTIFY_SUCCESS : null);
+    redirect(new moodle_url($baseurl, ['step' => 2]), $msg, null, $msg ? \core\output\notification::NOTIFY_SUCCESS : null);
 }
 
 // Edit / add a page.
@@ -171,7 +174,7 @@ if ($action === 'edit' || $action === 'add') {
         ['cmid' => $cm->id]
     );
     if ($form->is_cancelled()) {
-        redirect($baseurl);
+        redirect(new moodle_url($baseurl, ['step' => 2]));
     }
     if ($data = $form->get_data()) {
         $record = (object)[
@@ -182,23 +185,42 @@ if ($action === 'edit' || $action === 'add') {
             'imageprompt' => $data->imageprompt,
             'alttext' => $data->alttext,
             'summarytext' => $data->summarytext,
-            'tfstatement' => $data->tfstatement,
-            'tfanswer' => (int)$data->tfanswer,
             'timemodified' => time(),
         ];
+        $fields = \mod_visuallearning\local\question::to_fields(\mod_visuallearning\local\question::from_form($data));
+        foreach ($fields as $field => $value) {
+            $record->$field = $value;
+        }
         if ($page) {
+            if (!empty($page->bundleid) && ($record->qtype ?? 'none') !== ($page->qtype ?? 'none')) {
+                throw new moodle_exception('bundlequestiontype', 'mod_visuallearning');
+            }
             $record->id = $page->id;
             $DB->update_record('visuallearning_pages', $record);
         } else {
-            $record->visuallearningid = $book->id;
-            $record->pagenum = $count + 1;
-            $record->imagestatus = VISUALLEARNING_MEDIA_PENDING;
-            $record->audiostatus = VISUALLEARNING_MEDIA_PENDING;
-            $DB->insert_record('visuallearning_pages', $record);
+            require_capability('mod/visuallearning:useai', $context);
+            $parsed = ['pages' => [[
+                'title' => $record->title, 'concept' => $record->concepttext, 'action' => $record->actiontext,
+                'outcome' => $record->outcometext, 'image_prompt' => $record->imageprompt,
+                'alt_text' => $record->alttext, 'summary' => $record->summarytext,
+                'question' => \mod_visuallearning\local\question::from_form($data),
+            ]]];
+            $summary = requests::quote($book, (int)$USER->id, [[
+                'operation' => requests::IMPORT,
+                'body' => ['_manual' => true, 'pageCount' => 1, 'titles' => [$record->title],
+                    'maxCredits' => lmslabs::PAGE_CREDITS],
+            ]], json_encode($parsed));
+            \mod_visuallearning\local\quote_page::show($summary, $baseurl);
+            exit;
         }
         // Edited text or prompts need new media, made only when the teacher confirms its price (step 3).
         media::refresh($book, $context);
-        redirect($baseurl, get_string('pagesaved', 'mod_visuallearning'), null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect(
+            new moodle_url($baseurl, ['step' => 2]),
+            get_string('pagesaved', 'mod_visuallearning'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
     }
     if ($page) {
         $form->set_data(
@@ -206,8 +228,8 @@ if ($action === 'edit' || $action === 'add') {
                 'pageid' => $page->id, 'title' => $page->title, 'concepttext' => $page->concepttext,
                 'actiontext' => $page->actiontext, 'outcometext' => $page->outcometext,
                 'imageprompt' => $page->imageprompt, 'alttext' => $page->alttext,
-                'summarytext' => $page->summarytext, 'tfstatement' => $page->tfstatement, 'tfanswer' => $page->tfanswer,
-            ],
+                'summarytext' => $page->summarytext,
+            ] + \mod_visuallearning\local\question::to_form($page),
         );
     }
     echo $OUTPUT->header();
@@ -256,71 +278,34 @@ if ($data = $importform->get_data()) {
     }
 }
 
-// Overview.
+// The lesson is built in four steps, shown one at a time like slides.
 media::refresh($book, $context);
 $book = $DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST);
 $pages = visuallearning_get_pages($book->id);
 $open = requests::open((int)$book->id);
 $inprogress = count(array_filter($open, fn($r) => $r->status === 'pending'));
+$total = count($pages);
+$ready = ['image' => 0, 'audio' => 0];
+foreach ($pages as $p) {
+    $ready['image'] += (int)$p->imagestatus === VISUALLEARNING_MEDIA_READY ? 1 : 0;
+    $ready['audio'] += (int)$p->audiostatus === VISUALLEARNING_MEDIA_READY ? 1 : 0;
+}
+$hascover = trim((string)$book->coverprompt) !== '';
+$coverready = !$hascover || (int)$book->coverstatus === VISUALLEARNING_MEDIA_READY;
+$mediadone = $total > 0 && $ready['image'] === $total && $ready['audio'] === $total && $coverready;
+$mediastarted = $ready['image'] + $ready['audio'] > 0 || $open;
+$done = [1 => $total > 0, 2 => $total > 0 && ($mediastarted || $mediadone), 3 => $mediadone, 4 => false];
+
+// Open on the step the action belongs to, or on the first step still to do.
+$step = optional_param('step', 0, PARAM_INT);
+if ($step < 1 || $step > 4) {
+    $step = !$total ? 1 : ($mediadone ? 4 : ($mediastarted ? 3 : 2));
+}
 // Refresh while LMS Labs requests run in the background.
-$PAGE->requires->js_call_amd('mod_visuallearning/manage', 'init', [$inprogress ? 15 : 0]);
+$PAGE->requires->js_call_amd('mod_visuallearning/manage', 'init', [$inprogress ? 15 : 0, $step]);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($book->name) . ' — ' . get_string('managepages', 'mod_visuallearning'));
-
-$holds = [];
-foreach (['page' => 'write', 'import' => 'import', 'image' => 'image', 'voice' => 'voice'] as $op => $name) {
-    if (($hold = lmslabs::hold($op)) !== null) {
-        $holds[$hold][] = get_string('holdop_' . $name, 'mod_visuallearning');
-    }
-}
-foreach ($holds as $hold => $names) {
-    $msg = get_string('hold_' . $hold, 'mod_visuallearning') . ' (' . implode(', ', $names) . ')';
-    if (in_array($hold, ['nocredentials', 'off'], true) && has_capability('moodle/site:config', context_system::instance())) {
-        $msg .= ' ' . html_writer::link(
-            new moodle_url('/admin/settings.php', ['section' => 'modsettingvisuallearning']),
-            get_string('configure', 'mod_visuallearning')
-        );
-    }
-    echo $OUTPUT->notification($msg, \core\output\notification::NOTIFY_WARNING);
-}
-if (!$canai) {
-    echo $OUTPUT->notification(get_string('nouseai', 'mod_visuallearning'), \core\output\notification::NOTIFY_INFO);
-}
-
-// LMS Labs requests that need attention.
-if ($open) {
-    echo $OUTPUT->heading(get_string('aireq_heading', 'mod_visuallearning'), 3);
-    echo html_writer::start_div('pb-requests mb-4');
-    foreach ($open as $row) {
-        $item = requests::export($row, $context);
-        $buttons = '';
-        if ($canai && $item['canrecheck'] && $row->status !== 'pending') {
-            $buttons .= visuallearning_button(
-                new moodle_url($baseurl, ['action' => 'check', 'requestid' => $row->id, 'sesskey' => sesskey()]),
-                get_string('aireq_checkagain', 'mod_visuallearning'),
-                'post'
-            );
-        }
-        if ($canai && $item['candismiss']) {
-            $buttons .= visuallearning_button(
-                new moodle_url($baseurl, ['action' => 'dismiss', 'requestid' => $row->id, 'sesskey' => sesskey()]),
-                get_string('aireq_dismiss', 'mod_visuallearning'),
-                'post',
-                false,
-                in_array($row->status, requests::CHECKABLE, true) ? get_string('aireq_dismissconfirm', 'mod_visuallearning') : ''
-            );
-        }
-        $class = in_array($row->status, ['pending'], true) ? 'alert-info' : 'alert-warning';
-        echo html_writer::div(
-            html_writer::tag('strong', s($item['title'])) . ' ' . html_writer::span(s($item['time']), 'text-muted small') .
-            html_writer::div(s($item['message']), 'small') .
-            ($buttons !== '' ? html_writer::div($buttons, 'pb-manage-actions mt-1') : ''),
-            "alert $class py-2"
-        );
-    }
-    echo html_writer::end_div();
-}
 
 $summary = [
     get_string('industry', 'mod_visuallearning') . ': ' . s($book->industry ?: '—'),
@@ -336,15 +321,90 @@ echo html_writer::tag(
             new moodle_url('/course/modedit.php', ['update' => $cm->id, 'return' => 1]),
             get_string('editsettings', 'mod_visuallearning')
         ),
-    ['class' => 'text-muted'],
+    ['class' => 'text-muted small'],
 );
+if (!$canai) {
+    echo $OUTPUT->notification(get_string('nouseai', 'mod_visuallearning'), \core\output\notification::NOTIFY_INFO);
+}
 
-echo html_writer::start_div('pb-manage-steps');
+// Notices for the paid operations of one step that cannot run now (they fail closed).
+$holdnotice = function (array $ops): string {
+    global $OUTPUT;
+    $holds = [];
+    foreach ($ops as $op => $name) {
+        if (($hold = lmslabs::hold($op)) !== null) {
+            $holds[$hold][] = get_string('holdop_' . $name, 'mod_visuallearning');
+        }
+    }
+    $html = '';
+    foreach ($holds as $hold => $names) {
+        $msg = get_string('hold_' . $hold, 'mod_visuallearning') . ' (' . implode(', ', $names) . ')';
+        if (in_array($hold, ['nocredentials', 'off'], true) && has_capability('moodle/site:config', context_system::instance())) {
+            $msg .= ' ' . html_writer::link(
+                new moodle_url('/admin/settings.php', ['section' => 'modsettingvisuallearning']),
+                get_string('configure', 'mod_visuallearning')
+            );
+        }
+        $html .= $OUTPUT->notification($msg, \core\output\notification::NOTIFY_WARNING);
+    }
+    return $html;
+};
 
-// Step 1: write the pages - LMS Labs AI, or the teacher's own AI assistant (same price per page).
-echo html_writer::start_div('pb-step');
-echo html_writer::tag('h4', html_writer::span('1', 'pb-step-num') . get_string('step1', 'mod_visuallearning'));
-echo html_writer::tag('p', get_string('step1_desc', 'mod_visuallearning', lmslabs::PAGE_CREDITS));
+// Slide navigation: Back and Next.
+$nav = function (int $n, bool $nextok, string $hint = ''): string {
+    $back = $n > 1 ? html_writer::tag(
+        'button',
+        get_string('wizard_back', 'mod_visuallearning'),
+        ['type' => 'button', 'class' => 'btn btn-secondary', 'data-goto' => $n - 1]
+    ) : html_writer::span('');
+    $next = '';
+    if ($n < 4) {
+        $attrs = ['type' => 'button', 'class' => 'btn btn-primary', 'data-goto' => $n + 1];
+        if (!$nextok) {
+            $attrs['disabled'] = 'disabled';
+        }
+        $next = html_writer::tag('button', get_string('wizard_next_' . ($n + 1), 'mod_visuallearning'), $attrs);
+    }
+    $hint = $hint !== '' ? html_writer::span($hint, 'vl-wizard-hint text-muted small') : '';
+    return html_writer::div($back . html_writer::div($hint . $next, 'vl-wizard-next'), 'vl-wizard-nav');
+};
+
+echo html_writer::start_div('vl-wizard', ['data-step' => $step]);
+
+// Step tracker.
+$items = '';
+for ($n = 1; $n <= 4; $n++) {
+    $state = $done[$n] ? 'is-done' : '';
+    $items .= html_writer::tag(
+        'li',
+        html_writer::tag(
+            'button',
+            html_writer::span($done[$n] ? '✓' : (string)$n, 'vl-wizard-dot') .
+                html_writer::span(get_string('wizard_short_' . $n, 'mod_visuallearning'), 'vl-wizard-label'),
+            ['type' => 'button', 'data-goto' => $n, 'class' => 'vl-wizard-tab ' . $state,
+                'aria-current' => $n === $step ? 'step' : 'false']
+        )
+    );
+}
+$label = get_string('managepages', 'mod_visuallearning');
+echo html_writer::tag('ol', $items, ['class' => 'vl-wizard-steps', 'aria-label' => $label]);
+
+echo html_writer::start_div('vl-wizard-slides');
+
+// Step 1: write the pages.
+echo html_writer::start_tag('section', ['class' => 'vl-slide', 'data-slide' => 1, 'aria-labelledby' => 'vl-slide-1']);
+echo html_writer::tag('h3', get_string('wizard_title_1', 'mod_visuallearning'), ['id' => 'vl-slide-1', 'tabindex' => '-1']);
+$intro = get_string('wizard_intro_1', 'mod_visuallearning', lmslabs::PAGE_CREDITS);
+echo html_writer::tag('p', $intro, ['class' => 'vl-slide-intro']);
+if ($total) {
+    echo $OUTPUT->notification(get_string('wizard_haspages', 'mod_visuallearning', $total), \core\output\notification::NOTIFY_INFO);
+}
+echo $holdnotice(['page' => 'write', 'import' => 'import']);
+echo html_writer::start_div('vl-choices');
+// Choice A: LMS Labs AI.
+echo html_writer::start_div('vl-choice');
+echo html_writer::tag('h4', get_string('wizard_choice_ai', 'mod_visuallearning'));
+echo html_writer::tag('p', get_string('wizard_choice_ai_desc', 'mod_visuallearning'));
 if ($canai && lmslabs::hold('page') === null) {
     echo visuallearning_button(
         new moodle_url($baseurl, ['action' => 'writequote', 'sesskey' => sesskey()]),
@@ -354,117 +414,49 @@ if ($canai && lmslabs::hold('page') === null) {
         $pages ? get_string('writewithai_replace', 'mod_visuallearning') : ''
     );
 }
-echo visuallearning_button(
-    new moodle_url($baseurl, ['action' => 'downloadprompt']),
-    get_string('downloadprompt', 'mod_visuallearning'),
-    'get'
-);
-$prompttext = prompt_builder::chatgpt_prompt($book);
-echo html_writer::tag(
-    'details',
-    html_writer::tag('summary', get_string('previewprompt', 'mod_visuallearning')) .
-    html_writer::tag(
-        'textarea',
-        s($prompttext),
-        ['class' => 'pb-prompt-preview form-control mt-2', 'rows' => 12, 'readonly' => 'readonly'],
-    ),
-    ['class' => 'mt-2']
-);
 echo html_writer::end_div();
-
-// Step 2: paste the assistant's reply.
-echo html_writer::start_div('pb-step');
-echo html_writer::tag('h4', html_writer::span('2', 'pb-step-num') . get_string('step2', 'mod_visuallearning'));
-echo html_writer::tag('p', get_string('step2_desc', 'mod_visuallearning', lmslabs::PAGE_CREDITS));
+// Choice B: the teacher's own AI assistant.
+echo html_writer::start_div('vl-choice');
+echo html_writer::tag('h4', get_string('wizard_choice_own', 'mod_visuallearning'));
+echo html_writer::start_tag('ol', ['class' => 'vl-mini-steps']);
+echo html_writer::tag(
+    'li',
+    get_string('wizard_own_1', 'mod_visuallearning') . html_writer::div(
+        visuallearning_button(
+            new moodle_url($baseurl, ['action' => 'downloadprompt']),
+            get_string('downloadprompt', 'mod_visuallearning'),
+            'get'
+        ) . html_writer::tag(
+            'details',
+            html_writer::tag('summary', get_string('previewprompt', 'mod_visuallearning')) .
+            html_writer::tag(
+                'textarea',
+                s(prompt_builder::chatgpt_prompt($book)),
+                ['class' => 'pb-prompt-preview form-control mt-2', 'rows' => 10, 'readonly' => 'readonly']
+            ),
+            ['class' => 'mt-1']
+        ),
+        'mt-1'
+    )
+);
+echo html_writer::tag('li', get_string('wizard_own_2', 'mod_visuallearning'));
+echo html_writer::start_tag('li');
+echo get_string('wizard_own_3', 'mod_visuallearning', lmslabs::PAGE_CREDITS);
 if ($canai) {
     $importform->display();
 }
+echo html_writer::end_tag('li');
+echo html_writer::end_tag('ol');
 echo html_writer::end_div();
-
-// Step 3: illustrations and voiceover.
-echo html_writer::start_div('pb-step');
-echo html_writer::tag('h4', html_writer::span('3', 'pb-step-num') . get_string('step3', 'mod_visuallearning'));
-echo html_writer::tag(
-    'p',
-    get_string('step3_desc', 'mod_visuallearning', (object)['image' => lmslabs::IMAGE_CREDITS, 'voice' => lmslabs::VOICE_CREDITS])
-);
-if ($pages) {
-    $ready = ['image' => 0, 'audio' => 0];
-    foreach ($pages as $p) {
-        $ready['image'] += (int)$p->imagestatus === VISUALLEARNING_MEDIA_READY ? 1 : 0;
-        $ready['audio'] += (int)$p->audiostatus === VISUALLEARNING_MEDIA_READY ? 1 : 0;
-    }
-    $status = (object)['images' => $ready['image'], 'audio' => $ready['audio'], 'total' => count($pages),
-        'queued' => $inprogress];
-    echo html_writer::tag('p', get_string('mediastatus', 'mod_visuallearning', $status), ['class' => 'font-weight-bold fw-bold']);
-    if ($inprogress) {
-        echo html_writer::tag('p', get_string('generating', 'mod_visuallearning'), ['class' => 'text-muted small']);
-    }
-    if ($canai) {
-        echo visuallearning_button(
-            new moodle_url($baseurl, ['action' => 'quote', 'what' => 'missing', 'sesskey' => sesskey()]),
-            get_string('generatemissing', 'mod_visuallearning'),
-            'post',
-            true
-        );
-        echo visuallearning_button(
-            new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all', 'sesskey' => sesskey()]),
-            get_string('regenerateall', 'mod_visuallearning'),
-            'post'
-        );
-    }
-    echo html_writer::div(
-        visuallearning_button(
-            new moodle_url('/mod/visuallearning/view.php', ['id' => $cm->id]),
-            get_string('previewbook', 'mod_visuallearning'),
-            'get'
-        ),
-        'mt-2',
-    );
-} else {
-    echo html_writer::tag('p', get_string('nopagesyet', 'mod_visuallearning'), ['class' => 'text-muted']);
-}
 echo html_writer::end_div();
+echo $nav(1, $total > 0, $total ? '' : get_string('wizard_hint_1', 'mod_visuallearning'));
+echo html_writer::end_tag('section');
 
-echo html_writer::end_div();
-
-// Cover.
-if (trim((string)$book->coverprompt) !== '') {
-    $cover = media::image_file($context, media::AREA_COVER, 0);
-    echo $OUTPUT->heading(get_string('cover', 'mod_visuallearning'), 3);
-    echo html_writer::start_div('pb-manage-pages mb-4');
-    echo html_writer::start_div('pb-manage-page');
-    echo html_writer::div(
-        $cover ? html_writer::empty_tag('img', ['src' => visuallearning_file_url($cover), 'alt' => ''])
-            : visuallearning_status_label((int)$book->coverstatus),
-        'pb-manage-thumb',
-    );
-    echo html_writer::start_div('pb-manage-body');
-    echo html_writer::tag('p', s($book->coverprompt), ['class' => 'small text-muted']);
-    echo html_writer::tag(
-        'p',
-        get_string('image', 'mod_visuallearning') . ': ' . visuallearning_status_label((int)$book->coverstatus),
-        ['class' => 'small']
-    );
-    if ($canai) {
-        echo html_writer::div(
-            visuallearning_button(
-                new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all', 'kinds' => 'cover', 'sesskey' => sesskey()]),
-                get_string('regenimage', 'mod_visuallearning'),
-                'post'
-            ),
-            'pb-manage-actions',
-        );
-    }
-    echo html_writer::end_div();
-    echo html_writer::end_div();
-    echo html_writer::end_div();
-}
-
-// Pages.
-echo $OUTPUT->heading(get_string('pages', 'mod_visuallearning') . ' (' . count($pages) . ')', 3);
+// Step 2: check the pages.
+echo html_writer::start_tag('section', ['class' => 'vl-slide', 'data-slide' => 2, 'aria-labelledby' => 'vl-slide-2']);
+echo html_writer::tag('h3', get_string('wizard_title_2', 'mod_visuallearning'), ['id' => 'vl-slide-2', 'tabindex' => '-1']);
+echo html_writer::tag('p', get_string('wizard_intro_2', 'mod_visuallearning', $total), ['class' => 'vl-slide-intro']);
 echo html_writer::start_div('pb-manage-pages');
-$total = count($pages);
 $position = 0;
 foreach ($pages as $page) {
     $clips = media::clips($book, $page, $position++);
@@ -484,27 +476,14 @@ foreach ($pages as $page) {
                 s($page->{$card . 'text'}),
         );
     }
-    if (trim((string)$page->summarytext) !== '') {
-        echo html_writer::tag(
-            'p',
-            html_writer::span(get_string('summarytext', 'mod_visuallearning'), 'pb-tag') . s($page->summarytext),
-            ['class' => 'text-muted'],
-        );
-    }
-    if (trim((string)$page->tfstatement) !== '') {
-        $answer = get_string($page->tfanswer ? 'true' : 'false', 'mod_visuallearning');
-        echo html_writer::tag(
-            'p',
-            html_writer::span(get_string('tfstatement', 'mod_visuallearning'), 'pb-tag') .
-                s($page->tfstatement) . ' ' . html_writer::tag('strong', '(' . $answer . ')'),
-            ['class' => 'text-muted'],
-        );
+    if ($book->enablequiz) {
+        echo \mod_visuallearning\local\question::teacher_summary($page, $context, $book);
     }
     echo html_writer::tag(
         'p',
         get_string('image', 'mod_visuallearning') . ': ' . visuallearning_status_label((int)$page->imagestatus) .
-            ' &nbsp;·&nbsp; ' .
-            get_string('voiceover', 'mod_visuallearning') . ': ' . visuallearning_status_label((int)$page->audiostatus),
+            ' &nbsp;·&nbsp; ' . get_string('voiceover', 'mod_visuallearning') . ': ' .
+            visuallearning_status_label((int)$page->audiostatus),
         ['class' => 'small'],
     );
     $players = '';
@@ -531,24 +510,6 @@ foreach ($pages as $page) {
         get_string('edit'),
         'get'
     );
-    if ($canai) {
-        $actions[] = visuallearning_button(
-            new moodle_url(
-                $baseurl,
-                ['action' => 'quote', 'what' => 'all', 'kinds' => 'image', 'pageid' => $page->id, 'sesskey' => sesskey()],
-            ),
-            get_string('regenimage', 'mod_visuallearning'),
-            'post',
-        );
-        $actions[] = visuallearning_button(
-            new moodle_url(
-                $baseurl,
-                ['action' => 'quote', 'what' => 'all', 'kinds' => 'voice', 'pageid' => $page->id, 'sesskey' => sesskey()],
-            ),
-            get_string('regenaudio', 'mod_visuallearning'),
-            'post',
-        );
-    }
     if ((int)$page->pagenum > 1) {
         $actions[] = visuallearning_button(
             new moodle_url($baseurl, ['action' => 'moveup', 'pageid' => $page->id, 'sesskey' => sesskey()]),
@@ -575,7 +536,6 @@ foreach ($pages as $page) {
     echo html_writer::end_div();
 }
 echo html_writer::end_div();
-
 if ($total < 20) {
     echo html_writer::div(
         visuallearning_button(
@@ -586,5 +546,213 @@ if ($total < 20) {
         'mt-3',
     );
 }
+echo $nav(2, $total > 0);
+echo html_writer::end_tag('section');
+
+// Step 3: pictures and voiceover.
+echo html_writer::start_tag('section', ['class' => 'vl-slide', 'data-slide' => 3, 'aria-labelledby' => 'vl-slide-3']);
+echo html_writer::tag('h3', get_string('wizard_title_3', 'mod_visuallearning'), ['id' => 'vl-slide-3', 'tabindex' => '-1']);
+echo html_writer::tag(
+    'p',
+    get_string('wizard_intro_3', 'mod_visuallearning', (object)['image' => lmslabs::IMAGE_CREDITS,
+        'voice' => lmslabs::VOICE_CREDITS]) .
+        ($book->enablequiz && \mod_visuallearning\local\question::book_has_pick($pages) && $book->pickimages
+            ? ' ' . get_string('wizard_intro_3_options', 'mod_visuallearning', lmslabs::IMAGE_CREDITS) : ''),
+    ['class' => 'vl-slide-intro']
+);
+$optioncount = 0;
+foreach ($pages as $p) {
+    $optioncount += count(media::option_prompts($book, $p));
+}
+echo $holdnotice($optioncount ? ['image' => 'image', 'option' => 'option', 'voice' => 'voice'] : ['image' => 'image',
+    'voice' => 'voice']);
+if ($total) {
+    $percent = (int)round(100 * ($ready['image'] + $ready['audio']) / (2 * $total));
+    echo html_writer::div(
+        html_writer::div('', 'vl-meter-fill', ['style' => 'width:' . $percent . '%']),
+        'vl-meter',
+        ['role' => 'progressbar', 'aria-valuenow' => $percent, 'aria-valuemin' => 0, 'aria-valuemax' => 100]
+    );
+    $status = (object)['images' => $ready['image'], 'audio' => $ready['audio'], 'total' => $total, 'queued' => $inprogress];
+    echo html_writer::tag('p', get_string('mediastatus', 'mod_visuallearning', $status), ['class' => 'fw-bold font-weight-bold']);
+    if ($inprogress) {
+        echo html_writer::tag('p', get_string('generating', 'mod_visuallearning'), ['class' => 'text-muted small']);
+    }
+    if ($canai) {
+        $buttons = visuallearning_button(
+            new moodle_url($baseurl, ['action' => 'quote', 'what' => 'missing', 'sesskey' => sesskey()]),
+            get_string('generatemissing', 'mod_visuallearning'),
+            'post',
+            !$mediadone
+        );
+        $buttons .= visuallearning_button(
+            new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all', 'sesskey' => sesskey()]),
+            get_string('regenerateall', 'mod_visuallearning'),
+            'post'
+        );
+        echo html_writer::div($buttons, 'pb-manage-actions mb-3');
+    }
+}
+// LMS Labs requests that need attention.
+if ($open) {
+    echo html_writer::tag('h4', get_string('aireq_heading', 'mod_visuallearning'), ['class' => 'h6 mt-3']);
+    foreach ($open as $row) {
+        $item = requests::export($row, $context);
+        $buttons = '';
+        if ($canai && $item['canrecheck'] && $row->status !== 'pending') {
+            $buttons .= visuallearning_button(
+                new moodle_url($baseurl, ['action' => 'check', 'requestid' => $row->id, 'sesskey' => sesskey()]),
+                get_string('aireq_checkagain', 'mod_visuallearning'),
+                'post'
+            );
+        }
+        if ($canai && $item['candismiss']) {
+            $buttons .= visuallearning_button(
+                new moodle_url($baseurl, ['action' => 'dismiss', 'requestid' => $row->id, 'sesskey' => sesskey()]),
+                get_string('aireq_dismiss', 'mod_visuallearning'),
+                'post',
+                false,
+                in_array($row->status, requests::CHECKABLE, true) ? get_string('aireq_dismissconfirm', 'mod_visuallearning') : ''
+            );
+        }
+        $class = $row->status === 'pending' ? 'alert-info' : 'alert-warning';
+        echo html_writer::div(
+            html_writer::tag('strong', s($item['title'])) . ' ' . html_writer::span(s($item['time']), 'text-muted small') .
+            html_writer::div(s($item['message']), 'small') .
+            ($buttons !== '' ? html_writer::div($buttons, 'pb-manage-actions mt-1') : ''),
+            "alert $class py-2"
+        );
+    }
+}
+// Per-page remakes.
+if ($total && $canai) {
+    echo html_writer::start_tag('details', ['class' => 'mt-3']);
+    echo html_writer::tag('summary', get_string('wizard_remake', 'mod_visuallearning'));
+    echo html_writer::start_tag('ul', ['class' => 'vl-remake-list']);
+    if ($hascover) {
+        echo html_writer::tag(
+            'li',
+            html_writer::span(get_string('cover', 'mod_visuallearning') . ' ' .
+                visuallearning_status_label((int)$book->coverstatus)) .
+            visuallearning_button(
+                new moodle_url($baseurl, ['action' => 'quote', 'what' => 'all', 'kinds' => 'cover', 'sesskey' => sesskey()]),
+                get_string('regenimage', 'mod_visuallearning'),
+                'post'
+            )
+        );
+    }
+    foreach ($pages as $page) {
+        echo html_writer::tag(
+            'li',
+            html_writer::span((int)$page->pagenum . '. ' . format_string($page->title)) .
+            html_writer::div(
+                visuallearning_button(
+                    new moodle_url(
+                        $baseurl,
+                        ['action' => 'quote', 'what' => 'all', 'kinds' => 'image', 'pageid' => $page->id, 'sesskey' => sesskey()]
+                    ),
+                    get_string('regenpageimage', 'mod_visuallearning'),
+                    'post'
+                ) . (media::option_prompts($book, $page) ? visuallearning_button(
+                    new moodle_url(
+                        $baseurl,
+                        ['action' => 'quote', 'what' => 'all', 'kinds' => 'option', 'pageid' => $page->id, 'sesskey' => sesskey()]
+                    ),
+                    get_string('regenoptions', 'mod_visuallearning'),
+                    'post'
+                ) : '') . visuallearning_button(
+                    new moodle_url(
+                        $baseurl,
+                        ['action' => 'quote', 'what' => 'all', 'kinds' => 'voice', 'pageid' => $page->id, 'sesskey' => sesskey()]
+                    ),
+                    get_string('regenaudio', 'mod_visuallearning'),
+                    'post'
+                ),
+                'pb-manage-actions'
+            )
+        );
+    }
+    echo html_writer::end_tag('ul');
+    echo html_writer::end_tag('details');
+}
+echo $nav(3, $total > 0, $mediadone || !$total ? '' : get_string('wizard_hint_3', 'mod_visuallearning'));
+echo html_writer::end_tag('section');
+
+// Step 4: the lesson is ready - what learners will see, and what to do next.
+echo html_writer::start_tag('section', ['class' => 'vl-slide', 'data-slide' => 4, 'aria-labelledby' => 'vl-slide-4']);
+$visible = (bool)$cm->visible;
+if ($mediadone) {
+    echo html_writer::div(
+        html_writer::div(
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" ' .
+                'stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'vl-ready-tick'
+        ) . html_writer::div(
+            html_writer::tag('h3', get_string('wizard_title_4', 'mod_visuallearning'), ['id' => 'vl-slide-4', 'tabindex' => '-1']) .
+            html_writer::tag('p', get_string('wizard_intro_4', 'mod_visuallearning', (object)['pages' => $total,
+                'questions' => count(array_filter($pages, fn($p) => \mod_visuallearning\local\question::of_page($p)))])),
+            'vl-ready-text'
+        ),
+        'vl-ready-hero'
+    );
+} else {
+    echo html_writer::tag(
+        'h3',
+        get_string('wizard_title_4_notready', 'mod_visuallearning'),
+        ['id' => 'vl-slide-4', 'tabindex' => '-1']
+    );
+    echo html_writer::tag('p', get_string('wizard_intro_4_notready', 'mod_visuallearning'), ['class' => 'vl-slide-intro']);
+}
+// A filmstrip of the slides learners will see.
+$strip = '';
+$cover = $hascover ? media::image_file($context, media::AREA_COVER, 0) : null;
+if ($cover) {
+    $strip .= html_writer::div(html_writer::empty_tag('img', ['src' => visuallearning_file_url($cover), 'alt' => '']) .
+        html_writer::span(get_string('cover', 'mod_visuallearning')), 'vl-frame');
+}
+foreach ($pages as $page) {
+    $image = media::image_file($context, media::AREA_IMAGE, (int)$page->id);
+    $strip .= html_writer::div(
+        ($image ? html_writer::empty_tag('img', ['src' => visuallearning_file_url($image), 'alt' => ''])
+            : html_writer::span('', 'vl-frame-empty')) .
+        html_writer::span((int)$page->pagenum . '. ' . format_string($page->title)),
+        'vl-frame'
+    );
+}
+if ($strip !== '') {
+    echo html_writer::div($strip, 'vl-filmstrip', ['aria-label' => get_string('wizard_slides', 'mod_visuallearning')]);
+}
+$preview = new moodle_url('/mod/visuallearning/view.php', ['id' => $cm->id]);
+$actions = html_writer::link($preview, get_string('previewbook', 'mod_visuallearning'), ['class' => 'btn btn-primary']);
+$actions .= html_writer::link(
+    new moodle_url('/mod/visuallearning/export.php', ['id' => $cm->id]),
+    get_string('export_button', 'mod_visuallearning'),
+    ['class' => 'btn btn-secondary']
+);
+if ($book->enablequiz && has_capability('moodle/question:add', $context)) {
+    $actions .= html_writer::link(
+        new moodle_url('/mod/visuallearning/export.php', ['id' => $cm->id, 'action' => 'qbank']),
+        get_string('qbank_button', 'mod_visuallearning'),
+        ['class' => 'btn btn-secondary']
+    );
+}
+echo html_writer::div($actions, 'pb-manage-actions vl-ready-actions');
+// What to do next.
+$next = [
+    get_string($visible ? 'wizard_next_visible' : 'wizard_next_hidden', 'mod_visuallearning'),
+    get_string('wizard_next_preview', 'mod_visuallearning'),
+    get_string('wizard_next_report', 'mod_visuallearning', html_writer::link(
+        new moodle_url('/mod/visuallearning/report.php', ['id' => $cm->id]),
+        get_string('report', 'mod_visuallearning')
+    )),
+    get_string('wizard_next_reuse', 'mod_visuallearning'),
+];
+echo html_writer::tag('h4', get_string('wizard_whatnext', 'mod_visuallearning'), ['class' => 'vl-sub']);
+echo html_writer::alist($next, ['class' => 'vl-checklist'], 'ol');
+echo $nav(4, false);
+echo html_writer::end_tag('section');
+
+echo html_writer::end_div();
+echo html_writer::end_div();
 
 echo $OUTPUT->footer();

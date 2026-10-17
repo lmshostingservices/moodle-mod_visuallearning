@@ -40,7 +40,8 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
             [
                 'name', 'intro', 'introformat', 'industry', 'subindustry', 'sourcecontent', 'maxpages',
                 'language', 'voice', 'speakingrate', 'imagestyle', 'navmode', 'autoplay', 'imageculture',
-                'enablerecap', 'enablequiz', 'styleguide', 'characters', 'coverprompt', 'coverstatus',
+                'enablerecap', 'enablequiz', 'questiontypes', 'pickimages', 'sounds', 'styleguide', 'characters', 'coverprompt',
+                'coverstatus',
                 'covererror', 'completionlistened', 'completionquiz', 'timecreated', 'timemodified',
             ],
         );
@@ -50,7 +51,8 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
             ['id'],
             [
                 'pagenum', 'title', 'concepttext', 'actiontext', 'outcometext', 'imageprompt', 'alttext',
-                'summarytext', 'tfstatement', 'tfanswer', 'imagestatus', 'audiostatus', 'lasterror',
+                'summarytext', 'tfstatement', 'tfanswer', 'qtype', 'qdata', 'feedback', 'imagestatus', 'audiostatus', 'lasterror',
+                'bundleid', 'slideid', 'bundlesite', 'bundledeliveries',
                 'timemodified',
             ],
         );
@@ -60,7 +62,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
             ['id'],
             [
                 'pageid', 'userid', 'views', 'listened', 'timespent', 'timefirstviewed', 'timelistened',
-                'lastping', 'tfattempts', 'tfpassed', 'timepassed',
+                'lastping', 'tfattempts', 'tfpassed', 'timepassed', 'relisten',
             ],
         );
 
@@ -80,6 +82,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
         $book->annotate_files('mod_visuallearning', 'cover', null);
         $page->annotate_files('mod_visuallearning', 'image', 'id');
         $page->annotate_files('mod_visuallearning', 'audio', 'id');
+        $page->annotate_files('mod_visuallearning', 'option', 'id');
 
         return $this->prepare_activity_structure($book);
     }

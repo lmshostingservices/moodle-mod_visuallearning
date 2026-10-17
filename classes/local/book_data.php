@@ -44,7 +44,7 @@ class book_data {
             'visuallearning_progress',
             ['visuallearningid' => $book->id, 'userid' => $userid],
             '',
-            'pageid, listened, timespent, tfpassed'
+            'pageid, listened, timespent, tfpassed, tfattempts, relisten'
         );
 
         $out = [];
@@ -80,7 +80,7 @@ class book_data {
             }
             $p = $progress[$page->id] ?? null;
             $summary = trim((string)$page->summarytext) !== '' ? $page->summarytext : $page->concepttext;
-            $statement = trim((string)$page->tfstatement);
+            $q = $book->enablequiz ? question::of_page($page) : null;
             $out[] = [
                 'id' => (int)$page->id,
                 'num' => (int)$page->pagenum,
@@ -91,14 +91,12 @@ class book_data {
                 'summary' => format_text($summary, FORMAT_PLAIN, ['context' => $context, 'para' => false]),
                 // The recap clip says its number first, so no separate number clip is needed.
                 'summaryaudio' => $clipurl('summary'),
-                // The correct answer is never sent to the browser; answers are checked on the server.
-                'statement' => $statement === '' ? '' : format_text(
-                    $statement,
-                    FORMAT_PLAIN,
-                    ['context' => $context, 'para' => false]
-                ),
-                'statementaudio' => $clipurl('statement'),
+                // The right answer (and the feedback that explains it) is never sent to the browser.
+                'question' => $q === null ? null : question::for_player($q, $page, $context, $book),
+                'questionaudio' => $clipurl('question'),
                 'passed' => $p ? (bool)$p->tfpassed : false,
+                'attempts' => $p ? (int)$p->tfattempts : 0,
+                'relisten' => $p ? (bool)$p->relisten && !$p->tfpassed : false,
                 'listened' => $p ? (bool)$p->listened : false,
                 'timespent' => $p ? (int)$p->timespent : 0,
             ];
@@ -123,8 +121,13 @@ class book_data {
                 'play', 'replay', 'pageof', 'listenedof', 'taptolisten', 'finishedtitle', 'finishedtext',
                 'readagain', 'backtocourse', 'locked', 'listenedstatus', 'notlistened', 'nowreading',
                 'imagecoming', 'listenfirst', 'pagescount', 'cover', 'listen', 'listening', 'listenagain',
-                'recaptitle', 'recapsubtitle', 'recaptoc', 'quiztitle', 'quizof', 'quiztoc', 'true', 'false',
-                'correct', 'incorrect', 'revisit', 'backtoquiz', 'quizdone', 'continue', 'pressplay'] as $key
+                'recaptitle', 'recapsubtitle', 'recaptoc', 'true', 'false', 'correct', 'continue', 'pressplay',
+                'checkx', 'questionof', 'frompage', 'qtype_truefalse', 'qtype_pick', 'qtype_match', 'qtype_sort',
+                'checkanswer', 'nextquestion', 'notquite', 'notquitetext', 'golisten', 'nopenalty', 'attemptx',
+                'nextlocked', 'relistentitle', 'relistentext', 'backtoquestion', 'welcomeback', 'thatsit',
+                'gotfirst', 'gotnth', 'tapmatch', 'matchedof', 'tapsort', 'stilltosort', 'dropin', 'soundon',
+                'soundoff', 'yourresults', 'firsttry', 'ntries', 'rightfirst', 'answerstotal', 'timespent', 'notyet',
+                'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel'] as $key
         ) {
             $strings[$key] = get_string('player_' . strtolower($key), 'mod_visuallearning');
         }
@@ -141,6 +144,8 @@ class book_data {
             'autoplay' => (bool)$book->autoplay,
             'recap' => (bool)$book->enablerecap,
             'quiz' => (bool)$book->enablequiz,
+            'sounds' => !empty($book->sounds),
+            'pictures' => question::pictures($book),
             'groupsize' => VISUALLEARNING_GROUP_SIZE,
             'numbers' => $numbers,
             'pages' => $out,

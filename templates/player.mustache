@@ -43,6 +43,10 @@
             <div class="pb-progress-track"><div class="pb-progress-fill"></div></div>
             <span class="pb-progress-label"></span>
         </div>
+        <button type="button" class="pb-sound-toggle" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon pb-icon-sound"><path d="M11 5L6 9H2v6h4l5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon pb-icon-muted"><path d="M11 5L6 9H2v6h4l5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
         <button type="button" class="pb-toc-toggle" aria-expanded="false">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon"><path d="M4 6h16M4 12h16M4 18h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span class="pb-toc-toggle-label"></span>
@@ -109,50 +113,51 @@
             </div>
         </section>
 
-        <section class="pb-quiz" hidden>
-            <figure class="pb-figure pb-quiz-figure">
-                <img class="pb-quiz-image" alt="">
-            </figure>
-            <div class="pb-text">
-                <div class="pb-text-inner">
-                    <div class="pb-slide-head">
-                        <div class="pb-slide-headings">
-                            <div class="pb-page-label pb-quiz-label"></div>
-                            <h2 class="pb-page-title pb-quiz-title"></h2>
+        <section class="pb-question" hidden>
+            <div class="pb-q-main">
+                <div class="pb-q-banner" role="status" hidden></div>
+                <div class="pb-slide-head">
+                    <div class="pb-slide-headings">
+                        <div class="pb-q-top">
+                            <span class="pb-page-label pb-q-label"></span>
+                            <span class="pb-q-segs" aria-hidden="true"></span>
                         </div>
-                        <button type="button" class="pb-listen">
-                            <span class="pb-listen-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                            </span>
-                            <span class="pb-listen-eq" aria-hidden="true"><i></i><i></i><i></i></span>
-                            <span class="pb-listen-label"></span>
-                        </button>
+                        <div class="pb-q-pills"></div>
                     </div>
-                    <div class="pb-quiz-dots" aria-hidden="true"></div>
-                    <p class="pb-quiz-statement"></p>
-                    <div class="pb-quiz-answers">
-                        <button type="button" class="pb-answer pb-answer--true" data-answer="1">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            <span class="pb-answer-label"></span>
-                        </button>
-                        <button type="button" class="pb-answer pb-answer--false" data-answer="0">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-                            <span class="pb-answer-label"></span>
-                        </button>
-                    </div>
-                    <div class="pb-quiz-feedback" role="status" aria-live="assertive"></div>
+                    <button type="button" class="pb-listen">
+                        <span class="pb-listen-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        </span>
+                        <span class="pb-listen-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span class="pb-listen-label"></span>
+                    </button>
+                </div>
+                <p class="pb-q-ask" hidden></p>
+                <h2 class="pb-q-prompt"></h2>
+                <div class="pb-q-work">
+                    <div class="pb-q-body"></div>
+                    <div class="pb-q-panel" hidden aria-live="polite"></div>
+                </div>
+                <div class="pb-q-actions">
+                    <span class="pb-q-hint"></span>
+                    <button type="button" class="pb-btn pb-btn-primary pb-q-check"></button>
                 </div>
             </div>
         </section>
 
         <section class="pb-end" hidden>
+            <div class="pb-confetti" aria-hidden="true"></div>
             <div class="pb-end-inner">
-                <div class="pb-end-badge" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="pb-end-hero">
+                    <div class="pb-end-badge" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <h2 class="pb-end-title"></h2>
+                    <p class="pb-end-text"></p>
+                    <div class="pb-end-stats"></div>
+                    <div class="pb-end-actions"></div>
                 </div>
-                <h2 class="pb-end-title"></h2>
-                <p class="pb-end-text"></p>
-                <div class="pb-end-actions"></div>
+                <div class="pb-end-results" hidden></div>
             </div>
         </section>
     </div>
@@ -174,6 +179,7 @@
         <div class="pb-next-wrap">
             <span class="pb-listen-hint"></span>
             <button type="button" class="pb-btn pb-btn-primary pb-next">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon pb-next-lock"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
                 <span class="pb-next-label"></span>
                 <svg viewBox="0 0 24 24" aria-hidden="true" class="pb-icon"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>

@@ -24,11 +24,11 @@ use mod_visuallearning\local\credentials;
  * a browser, a URL or a log.
  *
  * Routes (proposed contract, see docs/LMSLABS_CONTRACT.md; none is assumed to exist until LMS Labs publishes it):
- *   GET  /api/moodle/ai-visuallearning/pages/capabilities    free: {tariff: {page}}
+ *   GET  /api/moodle/ai-visuallearning/pages/capabilities    free: {tariff: {page}, questionTypes}
  *   POST /api/moodle/ai-visuallearning/pages/draft           pages written by LMS Labs AI, charged per page delivered
  *   POST /api/moodle/ai-visuallearning/pages/import          pages written with the teacher's own AI assistant, same price
- *   GET  /api/moodle/ai-visuallearning/images/capabilities   free: {tariff: {image}, model}
- *   POST /api/moodle/ai-visuallearning/images                one Nano Banana illustration, raw image bytes
+ *   GET  /api/moodle/ai-visuallearning/images/capabilities   free: {tariff: {image}, model, aspectRatios}
+ *   POST /api/moodle/ai-visuallearning/images                one Nano Banana picture (4:3 page or 1:1 option), raw bytes
  *   GET  /api/moodle/ai-visuallearning/speech/capabilities   free: Chirp 3 HD voice catalogue and tariff
  *   POST /api/moodle/ai-visuallearning/speech/quote          free: the price of one clip (free remakes)
  *   POST /api/moodle/ai-visuallearning/speech/tts            one MP3 clip
@@ -69,7 +69,7 @@ class lmslabs {
     ];
 
     /** @var int Proposed credits per page (written by LMS Labs AI or imported); needs owner approval. */
-    public const PAGE_CREDITS = 2;
+    public const PAGE_CREDITS = 10;
 
     /** @var int Proposed credits per illustration (Nano Banana through LMS Labs); needs owner approval. */
     public const IMAGE_CREDITS = 2;
@@ -131,6 +131,7 @@ class lmslabs {
             'Accept: ' . $accept,
             'X-Site-ID: ' . $credentials['siteid'],
             'X-API-Key: ' . $credentials['apikey'],
+            'X-VL-Contract: bundle-1',
         ];
     }
 
@@ -147,7 +148,10 @@ class lmslabs {
     public static function post(string $route, string $body, string $key, string $accept, int $timeout = 100): array {
         global $CFG;
         $routes = [self::DRAFT_ROUTE, self::IMPORT_ROUTE, self::IMAGE_ROUTE, self::VOICE_ROUTE, self::VOICE_QUOTE_ROUTE];
-        if (!in_array($route, $routes, true)) {
+        if (!in_array($route, $routes, true) && !preg_match(
+            '~^/api/moodle/ai-visuallearning/v2/(bundles(?:/[a-f0-9-]{36}(?:/(?:draft|import|manual)|/slides/[a-f0-9-]{36}/slots/[a-z0-9:]+/lost)?)?|images|speech/(?:tts|quote))$~',
+            $route
+        )) {
             throw new \coding_exception('Unknown LMS Labs route');
         }
         $credentials = credentials::find();
@@ -235,7 +239,7 @@ class lmslabs {
         }
         $credentials = credentials::find();
         $cache = \cache::make('mod_visuallearning', 'capabilities');
-        $key = $kind . '_' . sha1((string)($credentials['siteid'] ?? ''));
+        $key = 'bundle1_' . $kind . '_' . sha1((string)($credentials['siteid'] ?? '') . '|' . ($credentials['apikey'] ?? ''));
         $cached = $cache->get($key);
         $kept = json_decode((string)get_config('mod_visuallearning', 'caps_' . $kind), true);
         $kept = is_array($kept) ? $kept : [];
@@ -248,7 +252,20 @@ class lmslabs {
                 return $cached['data'] ?: [];
             }
         }
-        [$status, $data] = self::get(self::CAPABILITY_ROUTES[$kind], 10);
+        [$status, $data] = self::get(self::PREFIX . '/v2/capabilities', 10);
+        if ($status === 200 && ($data['contract'] ?? '') === 'bundle-1') {
+            $data['tariff'] = [
+                'page' => $data['bundle']['slideCredits'] ?? null,
+                'image' => $data['remakes']['pictureCredits'] ?? null,
+                'tts' => $data['remakes']['voice']['credits'] ?? null,
+                'clipRefSupported' => true,
+                'maxCreditsRequired' => true,
+                'ttsRemakeLimit' => 10,
+                'ttsRemakeWindowDays' => 30,
+            ];
+        } else {
+            $data = [];
+        }
         $data = $status === 200 && is_array($data) ? $data : [];
         $cache->set($key, ['time' => time(), 'data' => $data]);
         if ($data && $data !== $kept) {
@@ -261,12 +278,12 @@ class lmslabs {
     /**
      * The price LMS Labs publishes for one unit of an operation, or null when it publishes none.
      *
-     * @param string $operation page, import (same price as page), image or voice
+     * @param string $operation page, import (same price as page), image, option (same price as image) or voice
      * @return int|null
      */
     public static function published_price(string $operation): ?int {
         $map = ['page' => ['pages', 'page'], 'import' => ['pages', 'page'], 'image' => ['images', 'image'],
-            'voice' => ['speech', 'tts']];
+            'option' => ['images', 'image'], 'voice' => ['speech', 'tts']];
         [$kind, $field] = $map[$operation];
         $price = self::capabilities($kind)['tariff'][$field] ?? null;
         return is_int($price) && $price >= 0 ? $price : null;
@@ -275,12 +292,12 @@ class lmslabs {
     /**
      * The approved (here: proposed) price of one unit.
      *
-     * @param string $operation page, import (same price as page), image or voice
+     * @param string $operation page, import (same price as page), image, option (same price as image) or voice
      * @return int
      */
     public static function approved_price(string $operation): int {
         $prices = ['page' => self::PAGE_CREDITS, 'import' => self::PAGE_CREDITS, 'image' => self::IMAGE_CREDITS,
-            'voice' => self::VOICE_CREDITS];
+            'option' => self::IMAGE_CREDITS, 'voice' => self::VOICE_CREDITS];
         return $prices[$operation];
     }
 
@@ -290,7 +307,8 @@ class lmslabs {
      * New paid generation fails closed: no credentials, a site that is not unlocked, a switched-off feature, an
      * unpublished price or a price other than the approved one all stop it before anything is sent.
      *
-     * @param string $operation page (LMS Labs AI writing), import (pages from the teacher's own assistant), image or voice
+     * @param string $operation page (LMS Labs AI writing), import (pages from the teacher's own assistant), image, option
+     *     (a square picture-pick option) or voice
      * @return string|null string identifier suffix (hold_...), or null
      */
     public static function hold(string $operation): ?string {
@@ -300,9 +318,14 @@ class lmslabs {
         if (!\mod_visuallearning\local\unlock::active()) {
             return 'notactivated';
         }
-        $setting = ['page' => 'aiwrite', 'image' => 'aiimages', 'voice' => 'aivoice', 'import' => ''][$operation];
+        $setting = ['page' => 'aiwrite', 'image' => 'aiimages', 'option' => 'aiimages', 'voice' => 'aivoice',
+            'import' => ''][$operation];
         if ($setting !== '' && !get_config('mod_visuallearning', $setting)) {
             return 'off';
+        }
+        if ($operation === 'option' && !in_array(\mod_visuallearning\local\media::OPTION_ASPECT, self::aspect_ratios(), true)) {
+            // Square option pictures are made only once LMS Labs says it makes them.
+            return 'nosquare';
         }
         // Pages imported from the teacher's own AI assistant cost the same as pages LMS Labs writes.
         $operation = $operation === 'import' ? 'page' : $operation;
@@ -311,6 +334,27 @@ class lmslabs {
             return 'priceunknown';
         }
         return $published === self::approved_price($operation) ? null : 'pricechanged';
+    }
+
+    /**
+     * The picture shapes LMS Labs says it makes. Page pictures (4:3) are assumed when it says nothing.
+     *
+     * @return string[]
+     */
+    public static function aspect_ratios(): array {
+        $ratios = self::capabilities('images')['aspectRatios'] ?? ['4:3'];
+        return is_array($ratios) ? array_values(array_filter($ratios, 'is_string')) : ['4:3'];
+    }
+
+    /**
+     * The question types LMS Labs AI says it writes. Only true or false is assumed when it says nothing.
+     *
+     * @return string[]
+     */
+    public static function question_types(): array {
+        $types = self::capabilities('pages')['questionTypes'] ?? ['truefalse'];
+        $types = is_array($types) ? array_intersect(\mod_visuallearning\local\question::TYPES, $types) : [];
+        return $types ? array_values($types) : ['truefalse'];
     }
 
     /**

@@ -2,6 +2,38 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.2.0] - 2026-10-17
+
+- New slides use the approved 10-credit bundle, including first pictures and narration.
+- Persist slide entitlements and delivery receipts, including backup and restore.
+- Recover lost included media without another slide charge; retain legacy media pricing.
+- Manual additions require price confirmation and append without deleting existing pages.
+- Fixed question types preserve the media entitlements purchased with each slide.
+
+## [1.1.0] - 2026-10-17
+
+### Added
+- One check question per page in four types: true or false, pick the picture (four square picture cards, or text
+  cards), match them up and sort into groups. The AI rotates the types the teacher allows; every question can be edited.
+- A wrong answer no longer jumps away: the learner sees where the answer is, presses "Go back and listen", hears the
+  page again (Next stays locked, also after a reload) and comes straight back to the same question with their earlier
+  choice crossed out.
+- Feedback for every question, shown and read aloud after a right answer.
+- Little interface sounds (hover, choose, match, page turn, right, not quite, recap, finish) with one remembered mute
+  switch; a teacher setting turns them off.
+- Finish screen with a green tick, confetti, a success sound and the learner's own results (tries per question).
+- Class attempts grid in the report (learners x questions), attempts CSV, headline numbers and the pages to go over
+  again.
+- Download all content in one ZIP (questions as Moodle XML, GIFT and CSV; text as Word, Markdown and CSV; pictures;
+  voiceover and transcript; an AI prompt pack) and Add questions to the question bank.
+- Step-by-step build wizard with a "Your lesson is ready" step: slide filmstrip, preview, what to do next.
+
+### Changed
+- Option pictures are square (1:1) Nano Banana pictures at the picture price; question and feedback clips at the
+  clip price. Every one is priced and confirmed first; option pictures wait for LMS Labs to publish 1:1 support
+  without holding up anything else.
+- New calm teacher look (no theme-coloured button clutter) and a refreshed learner player.
+
 ## [1.0.0] - 2026-10-17
 
 ### Added

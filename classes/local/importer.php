@@ -25,6 +25,28 @@ namespace mod_visuallearning\local;
  */
 class importer {
     /**
+     * Append a confirmed manually written slide without replacing existing content.
+     *
+     * @param \stdClass $book Activity
+     * @param array $page Confirmed page and purchased bundle identity
+     * @param \context_module $context Activity context
+     */
+    public static function append(\stdClass $book, array $page, \context_module $context): void {
+        global $DB;
+        $number = (int)$DB->get_field_sql(
+            'SELECT MAX(pagenum) FROM {visuallearning_pages} WHERE visuallearningid = ?', [$book->id]
+        ) + 1;
+        $DB->insert_record('visuallearning_pages', (object)(
+            question::to_fields($page['question'] ?? null) + ($page['_bundle'] ?? []) + [
+                'visuallearningid' => $book->id, 'pagenum' => $number, 'title' => $page['title'],
+                'concepttext' => $page['concept'], 'actiontext' => $page['action'], 'outcometext' => $page['outcome'],
+                'imageprompt' => $page['image_prompt'], 'alttext' => $page['alt_text'], 'summarytext' => $page['summary'],
+                'imagestatus' => VISUALLEARNING_MEDIA_PENDING, 'audiostatus' => VISUALLEARNING_MEDIA_PENDING,
+                'timemodified' => time(),
+            ]
+        ));
+    }
+    /**
      * Parse and validate pasted text.
      *
      * @param string $raw
@@ -65,8 +87,7 @@ class importer {
                 'image_prompt' => self::clean($p['image_prompt'] ?? ''),
                 'alt_text' => self::clean($p['alt_text'] ?? ''),
                 'summary' => self::clean($p['summary'] ?? ''),
-                'tf_statement' => self::clean($p['tf_statement'] ?? ''),
-                'tf_answer' => self::to_bool($p['tf_answer'] ?? true),
+                'question' => question::from_ai($p),
             ];
             foreach (['title', 'concept', 'action', 'outcome', 'image_prompt'] as $key) {
                 if ($page[$key] === '') {
@@ -79,11 +100,12 @@ class importer {
             if ($page['summary'] === '') {
                 $page['summary'] = $page['concept'];
             }
-            if ($page['tf_statement'] === '') {
-                $warnings[] = get_string('import_notf', 'mod_visuallearning', $n);
+            if ($page['question'] === null) {
+                $given = is_array($p['question'] ?? null) || trim((string)($p['tf_statement'] ?? '')) !== '';
+                $warnings[] = get_string($given ? 'import_badquestion' : 'import_notf', 'mod_visuallearning', $n);
             }
             $page['title'] = \core_text::substr($page['title'], 0, 255);
-            foreach (['concept', 'action', 'outcome', 'summary', 'tf_statement'] as $key) {
+            foreach (['concept', 'action', 'outcome', 'summary'] as $key) {
                 // Each card is read as one voiceover clip, which has a maximum length.
                 if (\core_text::strlen($page[$key]) > \mod_visuallearning\local\ai\lmslabs::MAX_CLIP) {
                     $page[$key] = self::shorten($page[$key], \mod_visuallearning\local\ai\lmslabs::MAX_CLIP);
@@ -123,7 +145,7 @@ class importer {
     }
 
     /**
-     * Replace the book's pages with the imported ones.
+     * Replace the lesson's pages with the imported ones.
      *
      * @param \stdClass $book
      * @param array $data Parsed data from parse().
@@ -136,7 +158,7 @@ class importer {
         $DB->delete_records('visuallearning_progress', ['visuallearningid' => $book->id]);
         $DB->delete_records('visuallearning_pages', ['visuallearningid' => $book->id]);
         $fs = get_file_storage();
-        foreach (['image', 'audio', 'cover'] as $area) {
+        foreach (['image', 'audio', 'cover', media::AREA_OPTION] as $area) {
             $fs->delete_area_files($context->id, 'mod_visuallearning', $area);
         }
 
@@ -161,7 +183,7 @@ class importer {
         foreach ($data['pages'] as $p) {
             $DB->insert_record(
                 'visuallearning_pages',
-                (object)[
+                (object)(question::to_fields($p['question'] ?? null) + ($p['_bundle'] ?? []) + [
                     'visuallearningid' => $book->id,
                     'pagenum' => $n++,
                     'title' => $p['title'],
@@ -171,12 +193,10 @@ class importer {
                     'imageprompt' => $p['image_prompt'],
                     'alttext' => $p['alt_text'],
                     'summarytext' => $p['summary'],
-                    'tfstatement' => $p['tf_statement'],
-                    'tfanswer' => $p['tf_answer'] ? 1 : 0,
                     'imagestatus' => VISUALLEARNING_MEDIA_PENDING,
                     'audiostatus' => VISUALLEARNING_MEDIA_PENDING,
                     'timemodified' => time(),
-                ],
+                ]),
             );
         }
         $transaction->allow_commit();
@@ -201,23 +221,6 @@ class importer {
             return null;
         }
         return substr($raw, $start, $end - $start + 1);
-    }
-
-    /**
-     * Read a true/false answer however ChatGPT wrote it.
-     *
-     * @param mixed $value
-     * @return bool
-     */
-    protected static function to_bool($value): bool {
-        if (is_bool($value)) {
-            return $value;
-        }
-        if (is_numeric($value)) {
-            return (int)$value === 1;
-        }
-        $value = \core_text::strtolower(trim((string)$value));
-        return !in_array($value, ['false', 'f', 'no', 'n', 'falso', 'faux', 'falsch', 'onwaar', 'fałsz'], true);
     }
 
     /**

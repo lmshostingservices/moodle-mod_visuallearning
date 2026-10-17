@@ -59,6 +59,7 @@ class provider implements
                 'tfattempts' => 'privacy:metadata:progress:tfattempts',
                 'tfpassed' => 'privacy:metadata:progress:tfpassed',
                 'timepassed' => 'privacy:metadata:progress:timepassed',
+                'relisten' => 'privacy:metadata:progress:relisten',
             ],
             'privacy:metadata:progress',
         );
@@ -168,8 +169,9 @@ class provider implements
                     'timespent' => (int)$r->timespent,
                     'timefirstviewed' => $r->timefirstviewed ? transform::datetime($r->timefirstviewed) : null,
                     'timelistened' => $r->timelistened ? transform::datetime($r->timelistened) : null,
-                    'truefalseattempts' => (int)$r->tfattempts,
-                    'truefalsecorrect' => transform::yesno($r->tfpassed),
+                    'questionattempts' => (int)$r->tfattempts,
+                    'questioncorrect' => transform::yesno($r->tfpassed),
+                    'mustlistenagain' => transform::yesno(!empty($r->relisten)),
                     'timecorrect' => $r->timepassed ? transform::datetime($r->timepassed) : null,
                 ];
             }

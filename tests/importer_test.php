@@ -79,8 +79,10 @@ final class importer_test extends \advanced_testcase {
         $this->assertSame('Action 2.', $data['pages'][1]['action']);
         $this->assertSame('Maya', $data['characters'][0]['name']);
         $this->assertSame('Summary 1.', $data['pages'][0]['summary']);
-        $this->assertFalse($data['pages'][0]['tf_answer']);
-        $this->assertTrue($data['pages'][1]['tf_answer']);
+        // The older true/false fields still import, as a true or false question.
+        $this->assertSame('truefalse', $data['pages'][0]['question']['type']);
+        $this->assertFalse($data['pages'][0]['question']['answer']);
+        $this->assertTrue($data['pages'][1]['question']['answer']);
     }
 
     /**
@@ -120,6 +122,7 @@ final class importer_test extends \advanced_testcase {
         $this->assertSame('Concept 1', $pages[0]->title);
         $this->assertEquals(0, $pages[0]->imagestatus);
         $this->assertSame('Statement 2.', $pages[1]->tfstatement);
+        $this->assertSame('truefalse', $pages[1]->qtype);
         $this->assertEquals(1, $pages[1]->tfanswer);
         $this->assertEquals(0, $pages[0]->tfanswer);
         $updated = $DB->get_record('visuallearning', ['id' => $book->id]);
@@ -140,6 +143,9 @@ final class importer_test extends \advanced_testcase {
             'maxpages' => 12,
             'imagestyle' => 'Watercolour',
             'sourcecontent' => 'Get to know each other.',
+            'enablequiz' => 1,
+            'questiontypes' => 'truefalse,pick,match,sort',
+            'pickimages' => 1,
         ];
         $prompt = prompt_builder::chatgpt_prompt($book);
         $this->assertStringContainsString('Maximum number of pages: 12', $prompt);
@@ -147,7 +153,22 @@ final class importer_test extends \advanced_testcase {
         $this->assertStringContainsString('NOT PROVIDED', $prompt);
         $this->assertStringContainsString('Get to know each other.', $prompt);
         $this->assertStringContainsString('"outcome"', $prompt);
-        $this->assertStringContainsString('"tf_statement"', $prompt);
+        $this->assertStringContainsString('"question"', $prompt);
+        $this->assertStringContainsString('{"type": "truefalse", "statement"', $prompt);
+        $this->assertStringContainsString('{"type": "pick", "prompt"', $prompt);
+        $this->assertStringContainsString('SQUARE illustration', $prompt);
+        $this->assertStringContainsString('{"type": "match", "prompt"', $prompt);
+        $this->assertStringContainsString('{"type": "sort", "prompt"', $prompt);
+        $this->assertStringContainsString('"feedback"', $prompt);
+        $this->assertStringContainsString('Rotate them', $prompt);
+
+        // Only the types the teacher allows, and text cards when option pictures are off.
+        $book->questiontypes = 'pick';
+        $book->pickimages = 0;
+        $only = prompt_builder::chatgpt_prompt($book);
+        $this->assertStringContainsString('Every question uses the type "pick"', $only);
+        $this->assertStringNotContainsString('{"type": "sort"', $only);
+        $this->assertStringNotContainsString('SQUARE illustration', $only);
         $this->assertStringContainsString('Country / culture of the learners: Thailand', $prompt);
 
         $book->styleguide = 'Soft light.';

@@ -47,7 +47,8 @@ define(
         'action' => 'actiontext',
         'outcome' => 'outcometext',
         'summary' => 'summarytext',
-        'statement' => 'tfstatement',
+        'question' => 'tfstatement',
+        'feedback' => 'feedback',
     ],
 );
 
@@ -159,6 +160,19 @@ function visuallearning_clean_instance_data(stdClass $data): void {
         $data->completionquiz = 0;
     }
     $data->imageculture = ($data->imageculture ?? 'language') === 'international' ? 'international' : 'language';
+    // Question types arrive as one checkbox each from the form, or as a list from generators and web services.
+    $types = [];
+    foreach (\mod_visuallearning\local\question::TYPES as $type) {
+        if (!empty($data->{'qt_' . $type})) {
+            $types[] = $type;
+        }
+    }
+    if (!$types) {
+        $types = array_intersect(\mod_visuallearning\local\question::TYPES, explode(',', (string)($data->questiontypes ?? '')));
+    }
+    $data->questiontypes = implode(',', $types ?: \mod_visuallearning\local\question::TYPES);
+    $data->pickimages = isset($data->pickimages) && empty($data->pickimages) ? 0 : 1;
+    $data->sounds = isset($data->sounds) && empty($data->sounds) ? 0 : 1;
 }
 
 /**
@@ -229,7 +243,7 @@ function visuallearning_pluginfile($course, $cm, $context, $filearea, $args, $fo
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
-    if (!in_array($filearea, ['image', 'audio', 'cover'])) {
+    if (!in_array($filearea, ['image', 'audio', 'cover', 'option'])) {
         return false;
     }
     require_course_login($course, true, $cm);
@@ -346,7 +360,7 @@ function visuallearning_reset_userdata($data) {
 }
 
 /**
- * Pages of a book in order.
+ * Pages of a lesson in order.
  *
  * @param int $bookid
  * @return array

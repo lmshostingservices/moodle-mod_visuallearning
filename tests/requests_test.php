@@ -73,6 +73,17 @@ final class requests_test extends \advanced_testcase {
         ];
         lmslabs::$transport = function (string $url, array $headers): array {
             $this->calls[] = [$url, $headers, ''];
+            if (str_ends_with($url, '/v2/capabilities')) {
+                return [200, json_encode([
+                    'contract' => 'bundle-1',
+                    'bundle' => ['slideCredits' => $this->caps['pages']['tariff']['page'] ?? null],
+                    'remakes' => ['pictureCredits' => $this->caps['images']['tariff']['image'] ?? null,
+                        'voice' => ['credits' => $this->caps['speech']['tariff']['tts'] ?? null]],
+                    'locales' => $this->caps['speech']['locales'] ?? [],
+                    'questionTypes' => $this->caps['pages']['questionTypes'] ?? ['truefalse'],
+                    'aspectRatios' => $this->caps['images']['aspectRatios'] ?? ['4:3'],
+                ])];
+            }
             foreach ($this->caps as $kind => $data) {
                 if (str_ends_with($url, '/' . $kind . '/capabilities')) {
                     return $data === null ? [404, '{}'] : [200, json_encode($data)];
@@ -85,6 +96,15 @@ final class requests_test extends \advanced_testcase {
         };
         lmslabs::$posttransport = function (string $url, array $headers, string $body): array {
             $this->calls[] = [$url, $headers, $body];
+            if (str_ends_with($url, '/v2/bundles')) {
+                $opened = json_decode($body, true);
+                return [201, [], json_encode(['bundleId' => \core\uuid::generate(),
+                    'slides' => array_map(fn($i) => ['slideId' => \core\uuid::generate()], range(1, $opened['slides'])),
+                    'creditsCharged' => 0])];
+            }
+            if (preg_match('~/v2/bundles/[a-f0-9-]+/(draft|import|manual)$~', $url, $match)) {
+                $url = '/pages/' . ($match[1] === 'draft' ? 'draft' : 'import');
+            }
             foreach ($this->answers as $suffix => $list) {
                 if (str_ends_with($url, $suffix) && $list) {
                     return array_shift($this->answers[$suffix]);
@@ -103,11 +123,11 @@ final class requests_test extends \advanced_testcase {
     }
 
     /**
-     * A book with pages, its context and a teacher.
+     * A lesson with pages, its context and a teacher.
      *
      * @param int $pages
      * @param array $settings
-     * @return array [book, context, teacher]
+     * @return array [lesson, context, teacher]
      */
     protected function book(int $pages = 1, array $settings = []): array {
         global $DB;
@@ -130,7 +150,8 @@ final class requests_test extends \advanced_testcase {
      * @return array
      */
     protected function posts(string $suffix): array {
-        return array_values(array_filter($this->calls, fn($c) => $c[2] !== '' && str_ends_with($c[0], $suffix)));
+        return array_values(array_filter($this->calls, fn($c) => $c[2] !== '' && (str_ends_with($c[0], $suffix) ||
+            (str_starts_with($suffix, '/pages/') && preg_match('~/v2/bundles/[a-f0-9-]+/' . basename($suffix) . '$~', $c[0])))));
     }
 
     /**
@@ -140,6 +161,138 @@ final class requests_test extends \advanced_testcase {
         ob_start();
         $this->runAdhocTasks('\mod_visuallearning\task\generate_media');
         ob_end_clean();
+    }
+
+    /** @var array Fake durable server-side slot states. */
+    protected $bundleslots = [];
+
+    /**
+     * Make an existing purchased slide and mock its entitlement lookup.
+     *
+     * @return array
+     */
+    protected function bundle_fixture(): array {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1);
+        $pages = visuallearning_get_pages($book->id);
+        $page = reset($pages);
+        $page->bundleid = \core\uuid::generate();
+        $page->slideid = \core\uuid::generate();
+        $page->bundlesite = requests::sitehash();
+        $DB->update_record('visuallearning_pages', $page);
+        $base = lmslabs::$transport;
+        lmslabs::$transport = function ($url, $headers) use ($page, $base) {
+            if (str_ends_with($url, '/v2/bundles/' . $page->bundleid)) {
+                return [200, json_encode(['slides' => [['slideId' => $page->slideid, 'slots' => $this->bundleslots]]])];
+            }
+            return $base($url, $headers);
+        };
+        return [$book, $context, $teacher, $page];
+    }
+
+    public function test_bundle_first_media_is_free_and_bound_to_the_purchased_slide(): void {
+        [$book, $context, $teacher, $page] = $this->bundle_fixture();
+        $this->bundleslots = ['picture' => ['state' => 'awaiting-retry']];
+        $quote = requests::quote($book, $teacher->id, [[
+            'operation' => requests::IMAGE, 'targetid' => $page->id, 'prompt' => media::image_prompt($book, $page),
+        ]]);
+        $this->assertSame(0, $quote['credits']);
+        $rows = requests::quoted($book->id, $quote['batch']);
+        $row = reset($rows);
+        $body = json_decode($row->body, true);
+        $this->assertSame($page->bundleid, $body['bundleId']);
+        $this->assertSame($page->slideid, $body['slideId']);
+        $this->assertSame('picture', $body['slot']);
+        $this->assertSame(false, $body['remake']);
+        $this->assertSame(0, $body['maxCredits']);
+        $this->assertArrayNotHasKey('purpose', $body);
+        $delivery = \core\uuid::generate();
+        $this->answers['/images'] = [[200, ['content-type' => 'image/png',
+            'x-credits-charged' => '0', 'x-delivery-id' => $delivery], self::PNG]];
+        requests::confirm($book, $quote['batch'], $teacher->id, 0);
+        $this->run_tasks();
+        global $DB;
+        $saved = $DB->get_record('visuallearning_pages', ['id' => $page->id]);
+        $this->assertSame($delivery, json_decode($saved->bundledeliveries, true)['picture']);
+        $this->assertStringEndsWith('/v2/images', $this->posts('/images')[0][0]);
+        $this->assertContains('X-VL-Contract: bundle-1', $this->posts('/images')[0][1]);
+    }
+
+    public function test_lost_included_picture_reopens_the_same_slot_without_a_remake_charge(): void {
+        [$book, $context, $teacher, $page] = $this->bundle_fixture();
+        $delivery = \core\uuid::generate();
+        $this->bundleslots = ['picture' => ['state' => 'delivered', 'deliveryId' => $delivery]];
+        $this->answers['/lost'] = [[200, [], '{}'], [200, [], '{}']];
+        $plan = [['operation' => requests::IMAGE, 'targetid' => $page->id, 'prompt' => media::image_prompt($book, $page)]];
+        $first = requests::quote($book, $teacher->id, $plan);
+        requests::cancel_quote($book->id, $first['batch']);
+        $second = requests::quote($book, $teacher->id, $plan);
+        $this->assertSame(0, $first['credits']);
+        $this->assertSame(0, $second['credits']);
+        $lost = $this->posts('/lost');
+        $this->assertCount(2, $lost);
+        $this->assertSame($lost[0][1], $lost[1][1]);
+        $this->assertSame(['deliveryId' => $delivery, 'maxCredits' => 0], json_decode($lost[0][2], true));
+    }
+
+    public function test_optional_picture_remake_is_two_credits_only_after_saved_delivery(): void {
+        global $DB;
+        [$book, $context, $teacher, $page] = $this->bundle_fixture();
+        $delivery = \core\uuid::generate();
+        $this->bundleslots = ['picture' => ['state' => 'delivered', 'deliveryId' => $delivery]];
+        $DB->set_field('visuallearning_pages', 'bundledeliveries', json_encode(['picture' => $delivery]), ['id' => $page->id]);
+        media::save_image($context, media::AREA_IMAGE, $page->id, 'Old picture', self::PNG, 'png');
+        $quote = requests::quote($book, $teacher->id, [[
+            'operation' => requests::IMAGE, 'targetid' => $page->id, 'prompt' => 'Replacement picture',
+        ]]);
+        $this->assertSame(2, $quote['credits']);
+        $rows = requests::quoted($book->id, $quote['batch']);
+        $row = reset($rows);
+        $this->assertTrue(json_decode($row->body, true)['remake']);
+        $this->assertSame([], $this->posts('/lost'));
+    }
+
+    public function test_manual_slide_requires_ten_credits_and_preserves_existing_pages(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1);
+        $existing = array_keys(visuallearning_get_pages($book->id));
+        $parsed = ['pages' => [['title' => 'Manual', 'concept' => 'C.', 'action' => 'A.', 'outcome' => 'O.',
+            'image_prompt' => 'A concrete scene.', 'alt_text' => 'A scene', 'summary' => 'Summary',
+            'question' => null]]];
+        $quote = requests::quote($book, $teacher->id, [['operation' => requests::IMPORT,
+            'body' => ['_manual' => true, 'pageCount' => 1, 'titles' => ['Manual'], 'maxCredits' => 10]]],
+            json_encode($parsed));
+        $this->assertSame(10, $quote['credits']);
+        $this->assertSame(1, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
+        $this->answers['/pages/import'] = [[200, [], '{"creditsCharged":10}']];
+        $rows = requests::confirm($book, $quote['batch'], $teacher->id, 10);
+        $this->assertSame('completed', $rows[0]->status);
+        $this->assertSame(2, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
+        $this->assertTrue($DB->record_exists('visuallearning_pages', ['id' => $existing[0]]));
+        $new = $DB->get_record('visuallearning_pages', ['visuallearningid' => $book->id, 'title' => 'Manual']);
+        $this->assertNotEmpty($new->bundleid);
+        $this->assertNotEmpty($new->slideid);
+        $opened = json_decode($this->posts('/bundles')[0][2], true);
+        $this->assertSame('manual', $opened['source']);
+        $this->assertSame(1, $opened['slides']);
+        $this->assertSame(10, $opened['maxCredits']);
+    }
+
+    public function test_initial_bundle_voice_quote_has_no_legacy_fields_and_no_charge(): void {
+        [$book, $context, $teacher, $page] = $this->bundle_fixture();
+        $this->bundleslots = ['clip:concept' => ['state' => 'awaiting-retry']];
+        $this->answers['/speech/quote'] = [[200, [], '{"credits":0}']];
+        [$body, $price] = \mod_visuallearning\local\ai\bundles::media_quote(
+            $book->id, requests::VOICE, $page->id, 'concept',
+            ['text' => 'A short concept.', 'locale' => 'en-AU', 'voice' => 'Aoede', 'speed' => 'normal',
+                'clipRef' => 'old-reference', 'maxCredits' => 2]
+        );
+        $this->assertSame(0, $price);
+        $this->assertSame('clip:concept', $body['slot']);
+        $this->assertArrayNotHasKey('clipRef', $body);
+        $quoted = json_decode($this->posts('/speech/quote')[0][2], true);
+        $this->assertSame(0, $quoted['maxCredits']);
+        $this->assertSame(['bundleId', 'slideId', 'slot', 'remake', 'maxCredits'], array_keys($quoted));
     }
 
     public function test_quote_stores_requests_and_sends_nothing(): void {
@@ -451,11 +604,14 @@ final class requests_test extends \advanced_testcase {
         $rows = requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
         $this->assertSame('failed', $rows[0]->status);
         $this->assertSame(0, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
-        // Only the page count and titles are sent, never the pages themselves.
-        $this->assertSame(
-            ['pageCount' => 1, 'titles' => ['One'], 'maxCredits' => lmslabs::PAGE_CREDITS],
-            json_decode($this->posts('/pages/import')[0][2], true)
-        );
+        // Settlement identifies entitled slides, but never uploads the teaching content.
+        $sent = json_decode($this->posts('/pages/import')[0][2], true);
+        $this->assertSame(lmslabs::PAGE_CREDITS, $sent['maxCredits']);
+        $this->assertCount(1, $sent['slides']);
+        $this->assertSame('One', $sent['slides'][0]['title']);
+        $this->assertSame('none', $sent['slides'][0]['questionType']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9-]{36}$/', $sent['slides'][0]['slideId']);
+        $this->assertArrayNotHasKey('pages', $sent);
 
         // Confirmed: the pages are created.
         $summary = requests::quote($book, (int)$teacher->id, [$plan], json_encode($parsed));
@@ -519,5 +675,103 @@ final class requests_test extends \advanced_testcase {
         $this->assertFalse(has_capability('mod/visuallearning:useai', $context, $teacher));
         $this->assertFalse(has_capability('mod/visuallearning:useai', $context, $student));
         $this->assertFalse(has_capability('mod/visuallearning:manage', $context, $student));
+    }
+
+    /**
+     * A page with a picture-pick question (four options with picture prompts) and feedback.
+     *
+     * @param int $bookid
+     * @return \stdClass
+     */
+    protected function pick_page(int $bookid): \stdClass {
+        $gen = $this->getDataGenerator()->get_plugin_generator('mod_visuallearning');
+        $options = [];
+        foreach (['Squeezes past', 'Calls "Behind!"', 'Waits by the door', 'Taps their arm'] as $i => $label) {
+            $options[] = ['label' => $label, 'image_prompt' => 'A cook who ' . strtolower($label) . '.', 'alt_text' => $label];
+        }
+        return $gen->create_page($bookid, ['qtype' => 'pick', 'tfstatement' => 'Which is the safe way to pass behind a chef?',
+            'qdata' => json_encode(['options' => $options, 'correct' => 1]), 'feedback' => 'Calling out stops collisions.']);
+    }
+
+    public function test_option_pictures_are_square_priced_and_saved(): void {
+        global $DB;
+        $this->caps['images']['aspectRatios'] = ['4:3', '1:1'];
+        [$book, $context, $teacher] = $this->book(0);
+        $page = $this->pick_page($book->id);
+        $plans = media::plan($book, $context, 'missing', 0, ['image', 'option', 'voice']);
+        // 1 page picture, 4 square option pictures, and 6 clips: three cards, recap, question and feedback.
+        $this->assertCount(11, $plans);
+        $this->assertSame(
+            ['concept', 'action', 'outcome', 'summary', 'question', 'feedback'],
+            array_values(array_column(array_filter($plans, fn($p) => $p['operation'] === 'voice'), 'part'))
+        );
+        $summary = requests::quote($book, (int)$teacher->id, $plans);
+        $this->assertNull($summary['hold']);
+        $this->assertSame(4, $summary['items']['option']);
+        $this->assertSame(5 * lmslabs::IMAGE_CREDITS + 6 * lmslabs::VOICE_CREDITS, $summary['credits']);
+
+        $this->answers['/images'] = array_fill(0, 5, [200, ['content-type' => 'image/png', 'x-credits-charged' => '2'],
+            self::PNG]);
+        $this->answers['/speech/tts'] = array_fill(0, 6, [200, ['content-type' => 'audio/mpeg', 'x-credits-charged' => '2'],
+            self::MP3]);
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $posts = $this->posts('/images');
+        $this->assertCount(5, $posts);
+        $bodies = array_map(fn($c) => json_decode($c[2], true), $posts);
+        $square = array_values(array_filter($bodies, fn($b) => $b['aspectRatio'] === '1:1'));
+        $this->assertCount(4, $square);
+        foreach ($square as $body) {
+            $this->assertSame('option', $body['purpose']);
+            $this->assertSame(lmslabs::IMAGE_CREDITS, $body['maxCredits']);
+        }
+        $this->assertCount(1, array_filter($bodies, fn($b) => $b['aspectRatio'] === '4:3' && $b['purpose'] === 'page'));
+        for ($i = 0; $i < 4; $i++) {
+            $this->assertNotNull(media::option_file($context, (int)$page->id, $i));
+        }
+        $this->assertEquals(VISUALLEARNING_MEDIA_READY, $DB->get_field('visuallearning_pages', 'imagestatus', ['id' => $page->id]));
+        $this->assertSame([], media::plan($book, $context, 'missing', 0, ['image', 'option', 'voice']));
+
+        // Editing one option's picture prompt needs that one picture again, nothing else.
+        $q = json_decode($DB->get_field('visuallearning_pages', 'qdata', ['id' => $page->id]), true);
+        $q['options'][2]['image_prompt'] = 'A cook waiting patiently.';
+        $DB->set_field('visuallearning_pages', 'qdata', json_encode($q), ['id' => $page->id]);
+        $again = media::plan($book, $context, 'missing', 0, ['image', 'option', 'voice']);
+        $this->assertCount(1, $again);
+        $this->assertSame(['option', '2'], [$again[0]['operation'], $again[0]['part']]);
+    }
+
+    public function test_option_pictures_wait_for_square_pictures_and_never_block_the_rest(): void {
+        [$book, $context, $teacher] = $this->book(0);
+        $this->pick_page($book->id);
+        $plans = media::plan($book, $context, 'missing', 0, ['image', 'option', 'voice']);
+        $summary = requests::quote($book, (int)$teacher->id, $plans);
+        $this->assertNull($summary['hold']);
+        $this->assertSame(4, $summary['dropped']);
+        $this->assertSame('nosquare', $summary['droppedhold']);
+        $this->assertArrayNotHasKey('option', $summary['items']);
+        $this->assertSame(lmslabs::IMAGE_CREDITS + 6 * lmslabs::VOICE_CREDITS, $summary['credits']);
+        // Asking only for option pictures says why nothing can be made.
+        $only = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'all', 0, ['option']));
+        $this->assertSame('nosquare', $only['hold']);
+    }
+
+    public function test_text_card_options_need_no_pictures(): void {
+        $this->caps['images']['aspectRatios'] = ['4:3', '1:1'];
+        [$book, $context] = $this->book(0, ['pickimages' => 0]);
+        $this->pick_page($book->id);
+        $this->assertSame([], media::plan($book, $context, 'missing', 0, ['option']));
+        $this->assertCount(1, media::plan($book, $context, 'missing', 0, ['image']));
+    }
+
+    public function test_write_asks_only_for_question_types_both_sides_allow(): void {
+        [$book] = $this->book(0, ['questiontypes' => 'truefalse,pick,sort', 'sourcecontent' => 'Teamwork content.']);
+        $this->assertSame(['truefalse'], requests::write_body($book)['questionTypes']);
+        $this->caps['pages']['questionTypes'] = ['truefalse', 'pick', 'match', 'sort'];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        $body = requests::write_body($book);
+        $this->assertSame(['truefalse', 'pick', 'sort'], $body['questionTypes']);
+        $this->assertArrayNotHasKey('trueFalse', $body);
+        $this->assertSame((int)$book->maxpages * lmslabs::PAGE_CREDITS, $body['maxCredits']);
     }
 }

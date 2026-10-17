@@ -16,9 +16,14 @@
 /**
  * AI Visual Learning player.
  *
- * The book is a sequence of steps: concept pages, then (after every four concepts) a narrated
- * recap slide and a true/false check. Each slide is narrated clip by clip when the learner
- * presses Listen (or automatically, if the teacher enabled autoplay).
+ * The lesson is a sequence of steps: concept pages, then (after every four concepts) a narrated
+ * recap slide and one check question per page (true or false, pick the picture, match them up or
+ * sort into groups). Each slide is narrated clip by clip when the learner presses Listen (or
+ * automatically, if the teacher enabled autoplay).
+ *
+ * A wrong answer never jumps anywhere by itself: the learner is told where the answer is and presses
+ * "Go back and listen". Next stays locked until they have listened to that page again, then they are
+ * brought straight back to the same question.
  *
  * @module     mod_visuallearning/player
  * @copyright  2026 LMS Hosting Services
@@ -27,10 +32,41 @@
 
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
+import * as Sounds from 'mod_visuallearning/sounds';
 
 const HEARTBEAT_MS = 15000;
 const WORDS_PER_SECOND = 2.6;
 const NAV_FREE = 1;
+
+const TICK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" ' +
+    'stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CROSS_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" ' +
+    'stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+const HEADPHONES_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/>' +
+    '<path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg>';
+const BACK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>';
+const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/>' +
+    '<path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const TYPE_ICONS = {
+    truefalse: '<path d="M4 12l4 4 8-9"/><path d="M15 15l5 5M20 15l-5 5"/>',
+    pick: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/>' +
+        '<rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+    match: '<circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M7.5 6h3a3 3 0 0 1 3 3v6a3 3 0 0 0 3 3"/>',
+    sort: '<rect x="3" y="4" width="8" height="16" rx="2"/><rect x="13" y="4" width="8" height="16" rx="2"/>',
+};
+const PAIR_COLOURS = 4;
+
+/**
+ * Escape text for HTML.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+const esc = (text) => String(text === undefined || text === null ? '' : text).replace(/[&<>"']/g,
+    (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 
 const CARD_ICONS = {
     concept: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/>',
@@ -99,8 +135,19 @@ class Player {
         this.token = 0;
         this.heartbeat = null;
         this.fallbackTimer = null;
-        this.returnTo = null; // Quiz step to return to after revisiting a page.
+        this.returnTo = null; // Question step to return to after listening to its page again.
+        this.revisitHeard = false; // The page was heard in full during this revisit.
+        this.welcomeBack = false; // Just came back from listening again.
+        this.wrong = {}; // Page id => choices already tried and wrong (crossed out on the next try, also after a reload).
+        try {
+            this.wrong = JSON.parse(window.sessionStorage.getItem('mod_visuallearning_tried_' + this.data.cmid) || '{}') || {};
+        } catch (e) {
+            this.wrong = {};
+        }
+        this.response = null; // The learner's answer being built on the current question.
+        this.answered = false; // The current question has just been answered right.
         this.recapHeard = new Set();
+        Sounds.setEnabled(this.data.sounds);
         this.audio = root.querySelector('.pb-audio');
         this.clipResolve = null;
         this.build();
@@ -114,6 +161,7 @@ class Player {
     buildSteps() {
         const steps = [];
         const size = this.data.groupsize || 4;
+        let check = 0;
         for (let start = 0; start < this.pages.length; start += size) {
             const group = [];
             for (let i = start; i < Math.min(start + size, this.pages.length); i++) {
@@ -126,9 +174,12 @@ class Player {
                 if (this.data.recap) {
                     steps.push({type: 'recap', group, ...range});
                 }
-                const questions = group.filter((i) => this.pages[i].statement);
+                const questions = group.filter((i) => this.pages[i].question);
                 if (this.data.quiz && questions.length) {
-                    steps.push({type: 'quiz', group: questions, current: null, ...range});
+                    check++;
+                    for (let n = 0; n < questions.length; n++) {
+                        steps.push({type: 'question', page: questions[n], n: n + 1, total: questions.length, check, ...range});
+                    }
                 }
             }
         }
@@ -175,11 +226,29 @@ class Player {
         this.q('.pb-prev-label').textContent = this.str('previous');
         this.q('.pb-replay').setAttribute('aria-label', this.str('replay'));
         this.q('.pb-replay').title = this.str('replay');
-        this.root.querySelectorAll('.pb-answer--true .pb-answer-label').forEach((el) => {
-            el.textContent = this.str('true');
+        const soundBtn = this.q('.pb-sound-toggle');
+        if (this.data.sounds) {
+            this.updateSoundToggle();
+            soundBtn.addEventListener('click', () => {
+                Sounds.setMuted(!Sounds.isMuted());
+                this.updateSoundToggle();
+                Sounds.play('pop');
+            });
+        } else {
+            soundBtn.hidden = true;
+        }
+        // A barely-there tick when the pointer or focus reaches an answer.
+        const stage = this.q('.pb-stage');
+        stage.addEventListener('pointerover', (e) => {
+            const target = e.target.closest('[data-tick]');
+            if (target && !target.contains(e.relatedTarget) && !target.disabled && e.pointerType === 'mouse') {
+                Sounds.play('tick');
+            }
         });
-        this.root.querySelectorAll('.pb-answer--false .pb-answer-label').forEach((el) => {
-            el.textContent = this.str('false');
+        stage.addEventListener('focusin', (e) => {
+            if (e.target.closest('[data-tick]') && e.target.matches(':focus-visible')) {
+                Sounds.play('tick');
+            }
         });
 
         // Cover.
@@ -222,9 +291,6 @@ class Player {
         this.q('.pb-replay').addEventListener('click', () => this.narrate());
         this.root.querySelectorAll('.pb-listen').forEach((btn) => {
             btn.addEventListener('click', () => this.togglePlay());
-        });
-        this.root.querySelectorAll('.pb-answer').forEach((btn) => {
-            btn.addEventListener('click', () => this.answer(btn.dataset.answer === '1'));
         });
 
         this.audio.addEventListener('ended', () => this.finishClip());
@@ -277,6 +343,20 @@ class Player {
             this.togglePlay();
         } else if (e.key === 'Escape') {
             this.toggleToc(false);
+        } else if (this.step() && this.step().type === 'question' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            // Letters choose answers: A to D on a picture pick, T or F on true or false.
+            const type = this.pages[this.step().page].question.type;
+            const key = e.key.toLowerCase();
+            let target = null;
+            if (type === 'pick' && 'abcd'.includes(key) && key.length === 1) {
+                target = this.q('.pb-pick[data-choice="' + 'abcd'.indexOf(key) + '"]');
+            } else if (type === 'truefalse' && (key === 't' || key === 'f')) {
+                target = this.q('.pb-tf--' + (key === 't' ? 'true' : 'false'));
+            }
+            if (target && !target.disabled) {
+                e.preventDefault();
+                target.click();
+            }
         }
     }
 
@@ -318,8 +398,8 @@ class Player {
         if (step.type === 'page') {
             return this.pages[step.page].listened;
         }
-        if (step.type === 'quiz') {
-            return step.group.every((i) => this.pages[i].passed);
+        if (step.type === 'question') {
+            return this.pages[step.page].passed;
         }
         return true;
     }
@@ -357,6 +437,14 @@ class Player {
         if (!step) {
             return false;
         }
+        if (step.type === 'question' && this.pages[step.page].relisten && !this.pages[step.page].passed) {
+            // Locked after a wrong answer until the page has been listened to again, whatever the navigation mode.
+            return false;
+        }
+        if (this.returnTo !== null && step.type === 'page') {
+            // Listening again: back to the question only once the page has been heard in full.
+            return this.revisitHeard;
+        }
         if (this.data.navmode === NAV_FREE) {
             return true;
         }
@@ -367,7 +455,7 @@ class Player {
     }
 
     /**
-     * Next button: normally the next step; after revisiting a page, back to the true/false statement.
+     * Next button: normally the next step; after listening to a page again, back to its question.
      */
     next() {
         if (!this.canAdvance()) {
@@ -375,19 +463,45 @@ class Player {
         }
         const step = this.step();
         if (this.returnTo !== null && step && step.type === 'page') {
-            const target = this.returnTo;
-            this.returnTo = null;
-            this.go(target);
+            this.backToQuestion();
             return;
         }
+        Sounds.play('swoosh');
         this.go(this.current + 1);
+    }
+
+    /**
+     * Leave the page being listened to again and return to its question.
+     */
+    backToQuestion() {
+        if (this.returnTo === null || !this.revisitHeard) {
+            return;
+        }
+        const target = this.returnTo;
+        this.returnTo = null;
+        this.welcomeBack = true;
+        Sounds.play('swoosh');
+        this.go(target);
+    }
+
+    /**
+     * Show the mute state on the sound button.
+     */
+    updateSoundToggle() {
+        const btn = this.q('.pb-sound-toggle');
+        const muted = Sounds.isMuted();
+        btn.classList.toggle('is-muted', muted);
+        btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        const label = muted ? this.str('soundoff') : this.str('soundon');
+        btn.setAttribute('aria-label', label);
+        btn.title = label;
     }
 
     /**
      * Keep the whole slide (image, cards and buttons) above the fold, whatever the theme chrome.
      */
     fitToViewport() {
-        // Stack image above text when the book itself is narrow (phones, or Moodle's drawers open on a tablet).
+        // Stack image above text when the lesson itself is narrow (phones, or Moodle's drawers open on a tablet).
         this.root.classList.toggle('is-narrow', this.root.clientWidth < 760);
         this.root.classList.toggle('is-xs', this.root.clientWidth < 400);
         const c = chrome();
@@ -408,7 +522,7 @@ class Player {
     }
 
     /**
-     * Scroll so the book sits directly under the navbar.
+     * Scroll so the lesson sits directly under the navbar.
      */
     scrollIntoPlace() {
         const c = chrome();
@@ -463,7 +577,10 @@ class Player {
         if (step.type === 'page') {
             return this.pages[step.page].title;
         }
-        return this.str(step.type === 'recap' ? 'recaptoc' : 'quiztoc', {from: step.from, to: step.to});
+        if (step.type === 'question') {
+            return this.str('checkx', step.check) + ' · ' + this.str('questionof', {n: step.n, total: step.total});
+        }
+        return this.str('recaptoc', {from: step.from, to: step.to});
     }
 
     /**
@@ -519,6 +636,7 @@ class Player {
             btn.addEventListener('click', () => {
                 this.toggleToc(false);
                 this.returnTo = null;
+                this.welcomeBack = false;
                 this.go(i);
             });
             li.appendChild(btn);
@@ -561,7 +679,7 @@ class Player {
      * Hide every slide section.
      */
     hideSections() {
-        ['.pb-cover', '.pb-spread', '.pb-recap', '.pb-quiz', '.pb-end'].forEach((sel) => {
+        ['.pb-cover', '.pb-spread', '.pb-recap', '.pb-question', '.pb-end'].forEach((sel) => {
             this.q(sel).hidden = true;
         });
     }
@@ -581,7 +699,7 @@ class Player {
     }
 
     /**
-     * Show the "well done" screen.
+     * The finish screen: a big green tick, confetti, a success sound and the learner's own results.
      */
     showEnd() {
         this.leaveSlide();
@@ -593,8 +711,27 @@ class Player {
         end.classList.remove('is-in');
         end.getBoundingClientRect();
         end.classList.add('is-in');
+
+        const asked = this.pages.filter((p) => p.question);
+        const first = asked.filter((p) => p.passed && p.attempts <= 1).length;
+        const answers = asked.reduce((sum, p) => sum + (p.attempts || 0), 0);
+        const minutes = Math.max(1, Math.round(this.pages.reduce((sum, p) => sum + (p.timespent || 0), 0) / 60));
+        const allright = asked.every((p) => p.passed);
+
         this.q('.pb-end-title').textContent = this.str('finishedtitle');
-        this.q('.pb-end-text').textContent = this.str('finishedtext', this.pages.length);
+        this.q('.pb-end-text').textContent = asked.length && allright
+            ? this.str('finishedall', {pages: this.pages.length, questions: asked.length}) + ' ' + this.str('teachersees')
+            : this.str('finishedtext', this.pages.length);
+        const stats = this.q('.pb-end-stats');
+        stats.innerHTML = '';
+        if (asked.length) {
+            [[first + '/' + asked.length, this.str('rightfirst'), 'is-green'],
+                [String(answers), this.str('answerstotal'), 'is-indigo'],
+                [this.str('timespent', minutes), this.str('timelabel'), 'is-grey']].forEach(([big, small, cls]) => {
+                stats.insertAdjacentHTML('beforeend', '<div class="pb-end-stat ' + cls + '"><strong>' + esc(big) +
+                    '</strong>' + (small ? '<span>' + esc(small) + '</span>' : '') + '</div>');
+            });
+        }
         const actions = this.q('.pb-end-actions');
         actions.innerHTML = '';
         actions.appendChild(this.button(this.str('readagain'), 'pb-btn pb-btn-ghost', () => this.go(0)));
@@ -603,6 +740,53 @@ class Player {
         back.href = this.data.courseurl;
         back.textContent = this.str('backtocourse');
         actions.appendChild(back);
+
+        const results = this.q('.pb-end-results');
+        results.hidden = !asked.length;
+        if (asked.length) {
+            let rows = '';
+            asked.forEach((p) => {
+                const num = this.pages.indexOf(p) + 1;
+                const tries = Math.max(1, p.attempts || 0);
+                let label = this.str('notyet');
+                let cls = 'is-notyet';
+                if (p.passed) {
+                    label = tries === 1 ? this.str('firsttry') : this.str('ntries', tries);
+                    cls = tries === 1 ? 'is-first' : (tries === 2 ? 'is-second' : 'is-more');
+                }
+                let dots = '';
+                for (let d = 0; d < Math.min(tries, 5); d++) {
+                    const last = d === Math.min(tries, 5) - 1;
+                    dots += '<i class="' + (last && p.passed ? cls : '') + '"></i>';
+                }
+                rows += '<li class="pb-result"><span class="pb-result-num">' + num + '</span>' +
+                    '<span class="pb-result-name"><strong>' + p.title + '</strong><span>' +
+                    esc(this.str('qtype_' + p.question.type)) + '</span></span>' +
+                    '<span class="pb-result-dots" aria-hidden="true">' + dots + '</span>' +
+                    '<span class="pb-result-label ' + cls + '">' + esc(label) + '</span></li>';
+            });
+            results.innerHTML = '<div class="pb-results-head"><h3>' + esc(this.str('yourresults')) + '</h3></div>' +
+                '<ol class="pb-results-list">' + rows + '</ol>';
+        }
+
+        // Confetti (skipped when the learner prefers less motion) and the success sound.
+        const confetti = this.q('.pb-confetti');
+        confetti.innerHTML = '';
+        const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!still) {
+            const colours = ['#4338CA', '#12B76A', '#F79009', '#F04438', '#0BA5EC', '#EE46BC', '#FDB022'];
+            for (let c = 0; c < 70; c++) {
+                const bit = document.createElement('i');
+                bit.style.left = (Math.random() * 100).toFixed(1) + '%';
+                bit.style.background = colours[c % colours.length];
+                bit.style.animationDelay = (Math.random() * 1.4).toFixed(2) + 's';
+                bit.style.animationDuration = (2.6 + Math.random() * 1.8).toFixed(2) + 's';
+                bit.style.setProperty('--pb-drift', ((Math.random() - 0.5) * 160).toFixed(0) + 'px');
+                bit.className = c % 3 === 0 ? 'is-round' : '';
+                confetti.appendChild(bit);
+            }
+        }
+        window.setTimeout(() => Sounds.play('fanfare'), 250);
         this.q('.pb-pageindicator').textContent = '';
         this.scrollIntoPlace();
     }
@@ -634,8 +818,13 @@ class Player {
         }
         const forward = index >= this.current;
         this.leaveSlide();
+        if (this.returnTo !== null && index !== this.current) {
+            this.revisitHeard = false;
+        }
         this.current = index;
         this.slideDone = false;
+        this.answered = false;
+        this.feedbackClip = null;
         this.hideSections();
         this.q('.pb-controls').hidden = false;
 
@@ -646,7 +835,7 @@ class Player {
         } else if (step.type === 'recap') {
             section = this.renderRecap(step);
         } else {
-            section = this.renderQuiz(step);
+            section = this.renderQuestion(step);
         }
         section.hidden = false;
         section.classList.remove('is-turning-forward', 'is-turning-back');
@@ -654,8 +843,14 @@ class Player {
         section.classList.add(forward ? 'is-turning-forward' : 'is-turning-back');
 
         let nextLabel = index === this.steps.length - 1 ? this.str('finish') : this.str('next');
+        const following = this.steps[index + 1];
+        if (step.type === 'recap' && following && following.type === 'question') {
+            nextLabel = this.str('startcheck');
+        } else if (step.type === 'question' && following && following.type === 'question') {
+            nextLabel = this.str('nextquestion');
+        }
         if (this.returnTo !== null && step.type === 'page') {
-            nextLabel = this.str('backtoquiz');
+            nextLabel = this.str('backtoquestion', this.steps[this.returnTo].n);
         }
         this.q('.pb-next-label').textContent = nextLabel;
         this.q('.pb-pageindicator').textContent = step.type === 'page'
@@ -669,8 +864,11 @@ class Player {
             this.track('view');
             this.startHeartbeat();
         }
-        // True/false statements are read straight away; other slides wait for Listen unless autoplay is on.
-        if ((step.type === 'quiz' && step.current !== null) || (step.type !== 'quiz' && this.data.autoplay)) {
+        // Questions are read straight away, and so is a page the learner chose to listen to again; other slides
+        // wait for Listen unless autoplay is on.
+        const page = step.type === 'question' ? this.pages[step.page] : null;
+        const revisit = this.returnTo !== null && step.type === 'page';
+        if ((page && !page.passed && !page.relisten) || revisit || (step.type !== 'question' && this.data.autoplay)) {
             this.narrate(650);
         }
     }
@@ -700,9 +898,7 @@ class Player {
         if (nextPage && nextPage.image) {
             (new Image()).src = nextPage.image;
         }
-        const banner = this.q('.pb-banner');
-        banner.hidden = this.returnTo === null;
-        banner.textContent = this.returnTo === null ? '' : this.str('revisit');
+        this.renderRevisitBanner();
 
         this.q('.pb-spread .pb-page-label').textContent = this.str('pageof', {page: step.page + 1, total: this.pages.length});
         this.q('.pb-spread .pb-page-title').innerHTML = page.title;
@@ -730,6 +926,7 @@ class Player {
      * @returns {HTMLElement}
      */
     renderRecap(step) {
+        Sounds.play('sparkle');
         this.q('.pb-recap-label').textContent = this.str('recapsubtitle', {from: step.from, to: step.to});
         this.q('.pb-recap-title').textContent = this.str('recaptitle');
         const mosaic = this.q('.pb-recap-mosaic');
@@ -759,122 +956,611 @@ class Player {
     }
 
     /**
-     * Render the current true/false statement of a quiz step.
+     * The banner on a page the learner is listening to again: why they are here, and the way back.
+     */
+    renderRevisitBanner() {
+        const banner = this.q('.pb-banner');
+        if (this.returnTo === null) {
+            banner.hidden = true;
+            banner.innerHTML = '';
+            return;
+        }
+        const n = this.steps[this.returnTo].n;
+        const ready = this.revisitHeard;
+        banner.hidden = false;
+        banner.classList.toggle('is-ready', ready);
+        banner.innerHTML = '<span class="pb-banner-icon">' + HEADPHONES_SVG + '</span>' +
+            '<span class="pb-banner-text"><strong>' + esc(this.str('relistentitle', n)) + '</strong>' +
+            '<span>' + esc(this.str('relistentext')) + '</span></span>';
+        const back = this.button('', 'pb-btn pb-banner-back', () => this.backToQuestion());
+        back.innerHTML = (ready ? BACK_SVG : LOCK_SVG) + '<span>' + esc(this.str('backtoquestion', n)) + '</span>';
+        back.disabled = !ready;
+        banner.appendChild(back);
+    }
+
+    /**
+     * Render the check question of one page.
      *
      * @param {Object} step
      * @returns {HTMLElement}
      */
-    renderQuiz(step) {
-        const remaining = step.group.filter((i) => !this.pages[i].passed);
-        const dots = this.q('.pb-quiz-dots');
-        dots.innerHTML = '';
-        step.group.forEach((i) => {
-            const dot = document.createElement('span');
-            dot.className = 'pb-quiz-dot' + (this.pages[i].passed ? ' is-passed' : '');
-            dots.appendChild(dot);
-        });
-        this.q('.pb-quiz-title').textContent = this.str('quiztitle');
-        const feedback = this.q('.pb-quiz-feedback');
-        feedback.textContent = '';
-        feedback.className = 'pb-quiz-feedback';
-        const statement = this.q('.pb-quiz-statement');
-        statement.className = 'pb-quiz-statement';
-        const answers = this.q('.pb-quiz-answers');
-        const img = this.q('.pb-quiz-image');
+    renderQuestion(step) {
+        const section = this.q('.pb-question');
+        const page = this.pages[step.page];
+        const q = page.question;
+        section.dataset.type = q.type;
 
-        if (!remaining.length) {
-            step.current = null;
-            this.q('.pb-quiz-label').textContent = this.str('quiztoc', {from: step.from, to: step.to});
-            statement.textContent = this.str('quizdone');
-            statement.classList.add('is-done');
-            answers.hidden = true;
-            const last = this.pages[step.group[step.group.length - 1]];
-            img.hidden = !last.image;
-            img.src = last.image || '';
-            img.alt = last.alt || '';
-            return this.q('.pb-quiz');
-        }
-        step.current = remaining[0];
-        const page = this.pages[step.current];
-        const n = step.group.indexOf(step.current) + 1;
-        this.q('.pb-quiz-label').textContent = this.str('quizof', {n, total: step.group.length});
-        statement.innerHTML = page.statement;
-        statement.style.setProperty('--pb-i', 0);
-        answers.hidden = false;
-        answers.querySelectorAll('button').forEach((b) => {
-            b.disabled = false;
+        const banner = this.q('.pb-q-banner');
+        banner.hidden = !this.welcomeBack;
+        banner.innerHTML = this.welcomeBack ? BACK_SVG + '<span>' + esc(this.str('welcomeback', step.page + 1)) + '</span>' : '';
+        this.welcomeBack = false;
+
+        this.q('.pb-q-pills').innerHTML = '<span class="pb-q-pill pb-q-pill--type"><svg viewBox="0 0 24 24" aria-hidden="true" ' +
+            'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+            TYPE_ICONS[q.type] + '</svg>' + esc(this.str('qtype_' + q.type)) + '</span>' +
+            '<span class="pb-q-pill">' + esc(this.str('frompage', step.page + 1)) + ' · ' + page.title + '</span>';
+        this.q('.pb-q-label').textContent = this.str('checkx', step.check) + ' · ' +
+            this.str('questionof', {n: step.n, total: step.total});
+        const segs = this.q('.pb-q-segs');
+        segs.innerHTML = '';
+        this.steps.filter((s) => s.type === 'question' && s.check === step.check).forEach((s) => {
+            const seg = document.createElement('span');
+            const p = this.pages[s.page];
+            let state = 'todo';
+            if (p.passed) {
+                state = 'done';
+            } else if (s === step) {
+                state = p.relisten ? 'retry' : 'now';
+            } else if (p.relisten) {
+                state = 'retry';
+            }
+            seg.className = 'pb-q-seg is-' + state;
+            segs.appendChild(seg);
         });
-        img.hidden = !page.image;
-        img.src = page.image || '';
-        img.alt = page.alt || '';
-        return this.q('.pb-quiz');
+
+        const prompt = this.q('.pb-q-prompt');
+        prompt.className = 'pb-q-prompt' + (q.type === 'truefalse' ? ' pb-q-prompt--statement' : '');
+        prompt.innerHTML = q.prompt;
+        this.q('.pb-q-ask').textContent = q.type === 'truefalse' ? this.str('qtype_truefalse') + '?' : '';
+        this.q('.pb-q-ask').hidden = q.type !== 'truefalse';
+
+        const body = this.q('.pb-q-body');
+        body.innerHTML = '';
+        body.className = 'pb-q-body pb-q-body--' + q.type;
+        this.response = null;
+        this.selected = null;
+        if (q.type === 'truefalse') {
+            this.renderTrueFalse(body, page);
+        } else if (q.type === 'pick') {
+            this.renderPick(body, page);
+        } else if (q.type === 'match') {
+            this.response = {pairs: {}};
+            this.renderMatch(body, page);
+        } else {
+            this.response = {items: {}};
+            this.renderSort(body, page);
+        }
+
+        const check = this.q('.pb-q-check');
+        check.textContent = this.str('checkanswer');
+        check.hidden = q.type === 'truefalse';
+        check.onclick = () => this.submit();
+        this.q('.pb-q-panel').hidden = true;
+        this.q('.pb-q-panel').innerHTML = '';
+        this.updateCheck();
+
+        if (page.passed) {
+            this.lockAnswers(true);
+            check.hidden = true;
+            this.showPanel('done', page);
+        } else if (page.relisten) {
+            this.lockAnswers(true);
+            check.hidden = true;
+            this.showPanel('wrong', page);
+        }
+        return section;
     }
 
     /**
-     * The learner answered the current statement.
+     * True or false: two big buttons that answer straight away.
      *
-     * @param {boolean} value
+     * @param {HTMLElement} body
+     * @param {Object} page
      */
-    async answer(value) {
+    renderTrueFalse(body, page) {
+        const tried = this.wrong[page.id] || [];
+        [[true, 'true', TICK_SVG], [false, 'false', CROSS_SVG]].forEach(([value, key, icon]) => {
+            const btn = this.button('', 'pb-tf pb-tf--' + key, () => {
+                Sounds.play('pop');
+                btn.classList.add('is-chosen');
+                this.response = {value};
+                this.submit(btn);
+            });
+            btn.dataset.tick = '1';
+            btn.dataset.value = key;
+            btn.innerHTML = '<span class="pb-tf-icon">' + icon + '</span><span>' + esc(this.str(key)) + '</span>';
+            if (tried.includes(key)) {
+                btn.classList.add('is-tried');
+                btn.disabled = true;
+            }
+            body.appendChild(btn);
+        });
+    }
+
+    /**
+     * Pick the picture: four cards (pictures, or text cards when the lesson has no option pictures).
+     *
+     * @param {HTMLElement} body
+     * @param {Object} page
+     */
+    renderPick(body, page) {
+        const tried = this.wrong[page.id] || [];
+        const pictures = page.question.options.some((o) => o.image);
+        body.classList.toggle('is-text', !pictures);
+        page.question.options.forEach((option, i) => {
+            const card = this.button('', 'pb-pick', () => {
+                if (card.disabled) {
+                    return;
+                }
+                Sounds.play('pop');
+                body.querySelectorAll('.pb-pick').forEach((c) => {
+                    c.classList.toggle('is-selected', c === card);
+                    c.setAttribute('aria-pressed', c === card ? 'true' : 'false');
+                });
+                this.response = {choice: i};
+                this.updateCheck();
+            });
+            card.dataset.tick = '1';
+            card.dataset.choice = String(i);
+            card.setAttribute('aria-pressed', 'false');
+            card.style.setProperty('--pb-i', i);
+            const key = String.fromCharCode(65 + i);
+            let media = '';
+            if (pictures) {
+                media = option.image ? '<img class="pb-pick-img" src="' + esc(option.image) + '" alt="' + option.alt + '">'
+                    : '<span class="pb-pick-img is-empty" aria-hidden="true"></span>';
+            }
+            card.innerHTML = media + '<span class="pb-pick-label"><span class="pb-pick-key">' + key + '</span>' +
+                '<span>' + option.label + '</span></span>';
+            if (tried.includes(i)) {
+                card.classList.add('is-tried');
+                card.disabled = true;
+            }
+            body.appendChild(card);
+        });
+    }
+
+    /**
+     * Match them up: tap a left item, then its partner on the right.
+     *
+     * @param {HTMLElement} body
+     * @param {Object} page
+     */
+    renderMatch(body, page) {
+        const q = page.question;
+        const left = document.createElement('div');
+        left.className = 'pb-match-col';
+        const right = document.createElement('div');
+        right.className = 'pb-match-col';
+        q.lefts.forEach((text, i) => {
+            const btn = this.button('', 'pb-match-item pb-match-left', () => this.matchLeft(i));
+            btn.dataset.tick = '1';
+            btn.dataset.left = String(i);
+            btn.innerHTML = '<span class="pb-match-badge" aria-hidden="true"></span><span>' + text + '</span>';
+            left.appendChild(btn);
+        });
+        q.rights.forEach((item) => {
+            const btn = this.button('', 'pb-match-item pb-match-right', () => this.matchRight(item.key));
+            btn.dataset.tick = '1';
+            btn.dataset.key = item.key;
+            btn.innerHTML = '<span class="pb-match-badge" aria-hidden="true"></span><span>' + item.text + '</span>';
+            right.appendChild(btn);
+        });
+        body.appendChild(left);
+        body.appendChild(right);
+        this.paintMatch();
+    }
+
+    /**
+     * A left match item was tapped.
+     *
+     * @param {number} i
+     */
+    matchLeft(i) {
+        const pairs = this.response.pairs;
+        if (pairs[i] !== undefined) {
+            delete pairs[i];
+            this.selected = i;
+        } else {
+            this.selected = this.selected === i ? null : i;
+        }
+        Sounds.play('pop');
+        this.paintMatch();
+    }
+
+    /**
+     * A right match item was tapped.
+     *
+     * @param {string} key
+     */
+    matchRight(key) {
+        const pairs = this.response.pairs;
+        const owner = Object.keys(pairs).find((l) => pairs[l] === key);
+        if (this.selected === null) {
+            if (owner !== undefined) {
+                delete pairs[owner];
+                this.selected = Number(owner);
+                Sounds.play('pop');
+                this.paintMatch();
+            }
+            return;
+        }
+        if (owner !== undefined) {
+            delete pairs[owner];
+        }
+        pairs[this.selected] = key;
+        this.selected = null;
+        Sounds.play('clack');
+        this.paintMatch();
+    }
+
+    /**
+     * Show the matched pairs (same colour and number on both sides) and the selected item.
+     */
+    paintMatch() {
+        const body = this.q('.pb-q-body');
+        const pairs = this.response.pairs;
+        body.querySelectorAll('.pb-match-left').forEach((btn) => {
+            const i = Number(btn.dataset.left);
+            const paired = pairs[i] !== undefined;
+            btn.className = 'pb-match-item pb-match-left' + (paired ? ' is-paired pb-pair-' + (i % PAIR_COLOURS) : '') +
+                (this.selected === i ? ' is-selected' : '');
+            btn.setAttribute('aria-pressed', this.selected === i ? 'true' : 'false');
+            btn.querySelector('.pb-match-badge').textContent = paired ? String(i + 1) : '';
+        });
+        body.querySelectorAll('.pb-match-right').forEach((btn) => {
+            const owner = Object.keys(pairs).find((l) => pairs[l] === btn.dataset.key);
+            const paired = owner !== undefined;
+            const pair = paired ? ' is-paired pb-pair-' + (Number(owner) % PAIR_COLOURS) : '';
+            btn.className = 'pb-match-item pb-match-right' + pair +
+                (this.selected !== null && !paired ? ' is-target' : '');
+            btn.querySelector('.pb-match-badge').textContent = paired ? String(Number(owner) + 1) : '';
+        });
+        this.updateCheck();
+    }
+
+    /**
+     * Sort into groups: tap (or drag) a card, then tap the group it belongs in.
+     *
+     * @param {HTMLElement} body
+     * @param {Object} page
+     */
+    renderSort(body, page) {
+        const q = page.question;
+        const tray = document.createElement('div');
+        tray.className = 'pb-sort-tray';
+        tray.innerHTML = '<span class="pb-sort-traylabel">' + esc(this.str('stilltosort')) + '</span>';
+        tray.addEventListener('click', (e) => {
+            if (!e.target.closest('.pb-chip-item') && this.selected !== null) {
+                this.place(this.selected, null);
+            }
+        });
+        this.dropTarget(tray, null);
+        body.appendChild(tray);
+        const groups = document.createElement('div');
+        groups.className = 'pb-sort-groups';
+        q.groups.forEach((name, g) => {
+            const bucket = document.createElement('div');
+            bucket.className = 'pb-bucket pb-bucket--' + g;
+            bucket.dataset.group = String(g);
+            const head = this.button('', 'pb-bucket-head', () => {
+                if (this.selected !== null) {
+                    this.place(this.selected, g);
+                }
+            });
+            head.dataset.tick = '1';
+            head.innerHTML = '<span class="pb-bucket-name">' + name + '</span><span class="pb-bucket-drop">' +
+                esc(this.str('dropin')) + '</span>';
+            bucket.appendChild(head);
+            const list = document.createElement('div');
+            list.className = 'pb-bucket-list';
+            bucket.appendChild(list);
+            bucket.addEventListener('click', (e) => {
+                if (!e.target.closest('.pb-chip-item, .pb-bucket-head') && this.selected !== null) {
+                    this.place(this.selected, g);
+                }
+            });
+            this.dropTarget(bucket, g);
+            groups.appendChild(bucket);
+        });
+        body.appendChild(groups);
+        q.items.forEach((item) => {
+            const chip = this.button('', 'pb-chip-item', () => {
+                this.selected = this.selected === item.index ? null : item.index;
+                Sounds.play('pop');
+                this.paintSort();
+            });
+            chip.dataset.tick = '1';
+            chip.dataset.item = String(item.index);
+            chip.draggable = true;
+            chip.innerHTML = '<span class="pb-chip-grip" aria-hidden="true">⋮⋮</span><span>' + item.text + '</span>';
+            chip.addEventListener('dragstart', (e) => {
+                this.selected = item.index;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(item.index));
+                this.paintSort();
+            });
+            tray.appendChild(chip);
+        });
+        this.paintSort();
+    }
+
+    /**
+     * Let cards be dropped on a group (or back on the tray, group null).
+     *
+     * @param {HTMLElement} el
+     * @param {number|null} group
+     */
+    dropTarget(el, group) {
+        el.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            el.classList.add('is-over');
+        });
+        el.addEventListener('dragleave', () => el.classList.remove('is-over'));
+        el.addEventListener('drop', (e) => {
+            e.preventDefault();
+            el.classList.remove('is-over');
+            const index = Number(e.dataTransfer.getData('text/plain'));
+            if (!Number.isNaN(index)) {
+                this.place(index, group);
+            }
+        });
+    }
+
+    /**
+     * Put a card in a group (or back on the tray).
+     *
+     * @param {number} index
+     * @param {number|null} group
+     */
+    place(index, group) {
+        if (group === null) {
+            delete this.response.items[index];
+        } else {
+            this.response.items[index] = group;
+        }
+        this.selected = null;
+        Sounds.play('pop');
+        this.paintSort();
+    }
+
+    /**
+     * Move every card to where it has been put.
+     */
+    paintSort() {
+        const body = this.q('.pb-q-body');
+        const tray = body.querySelector('.pb-sort-tray');
+        body.querySelectorAll('.pb-chip-item').forEach((chip) => {
+            const i = Number(chip.dataset.item);
+            const g = this.response.items[i];
+            const home = g === undefined ? tray : body.querySelector('.pb-bucket--' + g + ' .pb-bucket-list');
+            if (chip.parentNode !== home) {
+                home.appendChild(chip);
+            }
+            chip.classList.toggle('is-selected', this.selected === i);
+            chip.setAttribute('aria-pressed', this.selected === i ? 'true' : 'false');
+        });
+        body.querySelectorAll('.pb-bucket').forEach((b) => b.classList.toggle('is-target', this.selected !== null));
+        tray.classList.toggle('is-empty', !tray.querySelector('.pb-chip-item'));
+        this.updateCheck();
+    }
+
+    /**
+     * Enable "Check answer" once the answer is complete, and say what is left to do.
+     */
+    updateCheck() {
         const step = this.step();
-        if (!step || step.type !== 'quiz' || step.current === null) {
+        if (!step || step.type !== 'question') {
+            return;
+        }
+        const q = this.pages[step.page].question;
+        let ready = false;
+        let hint = '';
+        if (q.type === 'pick') {
+            ready = this.response !== null;
+            hint = this.str('pickhint');
+        } else if (q.type === 'match') {
+            const done = Object.keys(this.response.pairs).length;
+            ready = done === q.lefts.length;
+            hint = this.str('tapmatch') + ' · ' + this.str('matchedof', {done, total: q.lefts.length});
+        } else if (q.type === 'sort') {
+            ready = Object.keys(this.response.items).length === q.items.length;
+            hint = this.str('tapsort');
+        }
+        const check = this.q('.pb-q-check');
+        check.disabled = !ready;
+        this.q('.pb-q-hint').textContent = hint;
+    }
+
+    /**
+     * Stop (or allow) any further answering on the current question.
+     *
+     * @param {boolean} locked
+     */
+    lockAnswers(locked) {
+        this.q('.pb-q-body').querySelectorAll('button').forEach((b) => {
+            if (locked) {
+                b.disabled = true;
+            } else if (!b.classList.contains('is-tried')) {
+                b.disabled = false;
+            }
+        });
+        this.q('.pb-q-check').disabled = locked;
+    }
+
+    /**
+     * Send the answer to be checked on the server.
+     *
+     * @param {HTMLElement} [chosen] the true/false button pressed
+     */
+    async submit(chosen) {
+        const step = this.step();
+        if (!step || step.type !== 'question' || this.response === null) {
             return;
         }
         const stepIndex = this.current;
-        const pageIndex = step.current;
-        const page = this.pages[pageIndex];
-        const buttons = this.q('.pb-quiz-answers').querySelectorAll('button');
-        buttons.forEach((b) => {
-            b.disabled = true;
-        });
+        const page = this.pages[step.page];
+        const response = this.response;
+        this.lockAnswers(true);
         this.stopAudio();
         this.setListenState('idle');
         let result;
         try {
             result = await Ajax.call([{
-                methodname: 'mod_visuallearning_answer_statement',
-                args: {cmid: this.data.cmid, pageid: page.id, answer: value},
+                methodname: 'mod_visuallearning_answer_question',
+                args: {cmid: this.data.cmid, pageid: page.id, response: JSON.stringify(response)},
             }])[0];
         } catch (err) {
             Notification.exception(err);
-            buttons.forEach((b) => {
-                b.disabled = false;
-            });
+            this.lockAnswers(false);
             return;
         }
-        const statement = this.q('.pb-quiz-statement');
-        const feedback = this.q('.pb-quiz-feedback');
+        if (this.current !== stepIndex) {
+            return;
+        }
+        page.attempts = result.attempts;
+        const body = this.q('.pb-q-body');
+        const type = page.question.type;
+        let el = chosen || null;
+        if (type === 'pick') {
+            el = body.querySelector('.pb-pick[data-choice="' + response.choice + '"]');
+        }
+        this.q('.pb-q-check').hidden = true;
         if (result.correct) {
             page.passed = true;
-            statement.classList.add('is-correct');
-            feedback.textContent = this.str('correct');
-            feedback.className = 'pb-quiz-feedback is-correct';
-            this.q('.pb-quiz-dots').children[step.group.indexOf(pageIndex)].classList.add('is-passed');
-            await wait(1300);
-            if (this.current !== stepIndex) {
-                return;
+            page.relisten = false;
+            this.answered = true;
+            Sounds.play('chime');
+            body.classList.add('is-correct');
+            if (el) {
+                el.classList.add('is-right');
             }
-            this.renderQuiz(step);
-            if (step.current !== null) {
-                this.narrate(300);
+            this.renderSegments(step);
+            this.showPanel('right', page, result);
+            this.feedbackClip = result.feedback ? {el: this.q('.pb-q-panel'), urls: [result.feedbackaudio],
+                text: result.feedback} : null;
+            this.updateNext();
+            if (this.feedbackClip && result.feedbackaudio) {
+                this.narrate(500);
             } else {
                 this.slideDone = true;
-                this.setListenState('done');
                 this.pulseNext();
             }
-            this.updateNext();
-        } else {
-            statement.classList.add('is-wrong');
-            feedback.textContent = this.str('incorrect');
-            feedback.className = 'pb-quiz-feedback is-wrong';
-            await wait(1900);
-            if (this.current !== stepIndex) {
-                return;
-            }
-            // Revisit the concept page, then come back to this statement.
-            this.returnTo = stepIndex;
-            this.go(this.steps.findIndex((s) => s.type === 'page' && s.page === pageIndex));
+            return;
         }
+        Sounds.play('bonk');
+        page.relisten = result.relisten;
+        const tried = this.wrong[page.id] || [];
+        if (type === 'pick') {
+            tried.push(response.choice);
+        } else if (type === 'truefalse') {
+            tried.push(response.value ? 'true' : 'false');
+        }
+        this.wrong[page.id] = tried;
+        this.saveTried();
+        body.classList.add('is-wrong');
+        if (el) {
+            el.classList.add('is-wrongchoice');
+        }
+        this.renderSegments(step);
+        this.showPanel('wrong', page, result);
+        this.updateNext();
+    }
+
+    /**
+     * Remember the choices already tried in this browser tab (a nicety: nothing depends on it).
+     */
+    saveTried() {
+        try {
+            window.sessionStorage.setItem('mod_visuallearning_tried_' + this.data.cmid, JSON.stringify(this.wrong));
+        } catch (e) {
+            // Not remembered: storage blocked.
+        }
+    }
+
+    /**
+     * Repaint the question progress segments of the current check.
+     *
+     * @param {Object} step
+     */
+    renderSegments(step) {
+        const segs = this.q('.pb-q-segs').children;
+        this.steps.filter((s) => s.type === 'question' && s.check === step.check).forEach((s, i) => {
+            const p = this.pages[s.page];
+            let state = 'todo';
+            if (p.passed) {
+                state = 'done';
+            } else if (p.relisten) {
+                state = 'retry';
+            } else if (s === step) {
+                state = 'now';
+            }
+            if (segs[i]) {
+                segs[i].className = 'pb-q-seg is-' + state;
+            }
+        });
+    }
+
+    /**
+     * The panel beside a question: right (feedback), wrong (go back and listen) or done (answered earlier).
+     *
+     * @param {string} kind right, wrong or done
+     * @param {Object} page
+     * @param {Object} [result]
+     */
+    showPanel(kind, page, result) {
+        const panel = this.q('.pb-q-panel');
+        panel.className = 'pb-q-panel is-' + kind;
+        panel.hidden = false;
+        const num = this.pages.indexOf(page) + 1;
+        if (kind === 'wrong') {
+            panel.setAttribute('role', 'alert');
+            const thumb = page.image ? '<img src="' + esc(page.image) + '" alt="">' : '<span class="is-empty"></span>';
+            panel.innerHTML = '<div class="pb-q-panel-head"><span class="pb-q-panel-icon">' + HEADPHONES_SVG + '</span>' +
+                '<strong>' + esc(this.str('notquite')) + '</strong></div>' +
+                '<p>' + this.str('notquitetext', {page: num, title: page.title}) + '</p>' +
+                '<div class="pb-q-thumb">' + thumb + '<span><strong>' + esc(this.str('frompage', num)) + '</strong>' +
+                '<span>' + page.title + '</span></span></div>';
+            const go = this.button('', 'pb-btn pb-btn-primary pb-q-golisten', () => this.goListen());
+            go.innerHTML = BACK_SVG + '<span>' + esc(this.str('golisten', num)) + '</span>';
+            panel.appendChild(go);
+            const note = document.createElement('span');
+            note.className = 'pb-q-note';
+            note.textContent = this.str('attemptx', page.attempts) + ' · ' + this.str('nopenalty');
+            panel.appendChild(note);
+            window.setTimeout(() => go.focus({preventScroll: true}), 350);
+            return;
+        }
+        panel.setAttribute('role', 'status');
+        const tries = page.attempts <= 1 ? this.str('gotfirst') : this.str('gotnth', page.attempts);
+        const feedback = result && result.feedback ? '<p>' + result.feedback + '</p>' : '';
+        panel.innerHTML = '<div class="pb-q-panel-head"><span class="pb-q-panel-icon is-tick">' + TICK_SVG + '</span>' +
+            '<strong>' + esc(kind === 'right' ? this.str('thatsit') : this.str('correct')) + '</strong></div>' +
+            feedback + '<span class="pb-q-note">' + esc(tries) + '</span>';
+    }
+
+    /**
+     * "Go back and listen": open the question's page, read it again, and come back here.
+     */
+    goListen() {
+        const step = this.step();
+        if (!step || step.type !== 'question') {
+            return;
+        }
+        this.returnTo = this.current;
+        this.revisitHeard = false;
+        Sounds.play('swoosh');
+        this.go(this.steps.findIndex((s) => s.type === 'page' && s.page === step.page));
     }
 
     /**
@@ -885,15 +1571,23 @@ class Player {
         const hint = this.q('.pb-listen-hint');
         const step = this.step();
         const show = this.canAdvance();
-        nextBtn.classList.toggle('is-visible', show);
+        // After a wrong answer Next stays on screen, locked, so the learner sees it is waiting for them.
+        const locked = !show && !!step && step.type === 'question' && this.pages[step.page].relisten;
+        nextBtn.classList.toggle('is-visible', show || locked);
         nextBtn.disabled = !show;
         nextBtn.setAttribute('aria-hidden', show ? 'false' : 'true');
         let hintText = '';
-        if (!show && step && step.type !== 'quiz') {
+        if (!show && step && step.type === 'question' && this.pages[step.page].relisten) {
+            hintText = this.str('nextlocked', step.page + 1);
+        } else if (!show && step && step.type !== 'question') {
             hintText = this.narrating ? this.str('listenfirst') : this.str('pressplay');
         }
-        hint.textContent = hintText;
+        hint.innerHTML = hintText && step.type === 'question' ? LOCK_SVG + '<span>' + esc(hintText) + '</span>'
+            : esc(hintText);
+        hint.classList.toggle('is-locked', !!hintText && step.type === 'question');
         hint.hidden = hintText === '';
+        nextBtn.classList.toggle('is-locked', locked);
+        nextBtn.setAttribute('aria-hidden', show || locked ? 'false' : 'true');
     }
 
     /**
@@ -951,11 +1645,11 @@ class Player {
                 text: this.pages[i].summary,
             }));
         }
-        if (step.current === null) {
-            return [];
+        const page = this.pages[step.page];
+        if (this.answered && this.feedbackClip) {
+            return [this.feedbackClip];
         }
-        const page = this.pages[step.current];
-        return [{el: this.q('.pb-quiz-statement'), urls: [page.statementaudio], text: page.statement}];
+        return [{el: this.q('.pb-q-prompt'), urls: [page.questionaudio], text: page.question.prompt}];
     }
 
     /**
@@ -971,7 +1665,7 @@ class Player {
         if (!step || !clips.length) {
             return;
         }
-        if (step.type !== 'quiz') {
+        if (step.type !== 'question') {
             clips.forEach((c) => {
                 c.el.classList.remove('is-speaking', 'is-done');
                 c.el.classList.add('is-waiting');
@@ -1068,7 +1762,17 @@ class Player {
         const step = this.step();
         if (step.type === 'page') {
             const page = this.pages[step.page];
-            if (!page.listened) {
+            if (this.returnTo !== null) {
+                // Heard again in full: its question is unlocked (on the server too).
+                this.revisitHeard = true;
+                const question = this.pages[this.steps[this.returnTo].page];
+                question.relisten = false;
+                page.listened = true;
+                this.track('listened');
+                this.updateProgress();
+                this.renderRevisitBanner();
+                Sounds.play('chime');
+            } else if (!page.listened) {
                 page.listened = true;
                 this.track('listened');
                 this.updateProgress();
@@ -1077,7 +1781,7 @@ class Player {
             this.recapHeard.add(this.current);
         }
         this.updateNext();
-        if (step.type !== 'quiz') {
+        if (step.type !== 'question' || this.answered) {
             this.pulseNext();
         }
     }

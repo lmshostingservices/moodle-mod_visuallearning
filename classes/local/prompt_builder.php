@@ -39,7 +39,7 @@ class prompt_builder {
     public const CULTURE_INTERNATIONAL = 'international';
 
     /**
-     * The country or region the book's imagery reflects, or '' for international.
+     * The country or region the lesson's imagery reflects, or '' for international.
      *
      * @param \stdClass $book
      * @return string
@@ -89,11 +89,14 @@ class prompt_builder {
         $content = trim((string)$book->sourcecontent);
         $title = trim((string)$book->name);
         $place = self::culture($book);
+        $quiz = !empty($book->enablequiz);
+        $questionstep = $quiz ? self::question_brief($book, $language) : '- "question": null (this book has no check questions).';
+        $questionexample = $quiz ? self::question_example($book) : '"question": null,';
 
         if ($place !== '') {
             $cultureline = $place;
             $culturestep = <<<CULTURE
-The learners live and work in {$place}, so the whole book must feel local to {$place}:
+The learners live and work in {$place}, so the whole lesson must feel local to {$place}:
 - Characters have names that are common in {$place}, and look like people who live and work there.
 - Workplaces, tools, uniforms, food, drink, celebrations, transport, homes and streets are the ones
   people in {$place} really use. Example: a team-bonding dinner in Spain might be paella at a local
@@ -114,20 +117,20 @@ CULTURE;
         }
 
         return <<<PROMPT
-PICTURE BOOK LEARNING - CONTENT GENERATION BRIEF
+VISUAL LEARNING LESSON - CONTENT GENERATION BRIEF
 ================================================
 
-You are an expert instructional designer, workplace trainer and children's picture-book author.
-Your job is to turn the teaching content below into a PICTURE BOOK for adult learners.
+You are an expert instructional designer, workplace trainer and illustrated-story author.
+Your job is to turn the teaching content below into an illustrated VISUAL LEARNING LESSON for adult learners.
 Every page teaches exactly ONE concept, shown as one illustration on the left and three short
 narrated cards on the right. A professional voice actor will read every card aloud, so write for the ear.
-After every four pages the learner hears a short recap and answers true/false questions, so each
-page also needs a one-sentence summary and one true/false statement.
+After every four pages the learner hears a short recap and then answers one check question about each
+of those pages, so each page also needs a one-sentence summary and one check question.
 
 ------------------------------------------------
 INPUTS
 ------------------------------------------------
-Book title: {$title}
+Lesson title: {$title}
 Industry: {$industryline}
 Sub-industry: {$subindustryline}
 Language for ALL learner-facing text: {$language} ({$book->language})
@@ -184,32 +187,29 @@ Example of ONE good page (topic: promoting teamwork, English, Australia):
   outcome: "The team gets to know each other better and starts to trust one another. Back at work,
             they share ideas and help each other more."
   summary: "Teams that take time to bond trust each other and work better together."
-  tf_statement: "Getting to know your teammates makes it harder to work together."
-  tf_answer: false
+  question: {"type": "truefalse", "statement": "Getting to know your teammates makes it harder to
+            work together.", "answer": false, "feedback": "Teammates who know each other trust each
+            other, so they work together more easily."}
   image_prompt: "A cheerful group of six co-workers of different ages sitting around a wooden table
             in a cosy Australian pub, laughing and talking over drinks. Maya, the supervisor, raises her
             glass in a friendly toast. Warm evening light through the windows."
 
 ------------------------------------------------
-STEP 4 - RECAP SENTENCE AND TRUE/FALSE CHECK
+STEP 4 - RECAP SENTENCE AND CHECK QUESTION
 ------------------------------------------------
 - "summary": ONE neat sentence (under 20 words) that captures the concept for the recap slide.
   Written in {$language}, to be read aloud.
-- "tf_statement": ONE clear statement in {$language} about this page's concept that is either
-  definitely true or definitely false according to the page. Test understanding of the concept,
-  not trivia (no names, numbers or wording tricks). Avoid "always", "never" and double negatives.
-- "tf_answer": true or false (a JSON boolean). Across the book, make roughly half the statements
-  false, mixed in no obvious pattern.
+{$questionstep}
 
 ------------------------------------------------
 STEP 5 - DESIGN THE ILLUSTRATIONS
 ------------------------------------------------
 - First define a "style_guide": 2-4 sentences of art direction that every illustration will share
   (based on the teacher's chosen style above: medium, line quality, colour palette, lighting, mood).
-- Then define a small recurring "characters" cast (2-5 people) who appear across the book, each with
+- Then define a small recurring "characters" cast (2-5 people) who appear across the lesson, each with
   a name and a precise visual description (age range, hair, skin tone, build, clothing / uniform that
   suits a {$where} workplace in {$cultureline}). Re-use these exact characters in the image prompts so
-  the book feels like one consistent story.
+  the lesson feels like one consistent story.
 - For each page write "image_prompt" IN ENGLISH, 40-90 words, describing ONE scene that shows the
   ACTION card exactly as described - the same people, place and activity, with the cultural setting
   from Step 2 (local setting, food, objects and customs). Describe: who is in the scene (use cast names
@@ -222,7 +222,7 @@ STEP 5 - DESIGN THE ILLUSTRATIONS
 - Image rules: illustrations only (never photographs or photorealism), NO text, words, letters, numbers,
   signs, logos or speech bubbles in the image, safe and respectful workplace imagery, one clear focal point.
 - "alt_text": one sentence in {$language} describing the image for screen-reader users.
-- Also write a "cover_image_prompt" (English, 40-90 words) for a welcoming book-cover illustration
+- Also write a "cover_image_prompt" (English, 40-90 words) for a welcoming cover illustration
   showing the cast in their workplace, representing the overall topic. No text on the cover image.
 
 ------------------------------------------------
@@ -249,8 +249,7 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
       "action": "string",
       "outcome": "string",
       "summary": "string",
-      "tf_statement": "string",
-      "tf_answer": true,
+      {$questionexample}
       "image_prompt": "string",
       "alt_text": "string"
     }
@@ -258,10 +257,99 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
 }
 
 Before you answer, silently check: maximum {$max} pages; one concept per page; every page has all
-ten keys; the action card and the image prompt describe the same scene; names, places, food and
-customs fit the learners' country; no text in any image prompt; tf_answer is a boolean; the JSON is
-valid (double quotes, no trailing commas).
+nine keys; the action card and the image prompt describe the same scene; names, places, food and
+customs fit the learners' country; no text in any image prompt; every question follows its type's
+exact shape and tests only its own page; the JSON is valid (double quotes, no trailing commas).
 PROMPT;
+    }
+
+    /**
+     * The check-question part of the brief, for the question types the lesson allows.
+     *
+     * @param \stdClass $book
+     * @param string $language
+     * @return string
+     */
+    public static function question_brief(\stdClass $book, string $language): string {
+        $types = question::allowed($book);
+        $max = question::MAX_PROMPT;
+        $label = question::MAX_LABEL;
+        $lines = [];
+        $lines[] = "- \"question\": ONE check question in {$language} that tests ONLY this page's concept. Test";
+        $lines[] = "  understanding, not trivia (no names, numbers or wording tricks). Avoid \"always\", \"never\" and";
+        $lines[] = "  double negatives. Statements and prompts at most {$max} characters; every option, pair, group";
+        $lines[] = "  and item text at most {$label} characters. Everything is read aloud, so write for the ear.";
+        $lines[] = "- Every question has \"feedback\": ONE sentence in {$language} that explains WHY the right";
+        $lines[] = "  answer is right. It is read aloud after the learner gets it right.";
+        if (count($types) > 1) {
+            $list = implode(', ', array_map(fn($t) => '"' . $t . '"', $types));
+            $lines[] = "- Use these types: {$list}. Rotate them so no two pages in a row use the same";
+            $lines[] = "  type, and pick the type that suits each concept best.";
+        } else {
+            $lines[] = "- Every question uses the type \"{$types[0]}\".";
+        }
+        $lines[] = "- The types and their exact shapes:";
+        foreach ($types as $type) {
+            $lines[] = self::question_shape($type, !empty($book->pickimages));
+        }
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The exact JSON shape of one question type, with its rules.
+     *
+     * @param string $type
+     * @param bool $pictures picture-pick options get their own pictures
+     * @return string
+     */
+    protected static function question_shape(string $type, bool $pictures): string {
+        switch ($type) {
+            case question::TRUEFALSE:
+                return <<<SHAPE
+  TRUE OR FALSE - one statement that is definitely true or definitely false according to the page.
+  Across the lesson, make roughly half of them false.
+    {"type": "truefalse", "statement": "string", "answer": true, "feedback": "string"}
+SHAPE;
+            case question::PICK:
+                $picture = $pictures ? <<<PIC
+  Each option also has an "image_prompt" IN ENGLISH (20-50 words) for a SQUARE illustration of that
+  option alone, in the lesson's style, with the same recurring characters and culture, and NO text in the
+  image; plus "alt_text" in the lesson's language.
+PIC
+                    : '  Options are shown as text cards, so leave "image_prompt" empty.';
+                return <<<SHAPE
+  PICK THE PICTURE - a question with EXACTLY 4 options, of which exactly one is right. The wrong options
+  are believable mistakes, not jokes. "correct" is the position of the right option (0 to 3); vary it.
+{$picture}
+    {"type": "pick", "prompt": "string", "correct": 1, "feedback": "string", "options": [
+      {"label": "string", "image_prompt": "string", "alt_text": "string"}, ... exactly 4 ]}
+SHAPE;
+            case question::MATCH:
+                return <<<SHAPE
+  MATCH THEM UP - 3 or 4 pairs; the learner matches each left item to its right item. Every left
+  item and every right item is different.
+    {"type": "match", "prompt": "string", "feedback": "string", "pairs": [
+      {"left": "string", "right": "string"}, ... 3 or 4 ]}
+SHAPE;
+            default:
+                return <<<SHAPE
+  SORT INTO GROUPS - exactly 2 groups and 4 to 6 short items; each item belongs to one group (0 or 1),
+  and each group gets at least one item.
+    {"type": "sort", "prompt": "string", "feedback": "string", "groups": ["string", "string"],
+      "items": [{"text": "string", "group": 0}, ... 4 to 6 ]}
+SHAPE;
+        }
+    }
+
+    /**
+     * The question line in the output example.
+     *
+     * @param \stdClass $book
+     * @return string
+     */
+    protected static function question_example(\stdClass $book): string {
+        $types = question::allowed($book);
+        return '"question": {"type": "' . $types[0] . '", "...": "the exact shape for its type, see Step 4"},';
     }
 
     /**

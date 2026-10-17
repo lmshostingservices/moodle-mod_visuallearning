@@ -19,7 +19,7 @@ namespace mod_visuallearning\task;
 use mod_visuallearning\local\ai\requests;
 
 /**
- * Sends confirmed LMS Labs requests of a book (pages, illustrations, voiceover clips) in the background.
+ * Sends confirmed LMS Labs requests of a lesson (pages, illustrations, voiceover clips) in the background.
  *
  * Each stored request is sent once, with its stored key and body. Nothing is retried after a failure or a
  * timeout, and this task never throws, so Moodle does not retry it either. The only repeat is asking again, with

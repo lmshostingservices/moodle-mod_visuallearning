@@ -120,6 +120,10 @@ class track_page extends external_api {
             $progress->lastping = $now;
         }
 
+        if ($params['action'] === 'listened') {
+            // Listening to the whole page again unlocks its check question after a wrong answer.
+            $progress->relisten = 0;
+        }
         $newlylistened = false;
         if ($params['action'] === 'listened' && !$progress->listened) {
             $progress->listened = 1;

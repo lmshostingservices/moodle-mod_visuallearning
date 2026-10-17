@@ -44,7 +44,9 @@ $PAGE->activityheader->disable();
 
 $pages = visuallearning_get_pages($book->id);
 $totalpages = count($pages);
-$totalstatements = count(array_filter($pages, fn($p) => trim((string)$p->tfstatement) !== ''));
+// Pages with a check question (any type).
+$asked = $book->enablequiz ? array_filter($pages, fn($p) => \mod_visuallearning\local\question::of_page($p) !== null) : [];
+$totalstatements = count($asked);
 
 // One learner, page by page.
 if ($userid) {
@@ -57,6 +59,7 @@ if ($userid) {
         get_string('listenedcol', 'mod_visuallearning'), get_string('timespent', 'mod_visuallearning'),
         get_string('views', 'mod_visuallearning'), get_string('firstviewed', 'mod_visuallearning'),
         get_string('timelistened', 'mod_visuallearning'),
+        get_string('qtype', 'mod_visuallearning'),
         get_string('tfattempts', 'mod_visuallearning'),
         get_string('tfcorrect', 'mod_visuallearning'),
     ];
@@ -70,8 +73,9 @@ if ($userid) {
             $p ? (int)$p->views : 0,
             $p && $p->timefirstviewed ? userdate($p->timefirstviewed, get_string('strftimedatetimeshort', 'langconfig')) : '—',
             $p && $p->timelistened ? userdate($p->timelistened, get_string('strftimedatetimeshort', 'langconfig')) : '—',
+            isset($asked[$page->id]) ? get_string('qtype_' . $page->qtype, 'mod_visuallearning') : '—',
             $p ? (int)$p->tfattempts : 0,
-            trim((string)$page->tfstatement) === '' ? '—' : ($p && $p->tfpassed ? '✔' : '✘'),
+            !isset($asked[$page->id]) ? '—' : ($p && $p->tfpassed ? '✔' : '✘'),
         ];
     }
     echo $OUTPUT->header();
@@ -107,6 +111,46 @@ $headers = [
 $hasquiz = $book->enablequiz && $totalstatements > 0;
 if ($hasquiz) {
     array_splice($headers, 4, 0, [get_string('tfcorrect', 'mod_visuallearning'), get_string('tfattempts', 'mod_visuallearning')]);
+}
+
+// Every learner's attempts at every question: [userid][pageid] => attempts and passed.
+$attempts = [];
+if ($asked && $rows) {
+    [$insql, $inparams] = $DB->get_in_or_equal(array_keys($asked), SQL_PARAMS_NAMED);
+    $records = $DB->get_recordset_select(
+        'visuallearning_progress',
+        "visuallearningid = :bookid AND pageid $insql",
+        $inparams + ['bookid' => $book->id],
+        '',
+        'id, userid, pageid, tfattempts, tfpassed'
+    );
+    foreach ($records as $record) {
+        $attempts[$record->userid][$record->pageid] = $record;
+    }
+    $records->close();
+}
+
+if ($download === 'attempts' && $asked) {
+    require_once($CFG->libdir . '/csvlib.class.php');
+    $csv = new csv_export_writer();
+    $csv->set_filename(clean_filename(format_string($book->name) . '-question-attempts'));
+    $head = [get_string('fullnameuser'), get_string('email')];
+    foreach ($asked as $page) {
+        $head[] = get_string('pagex', 'mod_visuallearning', (int)$page->pagenum) . ' ' . format_string($page->title) . ' (' .
+            get_string('qtype_' . $page->qtype, 'mod_visuallearning') . ')';
+    }
+    $csv->add_data($head);
+    foreach ($rows as $r) {
+        $line = [fullname($r), $r->email];
+        foreach ($asked as $page) {
+            $a = $attempts[$r->id][$page->id] ?? null;
+            $line[] = !$a || !$a->tfattempts ? '' : ($a->tfpassed ? (int)$a->tfattempts
+                : get_string('report_notyet_tries', 'mod_visuallearning', (int)$a->tfattempts));
+        }
+        $csv->add_data($line);
+    }
+    $csv->download_file();
+    exit;
 }
 
 if ($download === 'csv') {
@@ -162,8 +206,36 @@ foreach ($rows as $r) {
 }
 
 echo $OUTPUT->header();
+echo html_writer::start_div('vl-report');
 echo $OUTPUT->heading(get_string('report', 'mod_visuallearning'));
 echo html_writer::tag('p', get_string('reportintro', 'mod_visuallearning', $totalpages), ['class' => 'text-muted']);
+
+// Headline numbers.
+$started = count(array_filter($rows, fn($r) => $r->listened > 0));
+$finished = count(array_filter($rows, fn($r) => $totalpages && $r->listened >= $totalpages));
+$firsttime = 0;
+$answered = 0;
+foreach ($attempts as $byuser) {
+    foreach ($byuser as $a) {
+        if ($a->tfpassed) {
+            $answered++;
+            $firsttime += (int)$a->tfattempts === 1 ? 1 : 0;
+        }
+    }
+}
+$kpis = [
+    [get_string('kpi_started', 'mod_visuallearning'), $started . ' / ' . count($rows)],
+    [get_string('kpi_finished', 'mod_visuallearning'), (string)$finished],
+];
+if ($asked) {
+    $kpis[] = [get_string('kpi_firsttime', 'mod_visuallearning'), $answered ? round($firsttime / $answered * 100) . '%' : '—'];
+}
+$kpihtml = '';
+foreach ($kpis as [$label, $value]) {
+    $kpihtml .= html_writer::div(html_writer::span($label, 'vl-kpi-label') . html_writer::span($value, 'vl-kpi-value'), 'vl-kpi');
+}
+echo html_writer::div($kpihtml, 'vl-kpis');
+
 echo html_writer::div(
     html_writer::link(
         new moodle_url($url, ['download' => 'csv']),
@@ -177,4 +249,80 @@ if (!$rows) {
 } else {
     echo html_writer::table($table);
 }
+
+// The whole class's attempts at every question.
+if ($asked && $rows) {
+    echo html_writer::start_tag('section', ['class' => 'vl-attempts', 'aria-labelledby' => 'vl-attempts-h']);
+    $legend = '';
+    $legends = ['first' => 'report_first', 'second' => 'report_second', 'more' => 'report_more', 'notyet' => 'report_notyet'];
+    foreach ($legends as $class => $key) {
+        $legend .= html_writer::span(html_writer::span('', 'vl-swatch vl-cell--' . $class) .
+            get_string($key, 'mod_visuallearning'), 'vl-legend-item');
+    }
+    echo html_writer::div(
+        html_writer::tag('h3', get_string('report_attempts', 'mod_visuallearning'), ['id' => 'vl-attempts-h']) .
+        html_writer::span($legend, 'vl-legend') .
+        html_writer::link(
+            new moodle_url($url, ['download' => 'attempts']),
+            get_string('report_attemptscsv', 'mod_visuallearning'),
+            ['class' => 'btn btn-secondary btn-sm']
+        ),
+        'vl-attempts-head'
+    );
+    $head = html_writer::tag('th', get_string('fullnameuser'), ['scope' => 'col']);
+    $missed = [];
+    foreach ($asked as $page) {
+        $title = format_string($page->title) . ' · ' . get_string('qtype_' . $page->qtype, 'mod_visuallearning');
+        $head .= html_writer::tag('th', (int)$page->pagenum, ['scope' => 'col', 'title' => $title]);
+        $missed[$page->id] = 0;
+    }
+    $body = '';
+    $sums = array_fill_keys(array_keys($asked), [0, 0]);
+    foreach ($rows as $r) {
+        $name = html_writer::link(new moodle_url($url, ['userid' => $r->id]), fullname($r));
+        $cells = html_writer::tag('th', $name, ['scope' => 'row']);
+        foreach ($asked as $page) {
+            $a = $attempts[$r->id][$page->id] ?? null;
+            $tries = $a ? (int)$a->tfattempts : 0;
+            if (!$a || !$a->tfpassed) {
+                $class = 'notyet';
+                $text = $tries ? '×' . $tries : '';
+            } else {
+                $class = $tries <= 1 ? 'first' : ($tries === 2 ? 'second' : 'more');
+                $text = (string)$tries;
+                $sums[$page->id][0] += $tries;
+                $sums[$page->id][1]++;
+            }
+            if ($tries > 1 || ($a && !$a->tfpassed && $tries)) {
+                $missed[$page->id]++;
+            }
+            $cells .= html_writer::tag('td', $text, ['class' => 'vl-cell vl-cell--' . $class]);
+        }
+        $body .= html_writer::tag('tr', $cells);
+    }
+    $avg = html_writer::tag('th', get_string('report_average', 'mod_visuallearning'), ['scope' => 'row']);
+    foreach ($asked as $page) {
+        [$total, $n] = $sums[$page->id];
+        $avg .= html_writer::tag('td', $n ? format_float($total / $n, 1) : '—', ['class' => 'vl-cell vl-cell--avg']);
+    }
+    $body .= html_writer::tag('tr', $avg, ['class' => 'vl-avg']);
+    echo html_writer::div(html_writer::tag('table', html_writer::tag('thead', html_writer::tag('tr', $head)) .
+        html_writer::tag('tbody', $body), ['class' => 'vl-grid']), 'vl-grid-wrap');
+    echo html_writer::tag('p', get_string('report_attempts_help', 'mod_visuallearning'), ['class' => 'text-muted small']);
+
+    // The questions most often missed first time: the pages to go over again in class.
+    arsort($missed);
+    $top = array_filter(array_slice($missed, 0, 3, true));
+    if ($top) {
+        $list = [];
+        foreach ($top as $pageid => $n) {
+            $list[] = get_string('report_missed_item', 'mod_visuallearning', (object)['page' => (int)$asked[$pageid]->pagenum,
+                'title' => format_string($asked[$pageid]->title), 'count' => $n]);
+        }
+        echo html_writer::tag('h4', get_string('report_missed', 'mod_visuallearning'), ['class' => 'vl-sub']);
+        echo html_writer::alist($list, ['class' => 'vl-missed']);
+    }
+    echo html_writer::end_tag('section');
+}
+echo html_writer::end_div();
 echo $OUTPUT->footer();

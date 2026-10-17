@@ -102,7 +102,7 @@ final class track_page_test extends \externallib_advanced_testcase {
     }
 
     /**
-     * A page from another book cannot be tracked.
+     * A page from another lesson cannot be tracked.
      */
     public function test_page_must_belong_to_book(): void {
         $this->resetAfterTest();

@@ -155,16 +155,54 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->setDefault('enablequiz', 1);
         $mform->addHelpButton('enablequiz', 'enablequiz', 'mod_visuallearning');
 
+        // Which kinds of check question the AI may write (it rotates between them).
+        $types = [];
+        foreach (\mod_visuallearning\local\question::TYPES as $type) {
+            $types[] = $mform->createElement('advcheckbox', 'qt_' . $type, '', get_string('qtype_' . $type, 'mod_visuallearning'));
+        }
+        $mform->addGroup($types, 'questiontypesgroup', get_string('questiontypes', 'mod_visuallearning'), '<br>', false);
+        $mform->addHelpButton('questiontypesgroup', 'questiontypes', 'mod_visuallearning');
+        foreach (\mod_visuallearning\local\question::TYPES as $type) {
+            $mform->setDefault('qt_' . $type, 1);
+        }
+        $mform->hideIf('questiontypesgroup', 'enablequiz', 'notchecked');
+
+        $mform->addElement(
+            'advcheckbox',
+            'pickimages',
+            get_string('pickimages', 'mod_visuallearning'),
+            get_string('pickimages_label', 'mod_visuallearning', \mod_visuallearning\local\ai\lmslabs::IMAGE_CREDITS)
+        );
+        $mform->setDefault('pickimages', 1);
+        $mform->addHelpButton('pickimages', 'pickimages', 'mod_visuallearning');
+        $mform->hideIf('pickimages', 'enablequiz', 'notchecked');
+        $mform->hideIf('pickimages', 'qt_pick', 'notchecked');
+
+        $mform->addElement(
+            'advcheckbox',
+            'sounds',
+            get_string('sounds', 'mod_visuallearning'),
+            get_string('sounds_label', 'mod_visuallearning')
+        );
+        $mform->setDefault('sounds', 1);
+        $mform->addHelpButton('sounds', 'sounds', 'mod_visuallearning');
+
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
     }
 
     /**
-     * Normalise the speaking rate for the select.
+     * Normalise the speaking rate for the select, and spread the question types over their checkboxes.
      *
      * @param array $defaultvalues
      */
     public function data_preprocessing(&$defaultvalues) {
+        if (isset($defaultvalues['questiontypes'])) {
+            $chosen = explode(',', (string)$defaultvalues['questiontypes']);
+            foreach (\mod_visuallearning\local\question::TYPES as $type) {
+                $defaultvalues['qt_' . $type] = in_array($type, $chosen, true) ? 1 : 0;
+            }
+        }
         if (isset($defaultvalues['speakingrate'])) {
             $rate = (float)$defaultvalues['speakingrate'];
             $defaultvalues['speakingrate'] = $rate < 0.95 ? '0.90' : ($rate > 1.05 ? '1.10' : '1.00');
@@ -185,6 +223,15 @@ class mod_visuallearning_mod_form extends moodleform_mod {
             $catalogue = \mod_visuallearning\local\ai\lmslabs::voice_catalogue();
         } finally {
             \mod_visuallearning\local\ai\lmslabs::$fetch = true;
+        }
+        if (!empty($data['enablequiz'])) {
+            $any = false;
+            foreach (\mod_visuallearning\local\question::TYPES as $type) {
+                $any = $any || !empty($data['qt_' . $type]);
+            }
+            if (!$any) {
+                $errors['questiontypesgroup'] = get_string('questiontypes_none', 'mod_visuallearning');
+            }
         }
         $language = (string)($data['language'] ?? '');
         $voice = (string)($data['voice'] ?? '');

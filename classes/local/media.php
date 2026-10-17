@@ -24,7 +24,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($GLOBALS['CFG']->dirroot . '/mod/visuallearning/lib.php');
 
 /**
- * The illustrations and voiceover clips a book needs, and the files that hold them.
+ * The illustrations and voiceover clips a lesson needs, and the files that hold them.
  *
  * Every file name carries a hash of what made it, so a file is "current" only when it matches the page as it is now.
  * A new file replaces the old one only after it has been saved, so a failed or unfinished request never removes
@@ -44,11 +44,17 @@ class media {
     /** @var string Voiceover clips (item id: page id). */
     public const AREA_AUDIO = 'audio';
 
-    /** @var string Aspect ratio of every illustration. */
+    /** @var string Pictures of picture-pick options (item id: page id; one file per option). */
+    public const AREA_OPTION = 'option';
+
+    /** @var string Aspect ratio of page and cover illustrations. */
     public const ASPECT = '4:3';
 
+    /** @var string Aspect ratio of picture-pick options (square tiles). */
+    public const OPTION_ASPECT = '1:1';
+
     /**
-     * The voiceover speed sent to LMS Labs for a book's speaking rate.
+     * The voiceover speed sent to LMS Labs for a lesson's speaking rate.
      *
      * @param stdClass $book
      * @return string slow, normal or fast
@@ -59,14 +65,14 @@ class media {
     }
 
     /**
-     * The clips of one page, in playing order: part => text.
+     * The clips of one page, in playing order: part => text (cards, recap sentence, question, feedback).
      *
-     * The recap sentence starts with its number in the recap (1 to 4), which the narrator reads in the book's
+     * The recap sentence starts with its number in the recap (1 to 4), which the narrator reads in the lesson's
      * language, so no separate number clips are needed.
      *
      * @param stdClass $book
      * @param stdClass $page
-     * @param int $position 0-based position of the page in the book
+     * @param int $position 0-based position of the page in the lesson
      * @return array part => text
      */
     public static function clips(stdClass $book, stdClass $page, int $position): array {
@@ -83,10 +89,12 @@ class media {
                 $out['summary'] = (($position % VISUALLEARNING_GROUP_SIZE) + 1) . '. ' . $summary;
             }
         }
-        if (!empty($book->enablequiz)) {
-            $statement = self::clean((string)$page->tfstatement);
-            if ($statement !== '') {
-                $out['statement'] = $statement;
+        if (!empty($book->enablequiz) && ($q = question::of_page($page)) !== null) {
+            // The question is read when it opens; the feedback after a right answer (never before: it explains it).
+            $out['question'] = self::clean($q['prompt']);
+            $feedback = self::clean($q['feedback']);
+            if ($feedback !== '') {
+                $out['feedback'] = $feedback;
             }
         }
         return $out;
@@ -207,6 +215,119 @@ class media {
             $scene = $page->title . '. ' . $page->actiontext;
         }
         return prompt_builder::image_prompt($book, $scene, lmslabs::MAX_PROMPT);
+    }
+
+    /**
+     * The picture prompts of a page's picture-pick options: option number => full prompt. Empty when the page has
+     * no picture question, or the lesson shows options as text cards.
+     *
+     * @param stdClass $book
+     * @param stdClass $page
+     * @return array int => string
+     */
+    public static function option_prompts(stdClass $book, stdClass $page): array {
+        if (empty($book->enablequiz) || !question::pictures($book)) {
+            return [];
+        }
+        $q = question::of_page($page);
+        if ($q === null || $q['type'] !== question::PICK) {
+            return [];
+        }
+        $out = [];
+        foreach ($q['data']['options'] as $i => $option) {
+            $scene = trim($option['image_prompt']) !== '' ? $option['image_prompt'] : $option['label'];
+            $scene .= ' Square picture, one simple subject, filling the frame.';
+            $out[$i] = prompt_builder::image_prompt($book, $scene, lmslabs::MAX_PROMPT);
+        }
+        return $out;
+    }
+
+    /**
+     * The file name stem of one option picture.
+     *
+     * @param int $option
+     * @param string $prompt
+     * @return string
+     */
+    public static function option_stem(int $option, string $prompt): string {
+        return 'option' . $option . '-' . sha1($prompt);
+    }
+
+    /**
+     * The picture learners see for one option: the latest one made for it, or null.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param int $option
+     * @return \stored_file|null
+     */
+    public static function option_file(\context $context, int $pageid, int $option): ?\stored_file {
+        $files = self::option_files($context, $pageid, 'timemodified DESC, id DESC');
+        foreach ($files as $file) {
+            if (str_starts_with($file->get_filename(), 'option' . $option . '-')) {
+                return $file;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The option pictures of a page.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param string $sort
+     * @return \stored_file[]
+     */
+    protected static function option_files(\context $context, int $pageid, string $sort = 'id'): array {
+        return get_file_storage()->get_area_files($context->id, 'mod_visuallearning', self::AREA_OPTION, $pageid, $sort, false);
+    }
+
+    /**
+     * Whether the picture made from this prompt exists for an option.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param int $option
+     * @param string $prompt
+     * @return bool
+     */
+    public static function option_current(\context $context, int $pageid, int $option, string $prompt): bool {
+        $stem = self::option_stem($option, $prompt) . '.';
+        foreach (self::option_files($context, $pageid) as $file) {
+            if (str_starts_with($file->get_filename(), $stem)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Saves a delivered option picture, then removes the older pictures of the same option.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param int $option
+     * @param string $prompt
+     * @param string $bytes
+     * @param string $ext
+     */
+    public static function save_option(
+        \context $context,
+        int $pageid,
+        int $option,
+        string $prompt,
+        string $bytes,
+        string $ext
+    ): void {
+        $name = self::option_stem($option, $prompt) . '.' . $ext;
+        $mimes = ['png' => 'image/png', 'webp' => 'image/webp', 'jpg' => 'image/jpeg'];
+        self::save($context, self::AREA_OPTION, $pageid, $name, $bytes, $mimes[$ext]);
+        foreach (self::option_files($context, $pageid) as $file) {
+            if (str_starts_with($file->get_filename(), 'option' . $option . '-') && $file->get_filename() !== $name) {
+                $file->delete();
+            }
+        }
     }
 
     /**
@@ -343,14 +464,14 @@ class media {
     }
 
     /**
-     * What a book still needs (or everything, for a full remake), as request plans.
+     * What a lesson still needs (or everything, for a full remake), as request plans.
      *
      * @param stdClass $book
      * @param \context $context
      * @param string $scope missing or all
      * @param int $pageid 0 for every page
-     * @param string[] $kinds image, cover and/or voice
-     * @return array list of ['operation', 'targetid', 'part', 'text' (voice) or 'prompt' (image, cover)]
+     * @param string[] $kinds image, option, cover and/or voice
+     * @return array list of ['operation', 'targetid', 'part', 'text' (voice) or 'prompt' (image, option, cover)]
      */
     public static function plan(stdClass $book, \context $context, string $scope, int $pageid, array $kinds): array {
         $out = [];
@@ -364,6 +485,14 @@ class media {
                 $prompt = self::image_prompt($book, $page);
                 if ($scope === 'all' || !self::image_current($context, self::AREA_IMAGE, (int)$page->id, $prompt)) {
                     $out[] = ['operation' => 'image', 'targetid' => (int)$page->id, 'part' => '', 'prompt' => $prompt];
+                }
+            }
+            if (in_array('option', $kinds, true)) {
+                foreach (self::option_prompts($book, $page) as $option => $prompt) {
+                    if ($scope === 'all' || !self::option_current($context, (int)$page->id, $option, $prompt)) {
+                        $out[] = ['operation' => 'option', 'targetid' => (int)$page->id, 'part' => (string)$option,
+                            'prompt' => $prompt];
+                    }
                 }
             }
             if (in_array('voice', $kinds, true)) {
@@ -384,7 +513,7 @@ class media {
     }
 
     /**
-     * Brings the stored media statuses of a book up to date with its files and LMS Labs requests.
+     * Brings the stored media statuses of a lesson up to date with its files and LMS Labs requests.
      *
      * @param stdClass $book
      * @param \context $context
@@ -394,7 +523,8 @@ class media {
         $open = [];
         $failed = [];
         foreach ($DB->get_records('visuallearning_aireq', ['visuallearningid' => $book->id], 'id ASC') as $row) {
-            $key = ($row->operation === 'voice' ? 'audio' : $row->operation) . ':' . $row->targetid;
+            $kind = ['voice' => 'audio', 'option' => 'image'][$row->operation] ?? $row->operation;
+            $key = $kind . ':' . $row->targetid;
             if (in_array($row->status, ['pending', 'uncertain'], true)) {
                 $open[$key] = true;
             }
@@ -413,7 +543,11 @@ class media {
         foreach (visuallearning_get_pages((int)$book->id) as $page) {
             $index = $position++;
             $prompt = self::image_prompt($book, $page);
-            $image = $state(self::image_current($context, self::AREA_IMAGE, (int)$page->id, $prompt), 'image:' . $page->id);
+            $pictures = self::image_current($context, self::AREA_IMAGE, (int)$page->id, $prompt);
+            foreach (self::option_prompts($book, $page) as $option => $optionprompt) {
+                $pictures = $pictures && self::option_current($context, (int)$page->id, $option, $optionprompt);
+            }
+            $image = $state($pictures, 'image:' . $page->id);
             $allclips = true;
             foreach (self::clips($book, $page, $index) as $part => $text) {
                 $allclips = $allclips && self::clip_current($context, $book, $page, $part, $text);

@@ -16,6 +16,8 @@
 
 namespace mod_visuallearning\form;
 
+use mod_visuallearning\local\question;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($GLOBALS['CFG']->libdir . '/formslib.php');
@@ -63,10 +65,27 @@ class page_form extends \moodleform {
         $mform->addHelpButton('summarytext', 'summarytext', 'mod_visuallearning');
         $mform->addRule('summarytext', get_string('maximumchars', '', $max - 4), 'maxlength', $max - 4, 'client');
 
+        // The check question: one per page, in one of four types.
+        $mform->addElement('header', 'questionhdr', get_string('questionhdr', 'mod_visuallearning'));
+        $types = ['' => get_string('qtype_none', 'mod_visuallearning')];
+        foreach (question::TYPES as $type) {
+            $types[$type] = get_string('qtype_' . $type, 'mod_visuallearning');
+        }
+        $mform->addElement('select', 'qtype', get_string('qtype', 'mod_visuallearning'), $types);
+        $mform->addHelpButton('qtype', 'qtype', 'mod_visuallearning');
+
         $mform->addElement('text', 'tfstatement', get_string('tfstatement', 'mod_visuallearning'), ['size' => 80]);
         $mform->setType('tfstatement', PARAM_TEXT);
         $mform->addHelpButton('tfstatement', 'tfstatement', 'mod_visuallearning');
-        $mform->addRule('tfstatement', get_string('maximumchars', '', $max), 'maxlength', $max, 'client');
+        $mform->addRule(
+            'tfstatement',
+            get_string('maximumchars', '', question::MAX_PROMPT),
+            'maxlength',
+            question::MAX_PROMPT,
+            'client'
+        );
+        $mform->hideIf('tfstatement', 'qtype', 'eq', '');
+
         $mform->addElement(
             'select',
             'tfanswer',
@@ -76,7 +95,69 @@ class page_form extends \moodleform {
                 0 => get_string('false', 'mod_visuallearning'),
             ],
         );
+        $mform->hideIf('tfanswer', 'qtype', 'neq', question::TRUEFALSE);
 
+        $letters = [];
+        for ($i = 0; $i < question::PICK_OPTIONS; $i++) {
+            $letter = chr(65 + $i);
+            $letters[$i] = $letter;
+            $mform->addElement('text', 'option' . $i, get_string('optionlabel', 'mod_visuallearning', $letter), ['size' => 50]);
+            $mform->setType('option' . $i, PARAM_TEXT);
+            $mform->hideIf('option' . $i, 'qtype', 'neq', question::PICK);
+            $mform->addElement(
+                'textarea',
+                'optionprompt' . $i,
+                get_string('optionprompt', 'mod_visuallearning', $letter),
+                ['rows' => 2, 'cols' => 70, 'style' => 'width:100%']
+            );
+            $mform->setType('optionprompt' . $i, PARAM_TEXT);
+            $mform->hideIf('optionprompt' . $i, 'qtype', 'neq', question::PICK);
+        }
+        $mform->addElement('select', 'correct', get_string('correctoption', 'mod_visuallearning'), $letters);
+        $mform->hideIf('correct', 'qtype', 'neq', question::PICK);
+
+        for ($i = 0; $i < 4; $i++) {
+            $group = [
+                $mform->createElement('text', 'left' . $i, '', ['size' => 30,
+                    'placeholder' => get_string('pairleft', 'mod_visuallearning')]),
+                $mform->createElement('text', 'right' . $i, '', ['size' => 30,
+                    'placeholder' => get_string('pairright', 'mod_visuallearning')]),
+            ];
+            $mform->addGroup($group, 'pair' . $i, get_string('pairx', 'mod_visuallearning', $i + 1), ' ', false);
+            $mform->setType('left' . $i, PARAM_TEXT);
+            $mform->setType('right' . $i, PARAM_TEXT);
+            $mform->hideIf('pair' . $i, 'qtype', 'neq', question::MATCH);
+        }
+
+        for ($g = 0; $g < 2; $g++) {
+            $mform->addElement('text', 'group' . $g, get_string('groupname', 'mod_visuallearning', $g + 1), ['size' => 40]);
+            $mform->setType('group' . $g, PARAM_TEXT);
+            $mform->hideIf('group' . $g, 'qtype', 'neq', question::SORT);
+        }
+        $groupchoice = [0 => get_string('groupx', 'mod_visuallearning', 1), 1 => get_string('groupx', 'mod_visuallearning', 2)];
+        for ($i = 0; $i < 6; $i++) {
+            $group = [
+                $mform->createElement('text', 'item' . $i, '', ['size' => 40]),
+                $mform->createElement('select', 'itemgroup' . $i, '', $groupchoice),
+            ];
+            $mform->addGroup($group, 'sortitem' . $i, get_string('itemx', 'mod_visuallearning', $i + 1), ' ', false);
+            $mform->setType('item' . $i, PARAM_TEXT);
+            $mform->hideIf('sortitem' . $i, 'qtype', 'neq', question::SORT);
+        }
+
+        $mform->addElement('text', 'feedback', get_string('feedback', 'mod_visuallearning'), ['size' => 80]);
+        $mform->setType('feedback', PARAM_TEXT);
+        $mform->addHelpButton('feedback', 'feedback', 'mod_visuallearning');
+        $mform->addRule(
+            'feedback',
+            get_string('maximumchars', '', question::MAX_PROMPT),
+            'maxlength',
+            question::MAX_PROMPT,
+            'client'
+        );
+        $mform->hideIf('feedback', 'qtype', 'eq', '');
+
+        $mform->addElement('header', 'picturehdr', get_string('picturehdr', 'mod_visuallearning'));
         $mform->addElement(
             'textarea',
             'imageprompt',
@@ -91,5 +172,20 @@ class page_form extends \moodleform {
         $mform->setType('alttext', PARAM_TEXT);
 
         $this->add_action_buttons(true, get_string('savechanges'));
+    }
+
+    /**
+     * Validation: a question with a type must be complete.
+     *
+     * @param array $data
+     * @param array $files
+     * @return array
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        if (($data['qtype'] ?? '') !== '' && question::from_form((object)$data) === null) {
+            $errors['qtype'] = get_string('question_incomplete_' . $data['qtype'], 'mod_visuallearning');
+        }
+        return $errors;
     }
 }

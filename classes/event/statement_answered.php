@@ -17,7 +17,7 @@
 namespace mod_visuallearning\event;
 
 /**
- * A learner answered a true/false statement.
+ * A learner answered a page's check question (any type).
  *
  * @package    mod_visuallearning
  * @copyright  2026 LMS Hosting Services
@@ -50,7 +50,7 @@ class statement_answered extends \core\event\base {
     public function get_description() {
         $pagenum = (int)($this->other['pagenum'] ?? 0);
         $result = empty($this->other['correct']) ? 'incorrectly' : 'correctly';
-        return "The user with id '{$this->userid}' answered the true/false statement for page {$pagenum} "
+        return "The user with id '{$this->userid}' answered the check question for page {$pagenum} "
             . "{$result} in the AI Visual Learning activity with course module id '{$this->contextinstanceid}'.";
     }
 

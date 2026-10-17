@@ -40,7 +40,7 @@ $PAGE->set_title(format_string($book->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_activity_record($book);
 $PAGE->add_body_class('path-mod-visuallearning-player');
-// The book has its own title bar, description (on the cover) and progress; keep the standard
+// The lesson has its own title bar, description (on the cover) and progress; keep the standard
 // activity header compact so the spread fits above the fold.
 $PAGE->activityheader->set_attrs(['title' => '', 'description' => '', 'hidecompletion' => true]);
 

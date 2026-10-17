@@ -66,6 +66,11 @@ class quote_page {
             $lines[] = html_writer::tag('li', get_string($key, 'mod_visuallearning', $a));
         }
         echo html_writer::tag('ul', implode('', $lines));
+        if (!empty($summary['dropped'])) {
+            $dropped = get_string('quote_dropped', 'mod_visuallearning', (object)['count' => $summary['dropped'],
+                'why' => get_string('hold_' . $summary['droppedhold'], 'mod_visuallearning')]);
+            echo html_writer::tag('p', $dropped, ['class' => 'text-muted']);
+        }
         if ($summary['skipped']) {
             $skipped = get_string('quote_skipped', 'mod_visuallearning', $summary['skipped']);
             echo html_writer::tag('p', $skipped, ['class' => 'text-muted']);

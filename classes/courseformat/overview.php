@@ -51,7 +51,7 @@ class overview extends \core_courseformat\activityoverviewbase {
     }
 
     /**
-     * Number of pages in the book.
+     * Number of pages in the lesson.
      *
      * @return overviewitem
      */

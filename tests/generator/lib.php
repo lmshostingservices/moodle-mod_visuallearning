@@ -40,7 +40,7 @@ class mod_visuallearning_generator extends testing_module_generator {
             'language' => 'en-AU',
             'voice' => 'Aoede',
             'speakingrate' => 1.0,
-            'imagestyle' => 'Picture book illustration',
+            'imagestyle' => 'Hand-drawn illustration',
             'navmode' => 0,
             'completionlistened' => 0,
             'completionquiz' => 0,
@@ -58,7 +58,7 @@ class mod_visuallearning_generator extends testing_module_generator {
     }
 
     /**
-     * Add a page to a book.
+     * Add a page to a lesson.
      *
      * @param int $bookid
      * @param array $record
