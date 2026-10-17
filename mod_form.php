@@ -187,6 +187,13 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->setDefault('sounds', 1);
         $mform->addHelpButton('sounds', 'sounds', 'mod_visuallearning');
 
+        // Grade: the share of check questions answered correctly in the end (all right = 100%).
+        $this->standard_grading_coursemodule_elements();
+        $mform->setDefault('grade', 100);
+        if (empty($this->_instance) && $mform->elementExists('gradepass')) {
+            $mform->setDefault('gradepass', 100);
+        }
+
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
     }

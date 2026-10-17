@@ -127,6 +127,7 @@ class answer_question extends external_api {
             ],
         )->trigger();
         if ($newlypassed) {
+            visuallearning_update_grades($book, (int)$USER->id);
             visuallearning_update_completion($course, $cm, (int)$USER->id);
         }
 

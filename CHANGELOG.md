@@ -2,6 +2,20 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.2.8] - 2026-10-17
+
+- Gradebook: the activity now has a grade (default out of 100; points, a scale or none). The grade is the share of
+  check questions answered correctly, on any attempt, so a learner who eventually gets every question right has 100%.
+  A lesson without check questions is graded on pages listened to. Grade to pass (default 100%) and the core
+  "Receive a grade" / "Receive a passing grade" completion conditions work as for any graded activity. Existing
+  lessons get a grade item and their learners' grades on upgrade. Grades follow page and question edits, deletions,
+  course reset and backup/restore (scales are remapped).
+- Finish screen: "You passed!" with a green banner "You have passed this activity. You have achieved the passing grade
+  of 75%. Your grade: 100%." (the teacher's own grade to pass). If not passed yet: "Almost there!", the grade, the
+  passing grade, how many questions are left, a "Go to the question" button, and no confetti.
+- Finish screen: "Go to next activity" button (with the activity's name) that opens the next activity in the course
+  index the learner can access, including activities inside subsections. Not shown at the end of the course.
+
 ## [1.2.7] - 2026-10-17
 
 - After a wrong answer the narrator reads a new per-page clip: "Not quite. Listen to “page title” again, then come

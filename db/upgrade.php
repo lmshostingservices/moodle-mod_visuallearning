@@ -29,7 +29,7 @@
  * @return bool
  */
 function xmldb_visuallearning_upgrade($oldversion) {
-    global $DB;
+    global $CFG, $DB;
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2026101800) {
@@ -102,6 +102,25 @@ function xmldb_visuallearning_upgrade($oldversion) {
             }
         }
         upgrade_mod_savepoint(true, 2026101802, 'visuallearning');
+    }
+
+    if ($oldversion < 2026101811) {
+        // Gradebook: every lesson gets a grade out of 100 (the share of check questions answered correctly).
+        $table = new xmldb_table('visuallearning');
+        $field = new xmldb_field('grade', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '100', 'completionquiz');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        require_once($CFG->dirroot . '/mod/visuallearning/lib.php');
+        $sql = "SELECT v.*, cm.idnumber AS cmidnumber
+                  FROM {visuallearning} v
+                  JOIN {course_modules} cm ON cm.instance = v.id
+                  JOIN {modules} m ON m.id = cm.module AND m.name = 'visuallearning'";
+        foreach ($DB->get_recordset_sql($sql) as $book) {
+            visuallearning_grade_item_update($book);
+            visuallearning_update_grades($book);
+        }
+        upgrade_mod_savepoint(true, 2026101811, 'visuallearning');
     }
     return true;
 }

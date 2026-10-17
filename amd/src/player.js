@@ -698,6 +698,85 @@ class Player {
     }
 
     /**
+     * The learner's grade as the gradebook works it out: the share of check questions answered correctly in the end
+     * (all right = full marks), or of pages listened to when the lesson has no check questions.
+     *
+     * @param {Array<Object>} asked Pages with a check question
+     * @returns {Object|null} {percent, label, passlabel, pass, passed, left} or null when the lesson is not graded
+     */
+    gradeResult(asked) {
+        const g = this.data.grade;
+        if (!g) {
+            return null;
+        }
+        const graded = this.data.quiz ? asked : [];
+        const total = graded.length || this.pages.length;
+        const done = graded.length ? graded.filter((p) => p.passed).length : this.pages.filter((p) => p.listened).length;
+        const fraction = total ? done / total : 0;
+        const pct = (v) => (Math.round(v * 10) / 10) + '%';
+        let value;
+        let label;
+        let passlabel = '';
+        if (g.scale.length) {
+            value = 1 + Math.round(fraction * (g.scale.length - 1));
+            label = g.scale[value - 1];
+            passlabel = g.pass > 0 ? g.scale[Math.min(g.scale.length, Math.ceil(g.pass)) - 1] : '';
+        } else {
+            value = fraction * g.max;
+            label = pct(fraction * 100);
+            passlabel = g.pass > 0 ? pct(g.pass / g.max * 100) : '';
+        }
+        return {
+            label,
+            passlabel,
+            pass: g.pass > 0,
+            passed: g.pass > 0 && value + 1e-6 >= g.pass,
+            left: total - done,
+            byquestions: graded.length > 0,
+        };
+    }
+
+    /**
+     * The grade banner on the finish screen: passed (with the passing grade the teacher set), or what is left to do.
+     *
+     * @param {Object|null} grade From gradeResult()
+     */
+    renderGrade(grade) {
+        const box = this.q('.pb-end-grade');
+        box.innerHTML = '';
+        box.hidden = !grade;
+        if (!grade) {
+            return;
+        }
+        let html;
+        if (!grade.pass) {
+            box.className = 'pb-end-grade is-plain';
+            html = '<p class="pb-end-grade-text">' + esc(this.str('gradeonly', grade.label)) + '</p>';
+        } else if (grade.passed) {
+            box.className = 'pb-end-grade is-passed';
+            const text = grade.label === grade.passlabel
+                ? this.str('gradepassedfull', grade.passlabel)
+                : this.str('gradepassed', {pass: grade.passlabel, grade: grade.label});
+            html = '<span class="pb-end-grade-icon">' + TICK_SVG + '</span><div><strong class="pb-end-grade-head">' +
+                esc(this.str('gradeheadpassed')) + '</strong><p class="pb-end-grade-text">' + esc(text) + '</p></div>';
+        } else {
+            box.className = 'pb-end-grade is-notyet';
+            html = '<span class="pb-end-grade-icon">' + LOCK_SVG + '</span><div><strong class="pb-end-grade-head">' +
+                esc(this.str('gradeheadnotyet')) + '</strong><p class="pb-end-grade-text">' +
+                esc(this.str(grade.byquestions ? 'gradenotyet' : 'gradenotyetpages',
+                    {pass: grade.passlabel, grade: grade.label, left: grade.left})) + '</p></div>';
+        }
+        box.innerHTML = html;
+        if (grade.pass && !grade.passed && grade.byquestions) {
+            const first = this.steps.findIndex((s) => s.type === 'question' && !this.pages[s.page].passed);
+            if (first >= 0) {
+                box.appendChild(this.button(this.str('gotoquestion'), 'pb-btn pb-btn-primary pb-end-grade-go',
+                    () => this.go(first)));
+            }
+        }
+    }
+
+    /**
      * Show the cover.
      */
     showCover() {
@@ -731,10 +810,14 @@ class Player {
         const minutes = Math.max(1, Math.round(this.pages.reduce((sum, p) => sum + (p.timespent || 0), 0) / 60));
         const allright = asked.every((p) => p.passed);
 
-        this.q('.pb-end-title').textContent = this.str('finishedtitle');
+        const grade = this.gradeResult(asked);
+        this.q('.pb-end-title').textContent = grade && grade.pass
+            ? this.str(grade.passed ? 'passedtitle' : 'notpassedtitle') : this.str('finishedtitle');
         this.q('.pb-end-text').textContent = asked.length && allright
             ? this.str('finishedall', {pages: this.pages.length, questions: asked.length}) + ' ' + this.str('teachersees')
             : this.str('finishedtext', this.pages.length);
+        this.renderGrade(grade);
+        end.classList.toggle('is-notpassed', !!(grade && grade.pass && !grade.passed));
         const stats = this.q('.pb-end-stats');
         stats.innerHTML = '';
         if (asked.length) {
@@ -748,11 +831,22 @@ class Player {
         const actions = this.q('.pb-end-actions');
         actions.innerHTML = '';
         actions.appendChild(this.button(this.str('readagain'), 'pb-btn pb-btn-ghost', () => this.go(0)));
+        const next = this.data.nextactivity;
         const back = document.createElement('a');
-        back.className = 'pb-btn pb-btn-primary';
+        back.className = 'pb-btn ' + (next ? 'pb-btn-ghost' : 'pb-btn-primary');
         back.href = this.data.courseurl;
         back.textContent = this.str('backtocourse');
         actions.appendChild(back);
+        if (next) {
+            // The next activity in the course index.
+            const go = document.createElement('a');
+            go.className = 'pb-btn pb-btn-primary pb-end-next';
+            go.href = next.url;
+            go.title = next.name;
+            go.innerHTML = '<span class="pb-end-next-label">' + esc(this.str('nextactivity')) + '</span>' +
+                '<span class="pb-end-next-name">' + esc(next.name) + '</span>';
+            actions.appendChild(go);
+        }
 
         const results = this.q('.pb-end-results');
         results.hidden = !asked.length;
@@ -786,7 +880,9 @@ class Player {
         const confetti = this.q('.pb-confetti');
         confetti.innerHTML = '';
         const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (!still) {
+        // Not passed yet: no party.
+        const notpassed = !!(grade && grade.pass && !grade.passed);
+        if (!still && !notpassed) {
             const colours = ['#4338CA', '#12B76A', '#F79009', '#F04438', '#0BA5EC', '#EE46BC', '#FDB022'];
             for (let c = 0; c < 70; c++) {
                 const bit = document.createElement('i');
@@ -799,7 +895,9 @@ class Player {
                 confetti.appendChild(bit);
             }
         }
-        window.setTimeout(() => Sounds.play('fanfare'), 250);
+        if (!notpassed) {
+            window.setTimeout(() => Sounds.play('fanfare'), 250);
+        }
         this.q('.pb-pageindicator').textContent = '';
         this.scrollIntoPlace();
     }

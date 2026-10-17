@@ -2679,6 +2679,118 @@
     line-height: 1.55;
 }
 
+.mod-visuallearning .pb-end-grade {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 18px;
+    text-align: left;
+}
+
+.mod-visuallearning .pb-end-grade[hidden] {
+    display: none;
+}
+
+.mod-visuallearning .pb-end-grade > div {
+    flex: 1 1 260px;
+    min-width: 0;
+}
+
+.mod-visuallearning .pb-end-grade-icon {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.mod-visuallearning .pb-end-grade-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mod-visuallearning .pb-end-grade-icon svg path {
+    stroke-width: 2.6;
+}
+
+.mod-visuallearning .pb-end-grade-head {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.mod-visuallearning .pb-end-grade-text {
+    margin: 4px 0 0;
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+.mod-visuallearning .pb-end-grade.is-passed {
+    background: linear-gradient(165deg, #ecfdf3 0%, #d1fadf 100%);
+    box-shadow: 0 0 0 1.5px #6ce9a6, 0 18px 36px -24px rgba(6, 118, 71, .55);
+    color: #054f31;
+}
+
+.mod-visuallearning .pb-end-grade.is-passed .pb-end-grade-icon {
+    background: var(--pb-green);
+}
+
+.mod-visuallearning .pb-end-grade.is-notyet {
+    background: linear-gradient(165deg, #fffaeb 0%, #fef0c7 100%);
+    box-shadow: 0 0 0 1.5px #fdb022, 0 18px 36px -24px rgba(181, 71, 8, .5);
+    color: #7a2e0e;
+}
+
+.mod-visuallearning .pb-end-grade.is-notyet .pb-end-grade-icon {
+    background: #f79009;
+}
+
+.mod-visuallearning .pb-end-grade.is-plain {
+    justify-content: center;
+    background: #f2f4f7;
+    color: var(--pb-ink);
+    font-weight: 700;
+}
+
+.mod-visuallearning .pb-end-grade.is-plain .pb-end-grade-text {
+    margin: 0;
+}
+
+.mod-visuallearning .pb-end-grade-go {
+    margin-left: 58px;
+}
+
+.mod-visuallearning .pb-end.is-notpassed .pb-end-badge {
+    background: #f79009;
+    box-shadow: 0 0 0 12px #fef0c7, 0 0 0 24px #fffaeb;
+}
+
+.mod-visuallearning .pb-end-next {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    line-height: 1.2;
+    max-width: 320px;
+}
+
+.mod-visuallearning .pb-end-next-name {
+    font-size: .78rem;
+    font-weight: 600;
+    opacity: .85;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .mod-visuallearning .pb-end-stats {
     display: flex;
     gap: 10px;

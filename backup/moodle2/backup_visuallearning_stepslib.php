@@ -42,7 +42,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
                 'language', 'voice', 'speakingrate', 'imagestyle', 'navmode', 'autoplay', 'imageculture',
                 'enablerecap', 'enablequiz', 'questiontypes', 'pickimages', 'sounds', 'styleguide', 'characters', 'coverprompt',
                 'coverstatus',
-                'covererror', 'completionlistened', 'completionquiz', 'timecreated', 'timemodified',
+                'covererror', 'completionlistened', 'completionquiz', 'grade', 'timecreated', 'timemodified',
             ],
         );
         $pages = new backup_nested_element('pages');

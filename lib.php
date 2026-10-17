@@ -86,8 +86,9 @@ function visuallearning_supports($feature) {
         case FEATURE_COMPLETION_TRACKS_VIEWS:
         case FEATURE_COMPLETION_HAS_RULES:
         case FEATURE_BACKUP_MOODLE2:
-            return true;
         case FEATURE_GRADE_HAS_GRADE:
+            return true;
+        case FEATURE_GRADE_OUTCOMES:
         case FEATURE_GROUPS:
         case FEATURE_GROUPINGS:
             return false;
@@ -111,6 +112,9 @@ function visuallearning_add_instance($data, $mform = null) {
     $data->timemodified = $data->timecreated;
     visuallearning_clean_instance_data($data);
     $data->id = $DB->insert_record('visuallearning', $data);
+    $book = $DB->get_record('visuallearning', ['id' => $data->id], '*', MUST_EXIST);
+    $book->cmidnumber = $data->cmidnumber ?? '';
+    visuallearning_grade_item_update($book);
 
     if (!empty($data->completionexpected)) {
         \core_completion\api::update_completion_date_event(
@@ -137,6 +141,11 @@ function visuallearning_update_instance($data, $mform = null) {
     visuallearning_clean_instance_data($data);
 
     $DB->update_record('visuallearning', $data);
+    // A new maximum grade or grade type rescales everyone's grade.
+    $book = $DB->get_record('visuallearning', ['id' => $data->id], '*', MUST_EXIST);
+    $book->cmidnumber = $data->cmidnumber ?? '';
+    visuallearning_grade_item_update($book);
+    visuallearning_update_grades($book);
 
     // Media files are bound to what made them (text, voice, prompt), so the statuses follow from the files.
     $cm = get_coursemodule_from_instance('visuallearning', $data->id, 0, false, MUST_EXIST);
@@ -213,8 +222,201 @@ function visuallearning_delete_instance($id) {
     $DB->delete_records('visuallearning_progress', ['visuallearningid' => $id]);
     $DB->delete_records('visuallearning_aireq', ['visuallearningid' => $id]);
     $DB->delete_records('visuallearning_pages', ['visuallearningid' => $id]);
+    visuallearning_grade_item_delete($book);
     $DB->delete_records('visuallearning', ['id' => $id]);
     return true;
+}
+
+/**
+ * What a learner's grade is based on: the check questions when the lesson has any, otherwise the pages.
+ *
+ * The grade is the share of check questions answered correctly (on any attempt), so a learner who eventually gets every
+ * question right has 100%. A lesson without check questions grades the share of pages listened to in full.
+ *
+ * @param stdClass $book
+ * @param int $userid 0 for every learner with progress
+ * @return array userid => fraction (0 to 1)
+ */
+function visuallearning_grade_fractions(stdClass $book, int $userid = 0): array {
+    global $DB;
+    $params = ['bookid' => $book->id];
+    $usersql = '';
+    if ($userid) {
+        $usersql = ' AND pr.userid = :userid';
+        $params['userid'] = $userid;
+    }
+    $hasquestion = $DB->sql_isnotempty('visuallearning_pages', 'pg.tfstatement', true, true);
+    $questions = !empty($book->enablequiz) ? (int)$DB->count_records_sql(
+        "SELECT COUNT(1) FROM {visuallearning_pages} pg WHERE pg.visuallearningid = :bookid AND $hasquestion",
+        ['bookid' => $book->id]
+    ) : 0;
+    if ($questions) {
+        $total = $questions;
+        $sql = "SELECT pr.userid, SUM(CASE WHEN pr.tfpassed = 1 AND $hasquestion THEN 1 ELSE 0 END) AS done
+                  FROM {visuallearning_progress} pr
+                  JOIN {visuallearning_pages} pg ON pg.id = pr.pageid
+                 WHERE pr.visuallearningid = :bookid $usersql
+              GROUP BY pr.userid";
+    } else {
+        $total = $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]);
+        $sql = "SELECT pr.userid, SUM(CASE WHEN pr.listened = 1 THEN 1 ELSE 0 END) AS done
+                  FROM {visuallearning_progress} pr
+                  JOIN {visuallearning_pages} pg ON pg.id = pr.pageid
+                 WHERE pr.visuallearningid = :bookid $usersql
+              GROUP BY pr.userid";
+    }
+    $out = [];
+    foreach ($DB->get_records_sql($sql, $params) as $row) {
+        $out[(int)$row->userid] = $total ? min(1, (int)$row->done / $total) : 0.0;
+    }
+    if ($userid && !isset($out[$userid])) {
+        $out[$userid] = 0.0;
+    }
+    return $out;
+}
+
+/**
+ * A grade fraction on the lesson's grade: points, or the matching item of a scale (all right = the top item).
+ *
+ * @param stdClass $book
+ * @param float $fraction
+ * @return float|null
+ */
+function visuallearning_fraction_to_grade(stdClass $book, float $fraction): ?float {
+    global $DB;
+    $grade = (int)$book->grade;
+    if ($grade > 0) {
+        return round($fraction * $grade, 5);
+    }
+    if ($grade < 0) {
+        $scale = $DB->get_field('scale', 'scale', ['id' => -$grade]);
+        $items = $scale === false ? 0 : count(explode(',', $scale));
+        return $items ? (float)(1 + (int)round($fraction * ($items - 1))) : null;
+    }
+    return null;
+}
+
+/**
+ * Raw grades for the gradebook.
+ *
+ * @param stdClass $book
+ * @param int $userid 0 for every learner
+ * @return array userid => {userid, rawgrade}
+ */
+function visuallearning_get_user_grades($book, $userid = 0) {
+    $grades = [];
+    foreach (visuallearning_grade_fractions($book, (int)$userid) as $uid => $fraction) {
+        $grades[$uid] = (object)['userid' => $uid, 'rawgrade' => visuallearning_fraction_to_grade($book, $fraction)];
+    }
+    return $grades;
+}
+
+/**
+ * Create or update the grade item.
+ *
+ * @param stdClass $book with cmidnumber when known
+ * @param array|object|string|null $grades 'reset', grades, or null
+ * @return int GRADE_UPDATE_OK etc.
+ */
+function visuallearning_grade_item_update($book, $grades = null) {
+    global $CFG;
+    require_once($CFG->libdir . '/gradelib.php');
+    $params = ['itemname' => $book->name];
+    if (isset($book->cmidnumber)) {
+        $params['idnumber'] = $book->cmidnumber;
+    }
+    $grade = (int)($book->grade ?? 100);
+    if ($grade > 0) {
+        $params['gradetype'] = GRADE_TYPE_VALUE;
+        $params['grademax'] = $grade;
+        $params['grademin'] = 0;
+    } else if ($grade < 0) {
+        $params['gradetype'] = GRADE_TYPE_SCALE;
+        $params['scaleid'] = -$grade;
+    } else {
+        $params['gradetype'] = GRADE_TYPE_NONE;
+    }
+    if ($grades === 'reset') {
+        $params['reset'] = true;
+        $grades = null;
+    }
+    return grade_update('mod/visuallearning', $book->course, 'mod', 'visuallearning', $book->id, 0, $grades, $params);
+}
+
+/**
+ * Delete the grade item.
+ *
+ * @param stdClass $book
+ * @return int
+ */
+function visuallearning_grade_item_delete($book) {
+    global $CFG;
+    require_once($CFG->libdir . '/gradelib.php');
+    return grade_update('mod/visuallearning', $book->course, 'mod', 'visuallearning', $book->id, 0, null, ['deleted' => 1]);
+}
+
+/**
+ * Push grades to the gradebook (one learner, or everyone with progress).
+ *
+ * @param stdClass $book
+ * @param int $userid
+ * @param bool $nullifnone
+ */
+function visuallearning_update_grades($book, $userid = 0, $nullifnone = true) {
+    global $CFG;
+    require_once($CFG->libdir . '/gradelib.php');
+    if ((int)$book->grade === 0) {
+        visuallearning_grade_item_update($book);
+        return;
+    }
+    $grades = visuallearning_get_user_grades($book, (int)$userid);
+    if ($grades) {
+        visuallearning_grade_item_update($book, $grades);
+    } else if ($userid && $nullifnone) {
+        visuallearning_grade_item_update($book, (object)['userid' => $userid, 'rawgrade' => null]);
+    } else {
+        visuallearning_grade_item_update($book);
+    }
+}
+
+/**
+ * Whether a scale is used by this lesson.
+ *
+ * @param int $bookid
+ * @param int $scaleid
+ * @return bool
+ */
+function visuallearning_scale_used($bookid, $scaleid) {
+    global $DB;
+    return $scaleid && $DB->record_exists('visuallearning', ['id' => $bookid, 'grade' => -$scaleid]);
+}
+
+/**
+ * Whether a scale is used by any lesson.
+ *
+ * @param int $scaleid
+ * @return bool
+ */
+function visuallearning_scale_used_anywhere($scaleid) {
+    global $DB;
+    return $scaleid && $DB->record_exists('visuallearning', ['grade' => -$scaleid]);
+}
+
+/**
+ * Remove grades on course reset.
+ *
+ * @param int $courseid
+ */
+function visuallearning_reset_gradebook($courseid) {
+    global $DB;
+    $sql = "SELECT v.*, cm.idnumber AS cmidnumber
+              FROM {visuallearning} v
+              JOIN {course_modules} cm ON cm.instance = v.id
+              JOIN {modules} m ON m.id = cm.module AND m.name = 'visuallearning'
+             WHERE v.course = ?";
+    foreach ($DB->get_records_sql($sql, [$courseid]) as $book) {
+        visuallearning_grade_item_update($book, 'reset');
+    }
 }
 
 /**
@@ -367,6 +569,9 @@ function visuallearning_reset_userdata($data) {
         if ($books) {
             [$insql, $params] = $DB->get_in_or_equal($books);
             $DB->delete_records_select('visuallearning_progress', "visuallearningid $insql", $params);
+        }
+        if (empty($data->reset_gradebook_grades)) {
+            visuallearning_reset_gradebook($data->courseid);
         }
         $status[] = [
             'component' => get_string('modulenameplural', 'mod_visuallearning'),

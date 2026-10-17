@@ -865,6 +865,8 @@ class requests {
         $DB->update_record('visuallearning_aireq', $row);
         $transaction->allow_commit();
         rebuild_course_cache((int)$book->course, true);
+        // New or replaced pages change what a full grade needs.
+        visuallearning_update_grades($DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST));
     }
 
     /**

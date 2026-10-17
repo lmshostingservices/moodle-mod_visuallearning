@@ -154,6 +154,10 @@ if (in_array($action, ['delete', 'moveup', 'movedown'], true)) {
     }
     // Moving pages changes recap numbers, so some recap clips may need making again.
     media::refresh($book, $context);
+    if ($action === 'delete') {
+        // One question fewer: grades are out of the questions that are left.
+        visuallearning_update_grades($book);
+    }
     \course_modinfo::purge_course_module_cache($course->id, $cm->id);
     rebuild_course_cache($course->id, true);
     redirect(new moodle_url($baseurl, ['step' => 2]), $msg, null, $msg ? \core\output\notification::NOTIFY_SUCCESS : null);
@@ -215,6 +219,8 @@ if ($action === 'edit' || $action === 'add') {
         }
         // Edited text or prompts need new media, made only when the teacher confirms its price (step 3).
         media::refresh($book, $context);
+        // A question added to or removed from the page changes what a full grade needs.
+        visuallearning_update_grades($book);
         redirect(
             new moodle_url($baseurl, ['step' => 2]),
             get_string('pagesaved', 'mod_visuallearning'),

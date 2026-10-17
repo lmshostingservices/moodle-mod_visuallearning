@@ -54,6 +54,10 @@ class restore_visuallearning_activity_structure_step extends restore_activity_st
         if ((int)$data->coverstatus === 1) {
             $data->coverstatus = 0;
         }
+        // A scale grade points at the restored scale; older backups have no grade and get the default (100).
+        if (isset($data->grade) && (int)$data->grade < 0) {
+            $data->grade = -(int)$this->get_mappingid('scale', abs((int)$data->grade));
+        }
         $newid = $DB->insert_record('visuallearning', $data);
         $this->apply_activity_instance($newid);
     }

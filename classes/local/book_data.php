@@ -119,7 +119,9 @@ class book_data {
         foreach (
             ['start', 'continuefrom', 'startover', 'contents', 'close', 'previous', 'next', 'finish', 'pause',
                 'play', 'replay', 'pageof', 'listenedof', 'taptolisten', 'finishedtitle', 'finishedtext',
-                'readagain', 'backtocourse', 'locked', 'listenedstatus', 'notlistened', 'nowreading',
+                'readagain', 'backtocourse', 'nextactivity', 'passedtitle', 'notpassedtitle', 'gradepassed',
+                'gradepassedfull', 'gradenotyet', 'gradenotyetpages', 'gradeonly', 'gotoquestion', 'gradeheadpassed',
+                'gradeheadnotyet', 'locked', 'listenedstatus', 'notlistened', 'nowreading',
                 'imagecoming', 'listenfirst', 'pagescount', 'cover', 'listen', 'listening', 'listenagain',
                 'recaptitle', 'recapsubtitle', 'recaptoc', 'true', 'false', 'correct', 'continue', 'pressplay',
                 'checkx', 'questionof', 'frompage', 'qtype_truefalse', 'qtype_pick', 'qtype_match', 'qtype_sort',
@@ -151,7 +153,80 @@ class book_data {
             'pages' => $out,
             'missingmedia' => $missing,
             'courseurl' => (new \moodle_url('/course/view.php', ['id' => $cm->course]))->out(false),
+            'nextactivity' => self::next_activity($cm, $userid),
+            'grade' => self::grade_info($book),
             'strings' => $strings,
         ];
+    }
+
+    /**
+     * The gradebook settings the finish screen explains: the grade type, the maximum and the grade to pass.
+     *
+     * @param \stdClass $book
+     * @return array|null null when the lesson is not graded
+     */
+    public static function grade_info(\stdClass $book): ?array {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+        $item = \grade_item::fetch(['itemtype' => 'mod', 'itemmodule' => 'visuallearning', 'iteminstance' => $book->id,
+            'itemnumber' => 0, 'courseid' => $book->course]);
+        if (!$item || (int)$item->gradetype === GRADE_TYPE_NONE || (int)$item->gradetype === GRADE_TYPE_TEXT) {
+            return null;
+        }
+        $out = ['scale' => [], 'max' => (float)$item->grademax, 'min' => (float)$item->grademin,
+            'pass' => (float)$item->gradepass];
+        if ((int)$item->gradetype === GRADE_TYPE_SCALE && ($scale = $item->load_scale())) {
+            $out['scale'] = array_map('trim', $scale->scale_items);
+            $out['min'] = 1.0;
+            $out['max'] = (float)count($out['scale']);
+        }
+        return $out;
+    }
+
+    /**
+     * The next activity in the course index that this learner can open, or null at the end of the course.
+     *
+     * @param \cm_info|\stdClass $cm
+     * @param int $userid
+     * @return array|null ['url', 'name']
+     */
+    public static function next_activity($cm, int $userid): ?array {
+        $modinfo = get_fast_modinfo($cm->course, $userid);
+        // The course index order: each section in turn, with a subsection's activities where the subsection sits.
+        $ordered = [];
+        $walk = function ($section) use (&$walk, &$ordered, $modinfo): void {
+            if (!$section->uservisible) {
+                return;
+            }
+            foreach ($modinfo->sections[$section->section] ?? [] as $cmid) {
+                $item = $modinfo->get_cm($cmid);
+                if ($item->modname === 'subsection' && method_exists($modinfo, 'get_section_info_by_component')) {
+                    $delegated = $modinfo->get_section_info_by_component('mod_subsection', (int)$item->instance);
+                    if ($delegated) {
+                        $walk($delegated);
+                    }
+                    continue;
+                }
+                $ordered[] = $item;
+            }
+        };
+        foreach ($modinfo->get_section_info_all() as $section) {
+            if (method_exists($section, 'is_delegated') && $section->is_delegated()) {
+                continue;
+            }
+            $walk($section);
+        }
+        $found = false;
+        foreach ($ordered as $next) {
+            if ((int)$next->id === (int)$cm->id) {
+                $found = true;
+                continue;
+            }
+            // Only real activity pages: no labels or other in-page content, nothing hidden or being deleted.
+            if ($found && $next->uservisible && $next->url && empty($next->deletioninprogress)) {
+                return ['url' => $next->url->out(false), 'name' => $next->get_formatted_name()];
+            }
+        }
+        return null;
     }
 }
