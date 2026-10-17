@@ -101,8 +101,54 @@ class media {
             if ($feedback !== '') {
                 $out['feedback'] = $feedback;
             }
+            // Read after a wrong answer, in the narrator's voice, when the lesson's language has the sentence.
+            $retry = self::retry_text($book, $page);
+            if ($retry !== null) {
+                $out['retry'] = $retry;
+            }
         }
         return $out;
+    }
+
+    /**
+     * The sentence read after a wrong answer, in the lesson's language, or null when there is none in that language.
+     *
+     * It names the page by its title (not its number), so reordering pages does not change it.
+     *
+     * @param stdClass $book
+     * @param stdClass $page
+     * @return string|null
+     */
+    public static function retry_text(stdClass $book, stdClass $page): ?string {
+        $lang = strtolower(str_replace('-', '_', (string)$book->language));
+        $sm = get_string_manager();
+        $title = self::clean((string)$page->title);
+        $candidates = array_unique([$lang, strtok($lang, '_')]);
+        foreach ($candidates as $code) {
+            if ($code === 'en' || str_starts_with($code, 'en_')) {
+                return self::clean($sm->get_string('retry_narration', 'mod_visuallearning', $title, 'en'));
+            }
+            if (!$sm->translation_exists($code, false)) {
+                continue;
+            }
+            $strings = $sm->load_component_strings('mod_visuallearning', $code);
+            $english = $sm->load_component_strings('mod_visuallearning', 'en');
+            if (isset($strings['retry_narration']) && $strings['retry_narration'] !== ($english['retry_narration'] ?? '')) {
+                return self::clean($sm->get_string('retry_narration', 'mod_visuallearning', $title, $code));
+            }
+        }
+        // No sentence in this language: nothing is read (an English sentence in another voice would be wrong).
+        return null;
+    }
+
+    /**
+     * Whether a clip part may be made now. The wrong-answer clip needs LMS Labs to publish its slot first.
+     *
+     * @param string $part
+     * @return bool
+     */
+    public static function part_available(string $part): bool {
+        return $part !== 'retry' || \mod_visuallearning\local\ai\lmslabs::retry_supported();
     }
 
     /**
@@ -503,6 +549,9 @@ class media {
             }
             if (in_array('voice', $kinds, true)) {
                 foreach (self::clips($book, $page, $index, count($pages)) as $part => $text) {
+                    if (!self::part_available($part)) {
+                        continue;
+                    }
                     if ($scope === 'all' || !self::clip_current($context, $book, $page, $part, $text)) {
                         $out[] = ['operation' => 'voice', 'targetid' => (int)$page->id, 'part' => $part, 'text' => $text];
                     }
@@ -557,6 +606,9 @@ class media {
             $image = $state($pictures, 'image:' . $page->id);
             $allclips = true;
             foreach (self::clips($book, $page, $index, count($pages)) as $part => $text) {
+                if (!self::part_available($part)) {
+                    continue;
+                }
                 $allclips = $allclips && self::clip_current($context, $book, $page, $part, $text);
             }
             $audio = $state($allclips, 'audio:' . $page->id);

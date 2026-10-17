@@ -337,6 +337,18 @@ class lmslabs {
     }
 
     /**
+     * Whether LMS Labs makes the wrong-answer clip: its bundle lists the "clip:retry" slot.
+     *
+     * Until it does, the clip is never requested, never priced and never counted as missing.
+     *
+     * @return bool
+     */
+    public static function retry_supported(): bool {
+        $slots = self::capabilities('speech')['bundle']['slots'] ?? [];
+        return is_array($slots) && in_array('clip:retry', $slots, true);
+    }
+
+    /**
      * The picture shapes LMS Labs says it makes. Page pictures (4:3) are assumed when it says nothing.
      *
      * @return string[]

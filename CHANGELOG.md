@@ -2,6 +2,21 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.2.7] - 2026-10-17
+
+- After a wrong answer the narrator reads a new per-page clip: "Not quite. Listen to “page title” again, then come
+  straight back here to try once more." The clip ("retry", bundle slot `clip:retry`) is requested, priced and counted
+  as missing only once LMS Labs lists `clip:retry` in its v2 capabilities; until then nothing changes. It is made only
+  in languages the plugin has the sentence for (English for now); other lessons stay silent rather than read English.
+- Question text is smaller (about 1.35rem on desktop, 1.1rem on phones).
+- Sort chips that wrap onto two lines are left-aligned with proper padding.
+
+## [1.2.6] - 2026-10-17
+
+- Check questions no longer sit white on white: true and false cards are tinted green and red, picture and text
+  options, match items and the sort tray have a grey or indigo tint with a clear edge, sort groups and the answer
+  panels are stronger. Beside a picture, answers keep their natural height and the question is centred.
+
 ## [1.2.5] - 2026-10-17
 
 - Build step 3 redesigned: one status panel (page pictures, page voiceover, cover, progress bar and what LMS Labs is

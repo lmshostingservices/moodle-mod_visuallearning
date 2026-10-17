@@ -1502,6 +1502,11 @@ class Player {
         this.renderSegments(step);
         this.showPanel('wrong', page, result);
         this.updateNext();
+        if (result.retryaudio) {
+            // The narrator sends the learner back to the page.
+            this.feedbackClip = {el: this.q('.pb-q-panel'), urls: [result.retryaudio], text: ''};
+            this.narrate(500);
+        }
     }
 
     /**
@@ -1675,7 +1680,7 @@ class Player {
             }));
         }
         const page = this.pages[step.page];
-        if (this.answered && this.feedbackClip) {
+        if (this.feedbackClip && (this.answered || page.relisten)) {
             return [this.feedbackClip];
         }
         return [{el: this.q('.pb-q-prompt'), urls: [page.questionaudio], text: page.question.prompt}];

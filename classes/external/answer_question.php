@@ -104,7 +104,7 @@ class answer_question extends external_api {
         if ($progress->relisten && !$progress->tfpassed) {
             // Locked until the page has been listened to again: not counted as an attempt.
             return ['correct' => false, 'attempts' => (int)$progress->tfattempts, 'relisten' => true, 'feedback' => '',
-                'feedbackaudio' => ''];
+                'feedbackaudio' => '', 'retryaudio' => ''];
         }
 
         $correct = question::check($q, (int)$page->id, $given);
@@ -132,15 +132,19 @@ class answer_question extends external_api {
 
         $feedback = '';
         $audio = '';
+        $retryaudio = '';
+        $ids = array_map('intval', array_keys(visuallearning_get_pages((int)$book->id)));
+        $position = array_search((int)$page->id, $ids);
+        $clips = media::clips($book, $page, (int)$position, count($ids));
         if ($correct) {
             $feedback = $q['feedback'] === '' ? '' : format_text($q['feedback'], FORMAT_PLAIN, ['context' => $context,
                 'para' => false]);
-            $ids = array_map('intval', array_keys(visuallearning_get_pages((int)$book->id)));
-            $position = array_search((int)$page->id, $ids);
-            $clips = media::clips($book, $page, (int)$position, count($ids));
             if (isset($clips['feedback'])) {
                 $audio = visuallearning_file_url(media::clip_file($context, $book, $page, 'feedback', $clips['feedback']));
             }
+        } else if (isset($clips['retry'])) {
+            // The narrator sends the learner back to the page (only when that clip has been made).
+            $retryaudio = visuallearning_file_url(media::clip_file($context, $book, $page, 'retry', $clips['retry']));
         }
         return [
             'correct' => $correct,
@@ -148,6 +152,7 @@ class answer_question extends external_api {
             'relisten' => !$correct && !$progress->tfpassed,
             'feedback' => $feedback,
             'feedbackaudio' => $audio,
+            'retryaudio' => $retryaudio,
         ];
     }
 
@@ -164,6 +169,7 @@ class answer_question extends external_api {
                 'relisten' => new external_value(PARAM_BOOL, 'The learner must listen to the page again first'),
                 'feedback' => new external_value(PARAM_TEXT, 'Why the answer is right (after a right answer only)'),
                 'feedbackaudio' => new external_value(PARAM_URL, 'Feedback voiceover (after a right answer only)'),
+                'retryaudio' => new external_value(PARAM_URL, 'Go-back-and-listen voiceover (after a wrong answer only)'),
             ],
         );
     }
