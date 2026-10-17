@@ -2,6 +2,11 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.2.1] - 2026-10-17
+
+- Recap slide spotlights the illustration for the concept being read aloud; the other illustrations frost over until
+  their turn, and all clear when the recap finishes.
+
 ## [1.2.0] - 2026-10-17
 
 - New slides use the approved 10-credit bundle, including first pictures and narration.

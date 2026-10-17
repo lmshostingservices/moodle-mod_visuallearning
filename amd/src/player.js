@@ -931,6 +931,7 @@ class Player {
         this.q('.pb-recap-title').textContent = this.str('recaptitle');
         const mosaic = this.q('.pb-recap-mosaic');
         mosaic.innerHTML = '';
+        mosaic.classList.remove('is-focusing');
         mosaic.dataset.count = step.group.length;
         step.group.forEach((i, n) => {
             const tile = document.createElement('div');
@@ -1639,8 +1640,10 @@ class Player {
         }
         if (step.type === 'recap') {
             const els = this.root.querySelectorAll('.pb-recap-item');
+            const tiles = this.root.querySelectorAll('.pb-recap-tile');
             return step.group.map((i, n) => ({
                 el: els[n],
+                tile: tiles[n],
                 urls: [this.data.numbers[n] || '', this.pages[i].summaryaudio],
                 text: this.pages[i].summary,
             }));
@@ -1670,6 +1673,7 @@ class Player {
                 c.el.classList.remove('is-speaking', 'is-done');
                 c.el.classList.add('is-waiting');
             });
+            this.focusRecapTile(null);
         }
         this.narrating = true;
         this.paused = false;
@@ -1682,6 +1686,9 @@ class Player {
             }
             clip.el.classList.remove('is-waiting');
             clip.el.classList.add('is-speaking');
+            if (clip.tile) {
+                this.focusRecapTile(clip.tile);
+            }
             const last = clip.urls.length - 1;
             for (let u = 0; u <= last; u++) {
                 if (token !== this.token) {
@@ -1700,8 +1707,26 @@ class Player {
             await wait(420);
         }
         if (token === this.token) {
+            this.focusRecapTile(null);
             this.onSlideNarrated();
         }
+    }
+
+    /**
+     * Spotlight one recap illustration while its concept is read; the others frost over.
+     *
+     * @param {HTMLElement|null} tile The tile to spotlight, or null to clear every tile.
+     */
+    focusRecapTile(tile) {
+        const mosaic = this.q('.pb-recap-mosaic');
+        if (!mosaic) {
+            return;
+        }
+        mosaic.querySelectorAll('.pb-recap-tile.is-focus').forEach((t) => t.classList.remove('is-focus'));
+        if (tile) {
+            tile.classList.add('is-focus');
+        }
+        mosaic.classList.toggle('is-focusing', !!tile);
     }
 
     /**

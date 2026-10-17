@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_visuallearning';
-$plugin->version   = 2026101803;
+$plugin->version   = 2026101804;
 $plugin->requires  = 2024042200; // Moodle 4.4.
 $plugin->supported = [404, 503];
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0';
+$plugin->release   = '1.2.1';
