@@ -111,15 +111,9 @@ function xmldb_visuallearning_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        require_once($CFG->dirroot . '/mod/visuallearning/lib.php');
-        $sql = "SELECT v.*, cm.idnumber AS cmidnumber
-                  FROM {visuallearning} v
-                  JOIN {course_modules} cm ON cm.instance = v.id
-                  JOIN {modules} m ON m.id = cm.module AND m.name = 'visuallearning'";
-        foreach ($DB->get_recordset_sql($sql) as $book) {
-            visuallearning_grade_item_update($book);
-            visuallearning_update_grades($book);
-        }
+        // Grade items and learners' grades are made by a one-off task straight after the upgrade: writing grades
+        // updates completion, which Moodle does not allow while an upgrade is running.
+        \core\task\manager::queue_adhoc_task(new \mod_visuallearning\task\regrade(), true);
         upgrade_mod_savepoint(true, 2026101811, 'visuallearning');
     }
     return true;

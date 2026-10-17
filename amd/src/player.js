@@ -47,6 +47,16 @@ const HEADPHONES_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" 
     '<path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg>';
 const BACK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" ' +
     'stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>';
+const CLOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+const REPLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>';
+const QUESTION_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/>' +
+    '<path d="M8.5 12.2l2.4 2.4 4.6-4.8"/></svg>';
+const TROPHY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4"/>' +
+    '<path d="M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M8.5 20h7"/></svg>';
 const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" ' +
     'stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/>' +
     '<path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
@@ -154,12 +164,11 @@ class Player {
     }
 
     /**
-     * Turn pages into steps: page, page, ... then recap and quiz after every group.
+     * The pages in recap groups (lists of page indexes).
      *
-     * @returns {Array<Object>}
+     * @returns {Array<Array<number>>}
      */
-    buildSteps() {
-        const steps = [];
+    pageGroups() {
         const size = this.data.groupsize || 4;
         const total = this.pages.length;
         // Groups of four; a single page left over joins the group before it (5 pages: one group of 5; 9: 4 + 5),
@@ -172,13 +181,32 @@ class Player {
             ends.pop();
         }
         ends.push(total);
-        let check = 0;
+        const groups = [];
         let start = 0;
         for (const end of ends) {
             const group = [];
             for (let i = start; i < end; i++) {
-                steps.push({type: 'page', page: i});
                 group.push(i);
+            }
+            if (group.length) {
+                groups.push(group);
+            }
+            start = end;
+        }
+        return groups;
+    }
+
+    /**
+     * Turn pages into steps: page, page, ... then recap and quiz after every group.
+     *
+     * @returns {Array<Object>}
+     */
+    buildSteps() {
+        const steps = [];
+        let check = 0;
+        for (const group of this.pageGroups()) {
+            for (const i of group) {
+                steps.push({type: 'page', page: i});
             }
             // A full group always gets a review; a final partial group only if it has two or more concepts.
             if (group.length >= 2) {
@@ -194,7 +222,6 @@ class Player {
                     }
                 }
             }
-            start = end;
         }
         return steps;
     }
@@ -275,12 +302,8 @@ class Player {
             this.q('.pb-cover-figure').classList.add('is-empty');
         }
         this.q('.pb-cover-title').innerHTML = this.data.title;
-        if (this.data.intro) {
-            this.q('.pb-cover-intro').innerHTML = this.data.intro;
-        } else {
-            this.q('.pb-cover-intro').hidden = true;
-        }
-        this.q('.pb-cover-meta').textContent = this.str('pagescount', this.pages.length);
+        this.renderCoverInfo();
+        this.q('.pb-cover-text').addEventListener('scroll', () => this.updateCoverScroll(), {passive: true});
         const chips = this.q('.pb-chips');
         this.data.chips.forEach((chip) => {
             const span = document.createElement('span');
@@ -532,6 +555,7 @@ class Player {
         this.root.style.setProperty('--pb-footer', c.bottom + 'px');
         this.root.classList.toggle('is-short', avail < 600);
         this.root.classList.toggle('is-tiny', avail < 480);
+        this.updateCoverScroll();
     }
 
     /**
@@ -560,6 +584,172 @@ class Player {
         btn.textContent = label;
         btn.addEventListener('click', onClick);
         return btn;
+    }
+
+    /**
+     * The fixed parts of the cover: quick facts, what the lesson is about, and how it works.
+     */
+    renderCoverInfo() {
+        const pages = this.pages.length;
+        const asked = this.data.quiz ? this.pages.filter((p) => p.question) : [];
+        const groups = this.pageGroups();
+        const reviewed = groups.filter((g) => g.length >= 2);
+        const recaps = this.data.recap ? reviewed.length : 0;
+        const checks = asked.length && reviewed.length;
+
+        // Quick facts: pages, an honest reading time, questions.
+        const words = this.pages.reduce((sum, p) => sum + p.cards.reduce((w, c) => w + wordCount(c.text), 0) +
+            (this.data.recap ? wordCount(p.summary) : 0) + (p.question ? wordCount(p.question.prompt) : 0), 0);
+        const minutes = Math.max(1, Math.round(words / WORDS_PER_SECOND / 60 + pages * 0.25 + asked.length * 0.4));
+        const facts = [[HEADPHONES_SVG, this.str(pages === 1 ? 'factpage' : 'factpages', pages)],
+            [CLOCK_SVG, this.str('factminutes', minutes)]];
+        if (checks) {
+            facts.push([QUESTION_SVG, this.str(asked.length === 1 ? 'factquestion' : 'factquestions', asked.length)]);
+        }
+        this.q('.pb-cover-facts').innerHTML = facts.map(([icon, text]) =>
+            '<span class="pb-fact">' + icon + '<span>' + esc(text) + '</span></span>').join('');
+
+        // What the lesson is about: the teacher's description, or a plain summary of what follows.
+        this.q('.pb-cover-aboutheading').textContent = this.str('coverabout');
+        const intro = this.q('.pb-cover-intro');
+        if (this.data.intro) {
+            intro.innerHTML = this.data.intro;
+        } else {
+            const title = this.data.title.replace(/<[^>]+>/g, '').trim();
+            intro.innerHTML = '<p>' + esc(this.str(pages === 1 ? 'coveraboutautoone' : 'coveraboutauto', {title, pages})) +
+                '</p>';
+        }
+        this.q('.pb-cover-learnheading').textContent = this.str('coverlearn');
+
+        // How it works: listen, recap, check (only the parts this lesson has).
+        const how = [];
+        how.push(['is-listen', HEADPHONES_SVG, this.str('steplisten'),
+            this.str(this.data.navmode === NAV_FREE ? 'steplistenfree' : 'steplistenlinear')]);
+        const once = reviewed.length === 1;
+        if (recaps) {
+            how.push(['is-recap', REPLAY_SVG, this.str('steprecap'), this.str(once ? 'steprecaponce' : 'steprecaptext')]);
+        }
+        if (checks) {
+            how.push(['is-check', QUESTION_SVG, this.str('stepcheck'), this.str(once ? 'stepcheckonce' : 'stepchecktext')]);
+        }
+        let html = '<h3 class="pb-cover-heading">' + esc(this.str('coverhow')) + '</h3><ol class="pb-how">';
+        how.forEach(([cls, icon, title, text], n) => {
+            html += '<li class="pb-how-step ' + cls + '"><span class="pb-how-icon">' + icon +
+                (how.length > 1 ? '<span class="pb-how-num">' + (n + 1) + '</span>' : '') + '</span><span class="pb-how-body"><strong>' + esc(title) +
+                '</strong><span>' + esc(text) + '</span></span></li>';
+        });
+        html += '</ol>';
+        const pass = this.passRequirement(asked.length);
+        if (checks && pass) {
+            html += '<p class="pb-how-pass">' + TROPHY_SVG + '<span>' + esc(pass) + '</span></p>';
+        }
+        this.q('.pb-cover-how').innerHTML = html;
+    }
+
+    /**
+     * What a learner needs to pass, in words, from the teacher's grade to pass (or null when there is none).
+     *
+     * @param {number} total Check questions in the lesson
+     * @returns {string|null}
+     */
+    passRequirement(total) {
+        const g = this.data.grade;
+        if (!g || !(g.pass > 0) || !total) {
+            return null;
+        }
+        let fraction;
+        let label;
+        if (g.scale.length) {
+            const item = Math.min(g.scale.length, Math.ceil(g.pass));
+            fraction = g.scale.length > 1 ? (item - 1) / (g.scale.length - 1) : 1;
+            label = g.scale[item - 1];
+        } else {
+            fraction = Math.min(1, g.pass / g.max);
+            label = (Math.round(fraction * 1000) / 10) + '%';
+        }
+        const need = Math.min(total, Math.max(1, Math.ceil(fraction * total - 1e-9)));
+        return need >= total ? this.str('coverpassall', label)
+            : this.str('coverpasssome', {need, total, pass: label});
+    }
+
+    /**
+     * What the learner will learn: every page by number, in its parts, with each part's recap and check.
+     * Pages already listened to are ticked; pages the learner may open are buttons.
+     */
+    renderCoverOutline() {
+        const wrap = this.q('.pb-cover-parts');
+        wrap.innerHTML = '';
+        const reviews = this.data.recap || (this.data.quiz && this.pages.some((p) => p.question));
+        const groups = reviews ? this.pageGroups() : [this.pages.map((p, i) => i)];
+        wrap.classList.toggle('is-single', groups.length === 1);
+        groups.forEach((group, g) => {
+            const part = document.createElement('section');
+            part.className = 'pb-part';
+            const from = group[0] + 1;
+            const to = group[group.length - 1] + 1;
+            const done = group.every((i) => this.pages[i].listened);
+            if (groups.length > 1) {
+                part.insertAdjacentHTML('beforeend', '<div class="pb-part-head"><span class="pb-part-name">' +
+                    esc(this.str('coverpart', g + 1)) + '</span><span class="pb-part-range">' +
+                    esc(from === to ? this.str('coverpage', from) : this.str('coverpages', {from, to})) + '</span>' +
+                    (done ? '<span class="pb-part-done">' + TICK_SVG + '</span>' : '') + '</div>');
+            }
+            const list = document.createElement('ol');
+            list.className = 'pb-part-list';
+            list.start = from;
+            group.forEach((i) => {
+                const page = this.pages[i];
+                const li = document.createElement('li');
+                const index = this.steps.findIndex((s) => s.type === 'page' && s.page === i);
+                const open = index >= 0 && this.isUnlocked(index);
+                const inner = '<span class="pb-part-num">' + (page.listened ? TICK_SVG : String(i + 1)) + '</span>' +
+                    '<span class="pb-part-title">' + page.title + '</span>';
+                if (open) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'pb-part-item' + (page.listened ? ' is-done' : '');
+                    btn.innerHTML = inner;
+                    btn.setAttribute('aria-label', this.str('coverpage', i + 1) + ': ' + page.title.replace(/<[^>]+>/g, '') +
+                        (page.listened ? ' (' + this.str('listenedstatus') + ')' : ''));
+                    btn.addEventListener('click', () => this.go(index));
+                    li.appendChild(btn);
+                } else {
+                    li.innerHTML = '<span class="pb-part-item is-locked">' + inner + '</span>';
+                }
+                list.appendChild(li);
+            });
+            part.appendChild(list);
+            // The review that follows this part.
+            if (group.length >= 2) {
+                const asked = this.data.quiz ? group.filter((i) => this.pages[i].question).length : 0;
+                let review = '';
+                if (this.data.recap) {
+                    review += '<span class="pb-part-tag is-recap">' + REPLAY_SVG + esc(this.str('coverrecap')) + '</span>';
+                }
+                if (asked) {
+                    review += '<span class="pb-part-tag is-check">' + QUESTION_SVG +
+                        esc(this.str(asked === 1 ? 'coverquestion' : 'coverquestions', asked)) + '</span>';
+                }
+                if (review) {
+                    part.insertAdjacentHTML('beforeend', '<div class="pb-part-review"><span class="pb-part-then">' +
+                        esc(this.str('coverthen')) + '</span>' + review + '</div>');
+                }
+            }
+            wrap.appendChild(part);
+        });
+        this.updateCoverScroll();
+    }
+
+    /**
+     * Fade the bottom of the cover's text column while more of the outline is below.
+     */
+    updateCoverScroll() {
+        const col = this.q('.pb-cover-text');
+        if (!col) {
+            return;
+        }
+        const more = col.scrollHeight - col.scrollTop - col.clientHeight > 6;
+        col.classList.toggle('has-more', more);
     }
 
     /**
@@ -786,6 +976,7 @@ class Player {
         this.q('.pb-cover').hidden = false;
         this.q('.pb-controls').hidden = true;
         this.q('.pb-pageindicator').textContent = '';
+        this.renderCoverOutline();
         this.renderCoverActions();
         this.fitToViewport();
     }

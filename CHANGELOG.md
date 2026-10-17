@@ -2,6 +2,27 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.3.0] - 2026-10-17
+
+- New cover page:
+  - quick facts: pages, an estimated time and the number of check questions;
+  - "What this lesson is about": the activity description, or a plain summary when there is none;
+  - "What you will learn": every page by number, in its parts, each part followed by its recap and its questions.
+    Pages already listened to are ticked; pages the learner may open are links;
+  - "How this lesson works": Listen, Recap and Check. It explains that a wrong answer takes the learner straight back
+    to the page to listen again and then back to the same question, with no penalty;
+  - what is needed to pass, from the teacher's grade to pass (for example "answer at least 9 of the 12 questions
+    correctly. That is the passing grade of 75%").
+- Only the parts a lesson has are described (no recap or check text when they are switched off).
+- Phones: picture, title, facts, about, Start, how it works, then the outline.
+
+## [1.2.9] - 2026-10-17
+
+- Fixed: the 1.2.8 upgrade stopped with "cannotexecduringupgrade". It wrote learners' grades during the upgrade, which
+  updates completion, and Moodle does not allow that while an upgrade runs. The upgrade now only adds the grade setting
+  and queues a one-off task ("regrade") that creates the grade items and fills in learners' grades straight after.
+  A site stopped part-way through the 1.2.8 upgrade finishes cleanly with this version.
+
 ## [1.2.8] - 2026-10-17
 
 - Gradebook: the activity now has a grade (default out of 100; points, a scale or none). The grade is the share of

@@ -119,7 +119,12 @@ class book_data {
         foreach (
             ['start', 'continuefrom', 'startover', 'contents', 'close', 'previous', 'next', 'finish', 'pause',
                 'play', 'replay', 'pageof', 'listenedof', 'taptolisten', 'finishedtitle', 'finishedtext',
-                'readagain', 'backtocourse', 'nextactivity', 'passedtitle', 'notpassedtitle', 'gradepassed',
+                'readagain', 'backtocourse', 'nextactivity', 'coverabout', 'coveraboutauto', 'coveraboutautoone', 
+                'coverhow', 'coverlearn', 'coverpage', 'coverpages', 'coverpart', 'coverpassall', 'coverpasssome',
+                'coverquestion', 'coverquestions', 'coverrecap', 'coverthen', 'factminutes', 'factpage', 'factpages',
+                'factquestion', 'factquestions', 'stepcheck', 'stepchecktext', 'steplisten', 'steplistenfree',
+                'steplistenlinear', 'steprecap', 'steprecaptext', 'steprecaponce', 'stepcheckonce',
+                'passedtitle', 'notpassedtitle', 'gradepassed',
                 'gradepassedfull', 'gradenotyet', 'gradenotyetpages', 'gradeonly', 'gotoquestion', 'gradeheadpassed',
                 'gradeheadnotyet', 'locked', 'listenedstatus', 'notlistened', 'nowreading',
                 'imagecoming', 'listenfirst', 'pagescount', 'cover', 'listen', 'listening', 'listenagain',
