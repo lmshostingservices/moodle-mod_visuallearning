@@ -2,6 +2,12 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.3.1] - 2026-10-18
+
+- Fixed: "custom_completion::get_sort_order() is missing one or more completion conditions" once the activity became
+  graded. The display order now lists the standard grade conditions (receive a grade, receive a passing grade)
+  alongside view, listen to every page and answer every question.
+
 ## [1.3.0] - 2026-10-17
 
 - New cover page:

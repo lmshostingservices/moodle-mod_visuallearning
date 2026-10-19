@@ -101,6 +101,7 @@ class custom_completion extends activity_custom_completion {
      * @return array
      */
     public function get_sort_order(): array {
-        return ['completionview', 'completionlistened', 'completionquiz'];
+        // Every condition this activity can have, the standard grade ones included (the activity is graded).
+        return ['completionview', 'completionusegrade', 'completionpassgrade', 'completionlistened', 'completionquiz'];
     }
 }
