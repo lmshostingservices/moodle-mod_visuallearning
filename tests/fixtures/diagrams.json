@@ -1,0 +1,20 @@
+{
+"ac": {"type":"waveform","title":"Alternating current","xlabel":"time","ylabel":"current","cycles":2,
+  "waves":[{"label":"I","colour":"blue","card":1}],
+  "markers":[{"kind":"halfcycles","wave":0,"label":"positive and negative half-cycles","card":2},{"kind":"period","label":"1 cycle = 20 ms","card":3}]},
+"lag": {"type":"waveform","title":"Current lags voltage in an inductor","cycles":2,
+  "waves":[{"label":"V","colour":"blue","phase":0,"card":1},{"label":"I","colour":"red","phase":-90,"amplitude":0.75,"card":2}],
+  "markers":[{"kind":"lag","from":0,"to":1,"label":"90°","card":3}]},
+"phasor": {"type":"phasor","title":"Phasors","rotate":true,"vectors":[{"label":"V","colour":"blue","angle":0,"card":1},{"label":"I","colour":"red","angle":-90,"length":0.75,"card":2}],"arcs":[{"from":0,"to":1,"label":"90° lag","card":3}]},
+"circuit": {"type":"circuit","title":"An inductive AC circuit","source":{"kind":"ac","label":"230 V 50 Hz"},
+  "components":[{"kind":"inductor","label":"Coil","card":1},{"kind":"lamp","label":"Lamp","card":1},{"kind":"meter","label":"Ammeter","card":2}],
+  "current":{"show":true,"alternating":true,"label":"alternating current","card":2}},
+"dc": {"type":"circuit","source":{"kind":"battery","label":"12 V"},"components":[{"kind":"switch","label":"Switch"},{"kind":"resistor","label":"Resistor"},{"kind":"lamp","label":"Lamp"},{"kind":"capacitor","label":"Capacitor"},{"kind":"motor","label":"Motor"}],"current":{"label":"current","direction":"clockwise"}},
+"process": {"type":"process","title":"Photosynthesis","steps":[{"label":"Light absorbed","detail":"by chlorophyll in chloroplasts","card":1},{"label":"Water split","detail":"releases oxygen","card":2},{"label":"Glucose made","detail":"from carbon dioxide","card":3}],
+  "inputs":[{"label":"Sunlight","card":1},{"label":"Water","card":1},{"label":"CO₂","card":1}],"outputs":[{"label":"Glucose","card":3},{"label":"Oxygen","card":2}]},
+"cycle": {"type":"cycle","title":"The refrigeration cycle","steps":[{"label":"Compressor","detail":"raises pressure and heat"},{"label":"Condenser","detail":"releases heat outside"},{"label":"Expansion valve","detail":"drops the pressure"},{"label":"Evaporator","detail":"absorbs heat from inside"}]},
+"forces": {"type":"forces","title":"Forces on a trolley","object":"Trolley","forces":[{"label":"Push","angle":0,"magnitude":1,"card":1},{"label":"Friction","angle":180,"magnitude":0.5,"card":2},{"label":"Weight","angle":270,"magnitude":0.7,"card":1},{"label":"Normal force","angle":90,"magnitude":0.7,"card":1}],"motion":{"angle":0,"label":"accelerates","card":3}},
+"bars": {"type":"bars","title":"Energy use per day","unit":"kWh","bars":[{"label":"Old fridge","value":2.4,"card":1},{"label":"New fridge","value":0.9,"card":2}]},
+"bad": {"type":"hologram"},
+"badwave": {"type":"waveform","waves":[]}
+}

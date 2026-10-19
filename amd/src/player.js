@@ -33,6 +33,7 @@
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import * as Sounds from 'mod_visuallearning/sounds';
+import * as Diagrams from 'mod_visuallearning/diagrams';
 
 const HEARTBEAT_MS = 15000;
 const WORDS_PER_SECOND = 2.6;
@@ -94,6 +95,14 @@ const cardIcon = (key) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentC
     'stroke-linecap="round" stroke-linejoin="round">' + (CARD_ICONS[key] || '') + '</svg>';
 
 /**
+ * Numbered icon for a card that is a step (key point 1, 2, 3): the same coloured tile, with its number.
+ *
+ * @param {string} key concept|action|outcome
+ * @returns {string} markup
+ */
+const cardNumber = (key) => '<span class="pb-card-num">' + (['concept', 'action', 'outcome'].indexOf(key) + 1) + '</span>';
+
+/**
  * Height of Moodle's fixed chrome (top navbar, sticky footer) that covers the page.
  *
  * @returns {{top: number, bottom: number}}
@@ -137,6 +146,9 @@ class Player {
         this.root = root;
         this.data = JSON.parse(root.querySelector('.pb-data').textContent);
         this.pages = this.data.pages;
+        // The animated diagram on the page shown (if any), and the timer that tidies the picture layers.
+        this.diagram = null;
+        this.layerTimer = 0;
         this.steps = this.buildSteps();
         this.current = -1; // Cover is -1, the end screen is steps.length.
         this.narrating = false;
@@ -1099,6 +1111,86 @@ class Player {
     leaveSlide() {
         this.stopAudio();
         this.stopHeartbeat();
+        this.clearFigure();
+    }
+
+    /**
+     * Remove the card pictures and the animated diagram of the page being left.
+     */
+    clearFigure() {
+        if (this.diagram) {
+            this.diagram.destroy();
+            this.diagram = null;
+        }
+        window.clearTimeout(this.layerTimer);
+        const figure = this.q('.pb-page-figure');
+        if (!figure) {
+            return;
+        }
+        figure.querySelectorAll('.pb-card-image, .pb-diagram').forEach((el) => el.remove());
+        figure.classList.remove('has-layers', 'has-diagram');
+        figure.querySelectorAll('.is-shown, .is-under').forEach((el) => el.classList.remove('is-shown', 'is-under'));
+    }
+
+    /**
+     * Show one picture of the page figure (the page picture, a card picture or the diagram): it rises gently into
+     * place over the one before, with the same timing as the cards.
+     *
+     * @param {HTMLElement|null} layer
+     */
+    showLayer(layer) {
+        const figure = this.q('.pb-page-figure');
+        if (!layer || !figure || layer.classList.contains('is-shown')) {
+            return;
+        }
+        figure.querySelectorAll('.is-under').forEach((el) => el.classList.remove('is-under'));
+        figure.querySelectorAll('.is-shown').forEach((el) => {
+            el.classList.remove('is-shown');
+            el.classList.add('is-under');
+        });
+        layer.getBoundingClientRect();
+        layer.classList.add('is-shown');
+        window.clearTimeout(this.layerTimer);
+        this.layerTimer = window.setTimeout(() => {
+            figure.querySelectorAll('.is-under').forEach((el) => el.classList.remove('is-under'));
+        }, 650);
+    }
+
+    /**
+     * Draw the page's animated diagram afresh, showing what appears from the given card on.
+     *
+     * @param {Object} page
+     * @param {number} card
+     */
+    drawDiagram(page, card) {
+        const figure = this.q('.pb-page-figure');
+        if (this.diagram) {
+            this.diagram.destroy();
+        }
+        let box = figure.querySelector('.pb-diagram');
+        if (!box) {
+            box = document.createElement('div');
+            box.className = 'pb-diagram';
+            figure.appendChild(box);
+        }
+        this.diagram = Diagrams.render(box, page.diagram, {label: this.str('diagramlabel', page.alt || page.title)});
+        if (this.diagram) {
+            this.diagram.reveal(card);
+        }
+        return box;
+    }
+
+    /**
+     * What the figure shows while a card is read (or tapped): its card picture, or its part of the diagram.
+     *
+     * @param {number} i card position
+     */
+    showCard(i) {
+        if (this.diagram) {
+            this.diagram.reveal(i + 1);
+            return;
+        }
+        this.showLayer(this.q('.pb-page-figure .pb-card-image[data-card="' + i + '"]'));
     }
 
     /**
@@ -1183,8 +1275,10 @@ class Player {
      */
     renderPage(step) {
         const page = this.pages[step.page];
+        const figure = this.q('.pb-page-figure');
         const img = this.q('.pb-page-image');
         const placeholder = this.q('.pb-image-placeholder');
+        this.clearFigure();
         if (page.image) {
             img.hidden = false;
             img.src = page.image;
@@ -1196,9 +1290,48 @@ class Player {
             placeholder.hidden = false;
             placeholder.textContent = this.str('imagecoming');
         }
+        const heard = page.listened || this.returnTo !== null;
+        let first = page.image ? img : placeholder;
+        if (page.diagram) {
+            // Animated diagram: drawn here, building up card by card (all of it once the page has been heard).
+            figure.classList.add('has-layers', 'has-diagram');
+            first = this.drawDiagram(page, heard ? 3 : 1);
+        } else if (page.cards.some((card) => card.image)) {
+            // One picture per card: stacked, each rising into place as its card is read.
+            figure.classList.add('has-layers');
+            let last = null;
+            page.cards.forEach((card, i) => {
+                if (!card.image) {
+                    return;
+                }
+                const layer = document.createElement('img');
+                layer.className = 'pb-card-image';
+                layer.dataset.card = i;
+                layer.src = card.image;
+                layer.alt = this.str('cardpicture', card.label);
+                figure.appendChild(layer);
+                last = layer;
+                if (i === 0) {
+                    first = layer;
+                }
+            });
+            if (heard && last) {
+                first = last;
+            }
+        }
+        // Every picture rises gently into place with the cards (same easing and length as their entrance).
+        first.getBoundingClientRect();
+        first.classList.add('is-shown');
         const nextPage = this.pages[step.page + 1];
         if (nextPage && nextPage.image) {
             (new Image()).src = nextPage.image;
+        }
+        if (nextPage) {
+            nextPage.cards.forEach((card) => {
+                if (card.image) {
+                    (new Image()).src = card.image;
+                }
+            });
         }
         this.renderRevisitBanner();
 
@@ -1208,14 +1341,20 @@ class Player {
         cards.innerHTML = '';
         page.cards.forEach((card, i) => {
             const el = document.createElement('article');
-            el.className = 'pb-card pb-card--' + card.key + ' is-waiting';
+            el.className = 'pb-card pb-card--' + card.key + ' is-waiting' + (this.data.numbered ? ' is-numbered' : '');
             // Drives the staggered entrance delay in CSS.
             el.style.setProperty('--pb-i', i);
             el.innerHTML = '<div class="pb-card-head">' +
-                '<span class="pb-card-icon" aria-hidden="true">' + cardIcon(card.key) + '</span>' +
+                '<span class="pb-card-icon" aria-hidden="true">' +
+                (this.data.numbered ? cardNumber(card.key) : cardIcon(card.key)) + '</span>' +
                 '<span class="pb-card-label">' + card.label + '</span>' +
                 '<span class="pb-card-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
                 '</div><p class="pb-card-text">' + card.text + '</p>';
+            if (card.image) {
+                // Tapping a card shows its picture again.
+                el.classList.add('has-picture');
+                el.addEventListener('click', () => this.showCard(i));
+            }
             cards.appendChild(el);
         });
         return this.q('.pb-spread');
@@ -1956,7 +2095,8 @@ class Player {
         }
         if (step.type === 'page') {
             const els = this.root.querySelectorAll('.pb-card');
-            return this.pages[step.page].cards.map((card, i) => ({el: els[i], urls: [card.audio], text: card.text}));
+            return this.pages[step.page].cards.map((card, i) => ({el: els[i], urls: [card.audio], text: card.text,
+                start: () => this.showCard(i)}));
         }
         if (step.type === 'recap') {
             const els = this.root.querySelectorAll('.pb-recap-item');
@@ -1995,6 +2135,10 @@ class Player {
             });
             this.focusRecapTile(null);
         }
+        if (step.type === 'page' && this.pages[step.page].diagram && this.diagram) {
+            // Read from the start: the diagram builds up again from card 1.
+            this.drawDiagram(this.pages[step.page], 1);
+        }
         this.narrating = true;
         this.paused = false;
         this.setListenState('playing');
@@ -2006,6 +2150,9 @@ class Player {
             }
             clip.el.classList.remove('is-waiting');
             clip.el.classList.add('is-speaking');
+            if (clip.start) {
+                clip.start();
+            }
             if (clip.tile) {
                 this.focusRecapTile(clip.tile);
             }

@@ -237,7 +237,7 @@ class exporter {
         foreach ($this->pages as $page) {
             $out .= '## ' . (int)$page->pagenum . '. ' . $page->title . "\n\n";
             foreach (VISUALLEARNING_CARDS as $card) {
-                $out .= '**' . get_string('card_' . $card, 'mod_visuallearning') . ':** ' . $page->{$card . 'text'} . "\n\n";
+                $out .= '**' . approaches::card_label($this->book, $card) . ':** ' . $page->{$card . 'text'} . "\n\n";
             }
             if (trim((string)$page->summarytext) !== '') {
                 $out .= '*' . get_string('summarytext', 'mod_visuallearning') . ':* ' . $page->summarytext . "\n\n";
@@ -278,7 +278,7 @@ class exporter {
         foreach ($this->pages as $page) {
             $body .= $p((int)$page->pagenum . '. ' . $page->title, 'Heading1');
             foreach (VISUALLEARNING_CARDS as $card) {
-                $body .= $label(get_string('card_' . $card, 'mod_visuallearning'), (string)$page->{$card . 'text'});
+                $body .= $label(approaches::card_label($this->book, $card), (string)$page->{$card . 'text'});
             }
             if (trim((string)$page->summarytext) !== '') {
                 $body .= $label(get_string('summarytext', 'mod_visuallearning'), (string)$page->summarytext);
@@ -379,6 +379,13 @@ class exporter {
             $stem = 'page-' . $num . '-' . self::slug((string)$page->title);
             if ($image = media::image_file($this->context, media::AREA_IMAGE, (int)$page->id)) {
                 $files['pictures/' . $stem . '.' . pathinfo($image->get_filename(), PATHINFO_EXTENSION)] = $image;
+            }
+            // One picture per card: the current picture of each card in the chain.
+            foreach (media::card_chain($this->context, $this->book, $page) as $card => $link) {
+                if ($link['file']) {
+                    $files['pictures/' . $stem . '-card-' . $card . '.' .
+                        pathinfo($link['file']->get_filename(), PATHINFO_EXTENSION)] = $link['file'];
+                }
             }
             for ($i = 0; $i < question::PICK_OPTIONS; $i++) {
                 if ($option = media::option_file($this->context, (int)$page->id, $i)) {

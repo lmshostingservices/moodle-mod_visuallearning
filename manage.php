@@ -77,8 +77,8 @@ if (in_array($action, ['quote', 'writequote', 'confirm', 'cancelquote', 'check',
     if ($action === 'quote') {
         $what = optional_param('what', 'missing', PARAM_ALPHA);
         $kinds = array_intersect(
-            explode(',', optional_param('kinds', 'image,option,cover,voice', PARAM_TEXT)),
-            ['image', 'option', 'cover', 'voice']
+            explode(',', optional_param('kinds', 'image,option,cover,voice,card', PARAM_TEXT)),
+            ['image', 'option', 'cover', 'voice', 'card']
         );
         $plans = media::plan($book, $context, $what === 'all' ? 'all' : 'missing', $pageid, array_values($kinds));
         \mod_visuallearning\local\quote_page::show(requests::quote($book, (int)$USER->id, $plans), $baseurl);
@@ -134,6 +134,7 @@ if (in_array($action, ['delete', 'moveup', 'movedown'], true)) {
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'image', $page->id);
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'audio', $page->id);
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'option', $page->id);
+        $fs->delete_area_files($context->id, 'mod_visuallearning', 'card', $page->id);
         $DB->delete_records('visuallearning_progress', ['pageid' => $page->id]);
         $DB->delete_records('visuallearning_pages', ['id' => $page->id]);
         visuallearning_renumber_pages($book->id);
@@ -175,7 +176,7 @@ if ($action === 'edit' || $action === 'add') {
     }
     $form = new \mod_visuallearning\form\page_form(
         new moodle_url($baseurl, ['action' => $action, 'pageid' => $pageid]),
-        ['cmid' => $cm->id]
+        ['cmid' => $cm->id, 'approach' => $book->teachingapproach ?? null, 'picturemode' => $book->picturemode ?? null]
     );
     if ($form->is_cancelled()) {
         redirect(new moodle_url($baseurl, ['step' => 2]));
@@ -191,6 +192,14 @@ if ($action === 'edit' || $action === 'add') {
             'summarytext' => $data->summarytext,
             'timemodified' => time(),
         ];
+        // Card picture prompts and the diagram are only on the form in their picture mode; elsewhere they are kept.
+        if (property_exists($data, 'cardprompt1')) {
+            $cards = importer::card_prompts([$data->cardprompt1, $data->cardprompt2 ?? '', $data->cardprompt3 ?? '']);
+            $record->cardprompts = $cards ? json_encode($cards, JSON_UNESCAPED_UNICODE) : null;
+        }
+        if (property_exists($data, 'diagram')) {
+            $record->diagram = \mod_visuallearning\local\diagram::json($data->diagram);
+        }
         $fields = \mod_visuallearning\local\question::to_fields(\mod_visuallearning\local\question::from_form($data));
         foreach ($fields as $field => $value) {
             $record->$field = $value;
@@ -208,6 +217,8 @@ if ($action === 'edit' || $action === 'add') {
                 'outcome' => $record->outcometext, 'image_prompt' => $record->imageprompt,
                 'alt_text' => $record->alttext, 'summary' => $record->summarytext,
                 'question' => \mod_visuallearning\local\question::from_form($data),
+                'card_image_prompts' => json_decode((string)($record->cardprompts ?? ''), true) ?: [],
+                'diagram' => \mod_visuallearning\local\diagram::clean($record->diagram ?? null),
             ]]];
             $summary = requests::quote($book, (int)$USER->id, [[
                 'operation' => requests::IMPORT,
@@ -235,6 +246,11 @@ if ($action === 'edit' || $action === 'add') {
                 'actiontext' => $page->actiontext, 'outcometext' => $page->outcometext,
                 'imageprompt' => $page->imageprompt, 'alttext' => $page->alttext,
                 'summarytext' => $page->summarytext,
+                'cardprompt1' => \mod_visuallearning\local\picture_modes::card_prompts($page)[0],
+                'cardprompt2' => \mod_visuallearning\local\picture_modes::card_prompts($page)[1],
+                'cardprompt3' => \mod_visuallearning\local\picture_modes::card_prompts($page)[2],
+                'diagram' => (string)($page->diagram ?? '') !== ''
+                    ? json_encode(json_decode($page->diagram), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '',
             ] + \mod_visuallearning\local\question::to_form($page),
         );
     }
@@ -318,6 +334,10 @@ $summary = [
     get_string('subindustry', 'mod_visuallearning') . ': ' . s($book->subindustry ?: '—'),
     get_string('language', 'mod_visuallearning') . ': ' . s(voices::language_name($book->language)),
     get_string('voice', 'mod_visuallearning') . ': ' . s($book->voice),
+    get_string('teachingapproach', 'mod_visuallearning') . ': '
+        . \mod_visuallearning\local\approaches::options()[\mod_visuallearning\local\approaches::of($book)->key()],
+    get_string('visualstyle', 'mod_visuallearning') . ': '
+        . \mod_visuallearning\local\visual_styles::options()[\mod_visuallearning\local\visual_styles::of($book)],
     get_string('maxpages', 'mod_visuallearning') . ': ' . (int)$book->maxpages,
 ];
 echo html_writer::tag(
@@ -478,7 +498,7 @@ foreach ($pages as $page) {
     foreach (VISUALLEARNING_CARDS as $card) {
         echo html_writer::tag(
             'p',
-            html_writer::span(get_string('card_' . $card, 'mod_visuallearning'), 'pb-tag pb-tag-' . $card) .
+            html_writer::span(\mod_visuallearning\local\approaches::card_label($book, $card), 'pb-tag pb-tag-' . $card) .
                 s($page->{$card . 'text'}),
         );
     }
@@ -576,8 +596,9 @@ $optioncount = 0;
 foreach ($pages as $p) {
     $optioncount += count(media::option_prompts($book, $p));
 }
-echo $holdnotice($optioncount ? ['image' => 'image', 'option' => 'option', 'voice' => 'voice'] : ['image' => 'image',
-    'voice' => 'voice']);
+$sequence = \mod_visuallearning\local\picture_modes::of($book) === \mod_visuallearning\local\picture_modes::SEQUENCE;
+echo $holdnotice(['image' => 'image'] + ($optioncount ? ['option' => 'option'] : []) + ($sequence ? ['card' => 'card'] : [])
+    + ['voice' => 'voice']);
 
 // Open requests, by page: what is being made, and what needs the teacher.
 $pendingby = [];
@@ -585,11 +606,12 @@ $problems = [];
 $pendingrows = [];
 foreach ($open as $row) {
     if ($row->status === 'pending') {
-        if (!in_array($row->operation, [requests::IMAGE, requests::COVER, requests::OPTION, requests::VOICE], true)) {
+        if (!in_array($row->operation, [requests::IMAGE, requests::COVER, requests::OPTION, requests::VOICE, requests::CARD],
+                true)) {
             $pendingrows[] = $row;
             continue;
         }
-        $kind = $row->operation === requests::VOICE ? 'audio' : 'image';
+        $kind = [requests::VOICE => 'audio', requests::CARD => 'card'][$row->operation] ?? 'image';
         $pendingby[(int)$row->targetid][$kind] = ($pendingby[(int)$row->targetid][$kind] ?? 0) + 1;
         $pendingrows[] = $row;
     } else {
@@ -750,6 +772,15 @@ if ($total) {
             $buttons[] = visuallearning_button($quoteurl('option', (int)$page->id),
                 get_string('regenoptions', 'mod_visuallearning'), 'post');
         }
+        $cardchip = '';
+        if ($sequence && !empty($page->bundleid) && media::card_prompts($book, $page)) {
+            $made = count(array_filter(array_column(media::card_chain($context, $book, $page), 'file')));
+            $buttons[] = visuallearning_button($quoteurl('card', (int)$page->id),
+                get_string('regencards', 'mod_visuallearning'), 'post');
+            $cardchip = $chip(get_string('media_cards', 'mod_visuallearning', $made),
+                $made === \mod_visuallearning\local\picture_modes::CARDS ? VISUALLEARNING_MEDIA_READY : VISUALLEARNING_MEDIA_PENDING,
+                $pend['card'] ?? 0);
+        }
         $buttons[] = visuallearning_button($quoteurl('voice', (int)$page->id), get_string('regenaudio', 'mod_visuallearning'),
             'post');
         $cards .= html_writer::div(
@@ -762,6 +793,7 @@ if ($total) {
                 html_writer::div(format_string($page->title, true, ['context' => $context]), 'vl-media-title') .
                 html_writer::div(
                     $chip(get_string('media_picture', 'mod_visuallearning'), (int)$page->imagestatus, $pend['image'] ?? 0) .
+                    $cardchip .
                     $chip(get_string('media_voice', 'mod_visuallearning'), (int)$page->audiostatus, $pend['audio'] ?? 0),
                     'vl-chips'
                 ) .

@@ -19,6 +19,9 @@
         <FIELD NAME="voice" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="Aoede" SEQUENCE="false"/>
         <FIELD NAME="speakingrate" TYPE="number" LENGTH="4" NOTNULL="true" DEFAULT="1.00" SEQUENCE="false" DECIMALS="2"/>
         <FIELD NAME="imagestyle" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="teachingapproach" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="story" SEQUENCE="false" COMMENT="Teaching approach key (see local\approaches)"/>
+        <FIELD NAME="visualstyle" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="illustration" SEQUENCE="false" COMMENT="Visual style key (see local\visual_styles)"/>
+        <FIELD NAME="picturemode" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="single" SEQUENCE="false" COMMENT="single, sequence (one picture per card) or animated (plugin-drawn diagrams)"/>
         <FIELD NAME="navmode" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 linear, 1 free"/>
         <FIELD NAME="autoplay" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Start narration automatically on page turn"/>
         <FIELD NAME="imageculture" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="language" SEQUENCE="false" COMMENT="language or international"/>
@@ -69,6 +72,8 @@
         <FIELD NAME="imagestatus" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 pending, 1 queued, 2 ready, 3 failed"/>
         <FIELD NAME="audiostatus" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 pending, 1 queued, 2 ready, 3 failed"/>
         <FIELD NAME="lasterror" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="cardprompts" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: three picture prompts, one per card; 2 and 3 edit the picture before them"/>
+        <FIELD NAME="diagram" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: animated diagram specification drawn by the plugin"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

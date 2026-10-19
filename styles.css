@@ -1184,29 +1184,19 @@
     }
 }
 
-@keyframes pb-turn-forward {
-    from {
-        opacity: 0;
-        transform: perspective(1400px) rotateY(-14deg) translateX(-28px) scale(.97);
-    }
-    to {
-        opacity: 1;
-        transform: none;
-    }
-}
-
-@keyframes pb-turn-back {
-    from {
-        opacity: 0;
-        transform: perspective(1400px) rotateY(14deg) translateX(28px) scale(.97);
-    }
-    to {
-        opacity: 1;
-        transform: none;
-    }
-}
-
 /* Card entrance ends exactly on the waiting state, so the hand-off to the state transitions is seamless. */
+/* Pictures: fade in while rising, the same movement and timing as a card coming in. */
+@keyframes pb-image-enter {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(.97);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
 @keyframes pb-card-enter {
     from {
         opacity: 0;
@@ -1743,12 +1733,11 @@
         animation-delay: -.6s;
     }
 
-    .mod-visuallearning .pb-spread.is-turning-forward .pb-page-figure {
-        animation: pb-turn-forward .75s var(--pb-ease) both;
-    }
-
-    .mod-visuallearning .pb-spread.is-turning-back .pb-page-figure {
-        animation: pb-turn-back .75s var(--pb-ease) both;
+    /* Every picture rises gently into place, with the same easing and length as the cards' entrance. */
+    .mod-visuallearning .pb-page-figure .is-shown,
+    .mod-visuallearning .pb-q-figure img,
+    .mod-visuallearning .pb-cover-figure img {
+        animation: pb-image-enter .6s var(--pb-ease) both;
     }
 
     .mod-visuallearning .pb-spread.is-turning-forward .pb-page-label,
@@ -4462,4 +4451,127 @@
     white-space: normal;
     height: auto;
     overflow-wrap: anywhere;
+}
+
+/* ---------- Animated diagrams (amd/src/diagrams.js) ---------- */
+.mod-visuallearning .pb-diagram {
+    width: 100%;
+    max-height: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--pb-radius);
+    background: #fff;
+    box-shadow: 0 22px 40px -22px rgba(31, 36, 51, .55), 0 2px 6px rgba(31, 36, 51, .08);
+    overflow: hidden;
+}
+
+.mod-visuallearning .dg-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    font-family: inherit;
+}
+
+.mod-visuallearning .dg-el {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .6s var(--pb-ease), transform .6s var(--pb-ease);
+}
+
+.mod-visuallearning .dg-el.is-on {
+    opacity: 1;
+    transform: none;
+}
+
+.mod-visuallearning .dg-trace {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 1.8s ease-in-out .2s;
+}
+
+.mod-visuallearning .dg-el.is-on .dg-trace {
+    stroke-dashoffset: 0;
+}
+
+.mod-visuallearning .dg-bar {
+    transform: scaleY(0);
+    transition: transform .9s var(--pb-ease) .15s;
+}
+
+.mod-visuallearning .dg-el.is-on .dg-bar {
+    transform: scaleY(1);
+}
+
+.mod-visuallearning .dg-dot {
+    transition: opacity .4s;
+}
+
+.mod-visuallearning .dg-svg.is-still .dg-el,
+.mod-visuallearning .dg-svg.is-still .dg-trace,
+.mod-visuallearning .dg-svg.is-still .dg-bar {
+    transition: none;
+}
+
+/* ---------- One picture per card, and animated diagrams: layers in the page figure ---------- */
+.mod-visuallearning .pb-page-figure.has-layers {
+    display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    place-items: center;
+}
+
+.mod-visuallearning .pb-page-figure.has-layers > * {
+    grid-area: 1 / 1;
+    min-height: 0;
+}
+
+/* Only the picture being shown (and, briefly, the one it rises over) is visible. */
+.mod-visuallearning .pb-page-figure.has-layers > :not(.is-shown):not(.is-under) {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.mod-visuallearning .pb-page-figure .is-shown {
+    position: relative;
+    z-index: 2;
+}
+
+.mod-visuallearning .pb-page-figure .is-under {
+    z-index: 1;
+}
+
+.mod-visuallearning .pb-page-figure.has-diagram {
+    container-type: size;
+}
+
+/* The largest 4:3 diagram that fits the figure. */
+.mod-visuallearning .pb-page-figure.has-diagram .pb-diagram {
+    width: min(100cqw, 133.33cqh);
+    max-height: none;
+}
+
+.mod-visuallearning .pb-card.has-picture {
+    cursor: pointer;
+}
+
+/* Key points: the coloured tile carries the card's number instead of an icon. */
+.mod-visuallearning .pb-card-num {
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Phones: the figure takes its height from what it shows, so the diagram sizes from the width. */
+.mod-visuallearning.is-narrow .pb-page-figure.has-diagram {
+    container-type: normal;
+}
+
+.mod-visuallearning.is-narrow .pb-page-figure.has-diagram .pb-diagram {
+    width: min(100%, 61vh);
+}
+
+/* The diagram replaces the page picture: the hidden picture takes no room. */
+.mod-visuallearning .pb-page-figure.has-diagram > .pb-page-image,
+.mod-visuallearning .pb-page-figure.has-diagram > .pb-image-placeholder {
+    display: none;
 }

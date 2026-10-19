@@ -116,5 +116,39 @@ function xmldb_visuallearning_upgrade($oldversion) {
         \core\task\manager::queue_adhoc_task(new \mod_visuallearning\task\regrade(), true);
         upgrade_mod_savepoint(true, 2026101811, 'visuallearning');
     }
+
+    if ($oldversion < 2026101815) {
+        // Teaching approach and visual style: existing lessons are workplace stories in the illustration style, which
+        // make exactly the same prompts as before, so no picture needs making again.
+        $table = new xmldb_table('visuallearning');
+        $fields = [
+            new xmldb_field('teachingapproach', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'story', 'imagestyle'),
+            new xmldb_field('visualstyle', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'illustration',
+                'teachingapproach'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_mod_savepoint(true, 2026101815, 'visuallearning');
+    }
+
+    if ($oldversion < 2026101816) {
+        // Picture modes: one picture per page (as before), one per card, or animated diagrams.
+        $table = new xmldb_table('visuallearning');
+        $field = new xmldb_field('picturemode', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'single', 'visualstyle');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $table = new xmldb_table('visuallearning_pages');
+        foreach (['cardprompts', 'diagram'] as $name) {
+            $field = new xmldb_field($name, XMLDB_TYPE_TEXT, null, null, null, null, null, 'lasterror');
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_mod_savepoint(true, 2026101816, 'visuallearning');
+    }
     return true;
 }

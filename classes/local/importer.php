@@ -43,8 +43,44 @@ class importer {
                 'imageprompt' => $page['image_prompt'], 'alttext' => $page['alt_text'], 'summarytext' => $page['summary'],
                 'imagestatus' => VISUALLEARNING_MEDIA_PENDING, 'audiostatus' => VISUALLEARNING_MEDIA_PENDING,
                 'timemodified' => time(),
-            ]
+            ] + self::picture_fields($page)
         ));
+    }
+
+    /**
+     * The per-card picture prompts and the diagram of a parsed page, as stored.
+     *
+     * @param array $page
+     * @return array
+     */
+    public static function picture_fields(array $page): array {
+        $cards = $page['card_image_prompts'] ?? [];
+        $diagram = $page['diagram'] ?? null;
+        return [
+            'cardprompts' => count($cards) === picture_modes::CARDS ? json_encode($cards, JSON_UNESCAPED_UNICODE) : null,
+            'diagram' => is_array($diagram) ? diagram::json($diagram) : null,
+        ];
+    }
+
+    /**
+     * Three card picture prompts, or none.
+     *
+     * @param mixed $list
+     * @return string[]
+     */
+    public static function card_prompts($list): array {
+        if (!is_array($list)) {
+            return [];
+        }
+        $out = [];
+        foreach (array_slice(array_values($list), 0, picture_modes::CARDS) as $prompt) {
+            $text = is_string($prompt) ? \core_text::substr(self::clean($prompt), 0, 600) : '';
+            if ($text === '') {
+                return [];
+            }
+            $out[] = $text;
+        }
+        return count($out) === picture_modes::CARDS ? $out : [];
     }
     /**
      * Parse and validate pasted text.
@@ -88,6 +124,8 @@ class importer {
                 'alt_text' => self::clean($p['alt_text'] ?? ''),
                 'summary' => self::clean($p['summary'] ?? ''),
                 'question' => question::from_ai($p),
+                'card_image_prompts' => self::card_prompts($p['card_image_prompts'] ?? null),
+                'diagram' => diagram::clean($p['diagram'] ?? null),
             ];
             foreach (['title', 'concept', 'action', 'outcome', 'image_prompt'] as $key) {
                 if ($page[$key] === '') {
@@ -158,7 +196,7 @@ class importer {
         $DB->delete_records('visuallearning_progress', ['visuallearningid' => $book->id]);
         $DB->delete_records('visuallearning_pages', ['visuallearningid' => $book->id]);
         $fs = get_file_storage();
-        foreach (['image', 'audio', 'cover', media::AREA_OPTION] as $area) {
+        foreach (['image', 'audio', 'cover', media::AREA_OPTION, media::AREA_CARD] as $area) {
             $fs->delete_area_files($context->id, 'mod_visuallearning', $area);
         }
 
@@ -196,7 +234,7 @@ class importer {
                     'imagestatus' => VISUALLEARNING_MEDIA_PENDING,
                     'audiostatus' => VISUALLEARNING_MEDIA_PENDING,
                     'timemodified' => time(),
-                ]),
+                ] + self::picture_fields($p)),
             );
         }
         $transaction->allow_commit();

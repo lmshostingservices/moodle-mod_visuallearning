@@ -81,6 +81,33 @@ if ($ADMIN->fulltree) {
         )
     );
     $settings->add(
+        new admin_setting_configselect(
+            "$component/defaultapproach",
+            get_string('settings_defaultapproach', $component),
+            get_string('settings_defaultapproach_desc', $component),
+            \mod_visuallearning\local\approaches::DEFAULT,
+            \mod_visuallearning\local\approaches::options()
+        )
+    );
+    $settings->add(
+        new admin_setting_configselect(
+            "$component/defaultvisualstyle",
+            get_string('settings_defaultvisualstyle', $component),
+            get_string('settings_defaultvisualstyle_desc', $component),
+            \mod_visuallearning\local\visual_styles::DEFAULT,
+            \mod_visuallearning\local\visual_styles::options()
+        )
+    );
+    $settings->add(
+        new admin_setting_configselect(
+            "$component/defaultpicturemode",
+            get_string('settings_defaultpicturemode', $component),
+            get_string('settings_defaultpicturemode_desc', $component),
+            \mod_visuallearning\local\picture_modes::SINGLE,
+            \mod_visuallearning\local\picture_modes::options()
+        )
+    );
+    $settings->add(
         new admin_setting_configtextarea(
             "$component/defaultimagestyle",
             get_string('settings_defaultimagestyle', $component),

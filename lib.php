@@ -177,6 +177,9 @@ function visuallearning_clean_instance_data(stdClass $data): void {
         $data->language = 'en-AU';
     }
     $data->speakingrate = max(0.5, min(1.5, (float)($data->speakingrate ?? 1)));
+    $data->teachingapproach = \mod_visuallearning\local\approaches::clean($data->teachingapproach ?? null);
+    $data->visualstyle = \mod_visuallearning\local\visual_styles::clean($data->visualstyle ?? null);
+    $data->picturemode = \mod_visuallearning\local\picture_modes::clean($data->picturemode ?? null);
     $data->completionlistened = empty($data->completionlistened) ? 0 : 1;
     $data->completionquiz = empty($data->completionquiz) ? 0 : 1;
     $data->autoplay = empty($data->autoplay) ? 0 : 1;
@@ -463,7 +466,7 @@ function visuallearning_pluginfile($course, $cm, $context, $filearea, $args, $fo
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
-    if (!in_array($filearea, ['image', 'audio', 'cover', 'option'])) {
+    if (!in_array($filearea, ['image', 'audio', 'cover', 'option', 'card'])) {
         return false;
     }
     require_course_login($course, true, $cm);

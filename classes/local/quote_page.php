@@ -83,6 +83,11 @@ class quote_page {
                 'why' => get_string('hold_' . $summary['droppedhold'], 'mod_visuallearning')]);
             echo html_writer::tag('p', $dropped, ['class' => 'text-muted']);
         }
+        if (!empty($summary['droppedcards'])) {
+            $dropped = get_string('quote_droppedcards', 'mod_visuallearning', (object)['count' => $summary['droppedcards'],
+                'why' => get_string('hold_' . $summary['droppedcardshold'], 'mod_visuallearning')]);
+            echo html_writer::tag('p', $dropped, ['class' => 'text-muted']);
+        }
         if ($summary['skipped']) {
             $skipped = get_string('quote_skipped', 'mod_visuallearning', $summary['skipped']);
             echo html_writer::tag('p', $skipped, ['class' => 'text-muted']);

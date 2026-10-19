@@ -2,6 +2,57 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.5.1] - 2026-10-20
+
+- Document the validated JSON-only diagram form field for the release security checker.
+- Preserve all 1.5.0 picture modes, whiteboard sketches and existing request contracts.
+
+## [1.5.0] - 2026-10-19
+
+- New lesson setting **Picture mode** (with a site default):
+  - **One picture per page**: as before (default; existing lessons keep it).
+  - **One picture per card (builds the scene)**: three pictures per page, one for each card, shown as that card is
+    read. Card 2's picture is made by editing card 1's picture, and card 3's by editing card 2's, so the scene builds
+    step by step. Each card picture is priced before anything is made (proposed 2 credits each). Card pictures are
+    made only once LMS Labs offers them; until then the page picture shows and nothing else is held up. A new card 1
+    picture makes cards 2 and 3 out of date, because they were edits of the old picture. If a card picture fails,
+    the cards after it are cancelled before sending, so nothing is charged for them.
+  - **Animated diagrams**: the player draws an accurate, moving SVG diagram from a small spec the AI writes, and
+    builds it card by card in time with the narration. Types: waveforms (half-cycles, period, phase lag), phasors,
+    circuits with flowing (or alternating) current, process steps, cycles, force arrows and bar charts. No credits.
+    Movement stops for people who ask for reduced motion. Pages without a diagram keep their picture.
+- The prompt file asks your AI assistant for `card_image_prompts` or a `diagram` only when that mode is chosen. Both
+  can also be edited per page. Invalid specs are refused with a clear message.
+- New visual style **Whiteboard sketch**: hand-drawn marker sketches on a white board, like a teacher explaining at
+  the board.
+- Scientific lessons show the cards as numbered steps: a coloured tile with 1, 2 or 3 in the card's own colour, next
+  to the Key point heading.
+- Every picture (page, card, cover and question pictures, and diagrams) now fades in and rises gently into place. It
+  uses the same easing and length as the cards' entrance.
+- Build step 3 shows a "Card pictures n/3" status per page and a "New card pictures" remake button.
+- Exports include the card pictures.
+- Story lessons in the illustration style send exactly the same requests and prompts as 1.4.0.
+
+## [1.4.0] - 2026-10-19
+
+- New: Teaching approach and Visual style, two independent lesson settings (with site defaults).
+  - Teaching approach decides what each page explains, what its three cards say and what its picture must show:
+    - Workplace story: the original approach;
+    - Scientific and technical explanation: the cards are Key point 1, 2 and 3, building in order (the core idea,
+      how it works, the result), with no invented people or workplace stories. The picture is an accurate
+      explanatory diagram of the mechanism, with characters optional.
+  - Visual style decides only how pictures look: Illustration (the original) or Technical diagram.
+  - Any approach works with any style.
+- Scientific pictures use a dedicated master prompt: explain what happens, why, how and what changes, in the clearest
+  format. The AI builds each picture from the concept, mechanism, relationships, format, style, accuracy constraints
+  and exclusions, and is told never to invent mechanisms, values or equations. A few short labels are allowed.
+- Card labels follow the approach everywhere: player, page editor, build page and exports.
+- Approaches and styles live in two registries (classes/local/approaches.php with classes/local/approach/*, and
+  classes/local/visual_styles.php), so more can be added without touching the rest of the code.
+- Existing lessons become workplace stories in the illustration style. Their prompts and LMS Labs requests are
+  unchanged, so no picture or clip needs making again.
+- LMS Labs AI receives the approach and style as new fields once LMS Labs lists them, and as text until then.
+
 ## [1.3.1] - 2026-10-18
 
 - Fixed: "custom_completion::get_sort_order() is missing one or more completion conditions" once the activity became

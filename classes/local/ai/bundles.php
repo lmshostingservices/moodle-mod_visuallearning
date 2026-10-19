@@ -79,6 +79,15 @@ class bundles {
         if ($page->bundlesite !== requests::sitehash()) {
             throw new \moodle_exception('lmslabscredentialsmissing', 'mod_visuallearning');
         }
+        if ($operation === requests::CARD) {
+            // Card pictures are extra pictures of a purchased slide, each paid at the published card price; there is
+            // no included slot to check first.
+            $bound = ['bundleId' => $page->bundleid, 'slideId' => $page->slideid, 'slot' => 'card' . $part,
+                'remake' => false, 'maxCredits' => (int)$body['maxCredits']];
+            unset($body['clipRef'], $body['purpose'], $body['maxCredits'], $body['bundleId'], $body['slideId'],
+                $body['slot'], $body['remake']);
+            return [$body + $bound, $bound['maxCredits']];
+        }
         $slot = $operation === requests::VOICE ? 'clip:' . $part :
             ($operation === requests::OPTION ? 'option' . $part : ($operation === requests::COVER ? 'cover' : 'picture'));
         [$status, $state] = lmslabs::get(self::PREFIX . '/bundles/' . $page->bundleid);

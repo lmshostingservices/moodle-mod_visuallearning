@@ -16,11 +16,13 @@
 
 namespace mod_visuallearning\local\ai;
 
+use mod_visuallearning\local\approaches;
 use mod_visuallearning\local\credentials;
 use mod_visuallearning\local\importer;
 use mod_visuallearning\local\media;
 use mod_visuallearning\local\prompt_builder;
 use mod_visuallearning\local\question;
+use mod_visuallearning\local\visual_styles;
 use moodle_exception;
 use stdClass;
 
@@ -66,6 +68,12 @@ class requests {
     /** @var string One voiceover clip. */
     public const VOICE = 'voice';
 
+    /** @var string One card picture (part: the card, 1 to 3); cards 2 and 3 edit the card picture before. */
+    public const CARD = 'card';
+
+    /** @var int Seconds a card picture waits for the picture it edits before it is cancelled. */
+    public const CARD_WAIT = 3600;
+
     /** @var string[] States in which the same request may be sent again with the same key and body. */
     public const CHECKABLE = ['pending', 'uncertain'];
 
@@ -100,7 +108,7 @@ class requests {
      */
     public static function price_operation(string $operation): string {
         return [self::WRITE => 'page', self::IMPORT => 'import', self::IMAGE => 'image', self::COVER => 'image',
-            self::OPTION => 'option', self::VOICE => 'voice'][$operation];
+            self::OPTION => 'option', self::VOICE => 'voice', self::CARD => 'card'][$operation];
     }
 
     /**
@@ -159,10 +167,46 @@ class requests {
         string $prompt,
         int $maxcredits,
         string $aspect = media::ASPECT,
-        string $purpose = 'page'
+        string $purpose = 'page',
+        string $style = 'illustration'
     ): array {
-        return ['prompt' => $prompt, 'style' => 'illustration', 'aspectRatio' => $aspect, 'purpose' => $purpose,
+        return ['prompt' => $prompt, 'style' => $style, 'aspectRatio' => $aspect, 'purpose' => $purpose,
             'maxCredits' => $maxcredits];
+    }
+
+    /**
+     * The style named in a picture request: the lesson's visual style when LMS Labs lists it, otherwise
+     * "illustration" (the look is written into the prompt either way).
+     *
+     * @param stdClass $book
+     * @return string
+     */
+    public static function image_style(stdClass $book): string {
+        $style = visual_styles::of($book);
+        return in_array($style, lmslabs::visual_styles(), true) ? $style : visual_styles::DEFAULT;
+    }
+
+    /**
+     * The teaching approach and visual style in a page-writing request.
+     *
+     * Workplace stories in the illustration style send exactly what they always did. Other lessons send
+     * "teachingApproach" and "visualStyle" when LMS Labs lists both; until then the choice travels in "imageStyle"
+     * as the style's art direction plus a short instruction, so LMS Labs AI still writes towards it.
+     *
+     * @param stdClass $book
+     * @return array fields that replace or follow "imageStyle"
+     */
+    public static function approach_fields(stdClass $book): array {
+        $approach = approaches::of($book);
+        $style = visual_styles::of($book);
+        if ($approach->key() === approaches::DEFAULT && $style === visual_styles::DEFAULT) {
+            return [];
+        }
+        $direction = visual_styles::direction($book);
+        if (in_array($approach->key(), lmslabs::teaching_approaches(), true) && in_array($style, lmslabs::visual_styles(), true)) {
+            return ['imageStyle' => $direction, 'teachingApproach' => $approach->key(), 'visualStyle' => $style];
+        }
+        return ['imageStyle' => trim($direction . ' ' . $approach->draft_hint())];
     }
 
     /**
@@ -180,13 +224,14 @@ class requests {
             throw new moodle_exception('write_toolong', 'mod_visuallearning', '', lmslabs::MAX_CONTENT);
         }
         $max = (int)$book->maxpages;
-        return [
+        return array_merge([
             'title' => (string)$book->name,
             'industry' => trim((string)$book->industry),
             'subindustry' => trim((string)$book->subindustry),
             'language' => (string)$book->language,
             'culture' => prompt_builder::culture($book),
             'imageStyle' => trim((string)$book->imagestyle),
+        ], self::approach_fields($book), [
             'maxPages' => $max,
             'recap' => (bool)$book->enablerecap,
             // One check question per page, in the types the teacher allows and LMS Labs AI writes.
@@ -194,7 +239,23 @@ class requests {
                 ? array_values(array_intersect(question::allowed($book), lmslabs::question_types())) : [],
             'content' => $content,
             'maxCredits' => $max * lmslabs::PAGE_CREDITS,
-        ];
+        ], self::picture_mode_fields($book));
+    }
+
+    /**
+     * The picture mode in a page-writing request: only for lessons that use card pictures or animated diagrams, and
+     * only once LMS Labs AI says it writes them (its v2 capabilities list "draftPictureModes"). One picture per page
+     * sends nothing new.
+     *
+     * @param stdClass $book
+     * @return array
+     */
+    public static function picture_mode_fields(stdClass $book): array {
+        $mode = \mod_visuallearning\local\picture_modes::of($book);
+        if ($mode === \mod_visuallearning\local\picture_modes::SINGLE || !in_array($mode, lmslabs::draft_picture_modes(), true)) {
+            return [];
+        }
+        return ['pictureMode' => $mode];
     }
 
     /**
@@ -216,13 +277,20 @@ class requests {
         $batch = \core\uuid::generate();
         $summary = ['batch' => $batch, 'items' => [], 'credits' => 0, 'free' => 0, 'included' => [], 'hold' => null,
             'skipped' => 0,
-            'dropped' => 0, 'droppedhold' => null];
+            'dropped' => 0, 'droppedhold' => null, 'droppedcards' => 0, 'droppedcardshold' => null];
         $options = array_filter($plans, fn($p) => $p['operation'] === self::OPTION);
         if ($options && count($options) < count($plans) && ($hold = lmslabs::hold('option')) !== null) {
             // Option pictures cannot be made yet: everything else still can (options show as text cards meanwhile).
             $plans = array_values(array_filter($plans, fn($p) => $p['operation'] !== self::OPTION));
             $summary['dropped'] = count($options);
             $summary['droppedhold'] = $hold;
+        }
+        $cards = array_filter($plans, fn($p) => $p['operation'] === self::CARD);
+        if ($cards && count($cards) < count($plans) && ($hold = lmslabs::hold('card')) !== null) {
+            // Card pictures cannot be made yet: the page pictures and voiceover still can (each page shows its picture).
+            $plans = array_values(array_filter($plans, fn($p) => $p['operation'] !== self::CARD));
+            $summary['droppedcards'] = count($cards);
+            $summary['droppedcardshold'] = $hold;
         }
         if (!$plans) {
             return $summary;
@@ -256,10 +324,18 @@ class requests {
             } else if ($operation === self::IMAGE || $operation === self::COVER) {
                 $price = lmslabs::IMAGE_CREDITS;
                 $body = self::image_body((string)$plan['prompt'], $price, media::ASPECT, $operation === self::COVER ? 'cover'
-                    : 'page');
+                    : 'page', self::image_style($book));
             } else if ($operation === self::OPTION) {
                 $price = lmslabs::IMAGE_CREDITS;
-                $body = self::image_body((string)$plan['prompt'], $price, media::OPTION_ASPECT, 'option');
+                $body = self::image_body((string)$plan['prompt'], $price, media::OPTION_ASPECT, 'option',
+                    self::image_style($book));
+            } else if ($operation === self::CARD) {
+                $price = lmslabs::approved_price('card');
+                $body = self::image_body((string)$plan['prompt'], $price, media::ASPECT, 'card', self::image_style($book));
+                if ((int)$part > 1) {
+                    // Edits the picture of the card before; which picture is fixed just before it is first sent.
+                    $body['_referenceFrom'] = (int)$part - 1;
+                }
             } else if ($operation === self::WRITE) {
                 $body = self::write_body($book);
                 $price = (int)$body['maxCredits'];
@@ -268,7 +344,7 @@ class requests {
                 $price = (int)$body['maxCredits'];
             }
             $included = false;
-            if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION], true)) {
+            if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD], true)) {
                 $listprice = $price;
                 [$body, $price] = bundles::media_quote((int)$book->id, $operation, $targetid, $part, $body);
                 // Covered by the slide price the teacher already paid (not a free remake).
@@ -617,14 +693,28 @@ class requests {
                 $DB->update_record('visuallearning_aireq', $row);
                 return $row;
             }
+            if ($row->operation === self::CARD && !self::card_reference($row, $book, $context)) {
+                // Waiting for the picture it edits, or cancelled because it will not come.
+                return $row;
+            }
+            try {
+                $payload = self::payload($row, $context);
+            } catch (moodle_exception $e) {
+                // The picture it edits was removed: never sent, or (if sent before) not sent with another picture.
+                $row->status = (int)$row->tries === 0 ? 'cancelled' : 'uncertain';
+                $row->errorcode = 'referencegone';
+                $row->timemodified = time();
+                $DB->update_record('visuallearning_aireq', $row);
+                return $row;
+            }
             $row->tries++;
             $row->timemodified = time();
             $DB->update_record('visuallearning_aireq', $row);
 
             $routes = [self::WRITE => lmslabs::DRAFT_ROUTE, self::IMPORT => lmslabs::IMPORT_ROUTE,
                 self::IMAGE => lmslabs::IMAGE_ROUTE, self::COVER => lmslabs::IMAGE_ROUTE, self::OPTION => lmslabs::IMAGE_ROUTE,
-                self::VOICE => lmslabs::VOICE_ROUTE];
-            $image = in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION], true);
+                self::VOICE => lmslabs::VOICE_ROUTE, self::CARD => lmslabs::IMAGE_ROUTE];
+            $image = in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION, self::CARD], true);
             $accept = $image ? 'image/png, image/webp, image/jpeg, application/json'
                 : ($row->operation === self::VOICE ? 'audio/mpeg, application/json' : 'application/json');
             $timeout = $image ? lmslabs::IMAGE_TIMEOUT : ($row->operation === self::WRITE ? lmslabs::DRAFT_TIMEOUT : 100);
@@ -638,7 +728,7 @@ class requests {
                         bundles::PREFIX . ($row->operation === self::VOICE ? '/speech/tts' : '/images');
                     [$status, $headers, $body] = lmslabs::post(
                     $route,
-                    (string)$row->body,
+                    $payload,
                     (string)$row->idemkey,
                     $accept,
                     $timeout
@@ -671,6 +761,80 @@ class requests {
     }
 
     /**
+     * Fixes the picture a card picture edits, before it is first sent.
+     *
+     * Card 1 needs none. For cards 2 and 3 the current picture of the card before is pinned in the stored body (as its
+     * content hash), so every try sends exactly the same picture. While that picture is still being made the request
+     * waits (it stays pending and is checked again); if it will not come, the request is cancelled before anything is
+     * sent.
+     *
+     * @param stdClass $row
+     * @param stdClass $book
+     * @param \context_module $context
+     * @return bool true when it can be sent now
+     */
+    protected static function card_reference(stdClass $row, stdClass $book, \context_module $context): bool {
+        global $DB;
+        $sent = json_decode((string)$row->body, true) ?: [];
+        if (empty($sent['_referenceFrom']) || !empty($sent['_referenceHash'])) {
+            return true;
+        }
+        $page = $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]);
+        $chain = $page ? media::card_chain($context, $book, $page) : [];
+        $before = $chain[(int)$sent['_referenceFrom']]['file'] ?? null;
+        if ($before) {
+            $sent['_referenceHash'] = $before->get_contenthash();
+            $row->body = json_encode($sent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $row->timemodified = time();
+            $DB->update_record('visuallearning_aireq', $row);
+            return true;
+        }
+        $waiting = self::waiting((int)$book->id, self::CARD, (int)$row->targetid, (string)$sent['_referenceFrom']);
+        if ($page && $waiting && $waiting->status === 'pending' && time() - (int)$row->timecreated < self::CARD_WAIT) {
+            $row->errorcode = 'waitingprevious';
+            $row->timemodified = time();
+            $DB->update_record('visuallearning_aireq', $row);
+            return false;
+        }
+        $row->status = 'cancelled';
+        $row->errorcode = $page ? 'needsprevious' : 'pagedeleted';
+        $row->timemodified = time();
+        $DB->update_record('visuallearning_aireq', $row);
+        return false;
+    }
+
+    /**
+     * The exact text sent for a stored request: its body, without local keys (those starting with "_"), and for a
+     * card picture that edits another, that picture (always the same bytes: it is pinned by content hash).
+     *
+     * @param stdClass $row
+     * @param \context_module $context
+     * @return string
+     */
+    public static function payload(stdClass $row, \context_module $context): string {
+        $sent = json_decode((string)$row->body, true);
+        if (!is_array($sent) || !preg_grep('/^_/', array_keys($sent))) {
+            return (string)$row->body;
+        }
+        $reference = (string)($sent['_referenceHash'] ?? '');
+        foreach (array_keys($sent) as $key) {
+            if (str_starts_with($key, '_')) {
+                unset($sent[$key]);
+            }
+        }
+        if ($reference !== '') {
+            $file = media::card_by_hash($context, (int)$row->targetid, $reference);
+            if (!$file) {
+                // The picture it edits is gone; sending without it would ask for something else.
+                throw new moodle_exception('cardreferencegone', 'mod_visuallearning');
+            }
+            $sent['referenceImage'] = base64_encode($file->get_content());
+            $sent['referenceMime'] = $file->get_mimetype();
+        }
+        return json_encode($sent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
      * Why a request that was never sent should not be sent now, or ''.
      *
      * @param stdClass $row
@@ -685,10 +849,17 @@ class requests {
                 $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]) >= 20) {
             return 'maxpagesreached';
         }
-        if (in_array($row->operation, [self::IMAGE, self::OPTION, self::VOICE], true)) {
+        if (in_array($row->operation, [self::IMAGE, self::OPTION, self::VOICE, self::CARD], true)) {
             $page = $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]);
             if (!$page) {
                 return 'pagedeleted';
+            }
+            if ($row->operation === self::CARD) {
+                $link = media::card_chain($context, $book, $page)[(int)$row->part] ?? null;
+                if (!$link || $link['prompt'] !== ($sent['prompt'] ?? null)) {
+                    return 'changed';
+                }
+                return $link['file'] !== null ? 'alreadymade' : '';
             }
             if ($row->operation === self::IMAGE) {
                 return media::image_prompt($book, $page) === ($sent['prompt'] ?? null) ? '' : 'changed';
@@ -775,7 +946,7 @@ class requests {
             return;
         }
         $sent = json_decode((string)$row->body, true) ?: [];
-        if (in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION, self::VOICE], true)) {
+        if (in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION, self::VOICE, self::CARD], true)) {
             $row->charged = self::reported($headers['x-credits-charged'] ?? null);
             $row->balance = isset($headers['x-credits-balance']) && is_numeric($headers['x-credits-balance'])
                 ? (int)$headers['x-credits-balance'] : null;
@@ -802,7 +973,7 @@ class requests {
             }
             $bytes = self::image_bytes($type, $body);
             $ext = $bytes === null ? '' : media::image_type($bytes);
-            $perpage = $row->operation === self::IMAGE || $row->operation === self::OPTION;
+            $perpage = in_array($row->operation, [self::IMAGE, self::OPTION, self::CARD], true);
             $page = $perpage
                 ? $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]) : null;
             if ($ext === '' || ($perpage && !$page)) {
@@ -813,6 +984,9 @@ class requests {
             }
             if ($row->operation === self::OPTION) {
                 media::save_option($context, (int)$row->targetid, (int)$row->part, (string)$sent['prompt'], $bytes, $ext);
+            } else if ($row->operation === self::CARD) {
+                media::save_card($context, (int)$row->targetid, (int)$row->part, (string)$sent['prompt'],
+                    (string)($sent['_referenceHash'] ?? ''), $bytes, $ext);
             } else {
                 $area = $row->operation === self::COVER ? media::AREA_COVER : media::AREA_IMAGE;
                 media::save_image($context, $area, (int)$row->targetid, (string)$sent['prompt'], $bytes, $ext);
@@ -974,6 +1148,8 @@ class requests {
         }
         if ($row->operation === self::OPTION) {
             $title .= ' · ' . get_string('optionx', 'mod_visuallearning', chr(65 + (int)$row->part));
+        } else if ($row->operation === self::CARD) {
+            $title .= ' · ' . get_string('cardx', 'mod_visuallearning', (int)$row->part);
         } else if ($row->part !== '') {
             $title .= ' · ' . get_string('clip_' . $row->part, 'mod_visuallearning');
         }

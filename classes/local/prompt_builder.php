@@ -24,7 +24,7 @@ namespace mod_visuallearning\local;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class prompt_builder {
-    /** @var string Rules appended to every image request. */
+    /** @var string Rules of every picture of a workplace story in the illustration style ({@see image_rules()}). */
     public const IMAGE_GUARDRAILS = 'STRICT RULES: This must be an ILLUSTRATION, never a photograph, never photorealistic, '
         . 'never 3D-rendered realism. Do NOT include any text, words, letters, numbers, captions, speech bubbles, '
         . 'labels, logos, brand names or readable signage anywhere in the image. Adults in a professional, '
@@ -69,6 +69,41 @@ class prompt_builder {
     }
 
     /**
+     * The cultural direction in one short sentence (used by approaches whose pictures rarely show people, and when a
+     * picture prompt must be shortened).
+     *
+     * @param \stdClass $book
+     * @return string
+     */
+    public static function culture_short(\stdClass $book): string {
+        $place = self::culture($book);
+        return $place !== '' ? "Every scene takes place in {$place}, with authentic local people, settings and customs."
+            : 'Neutral, international setting with a diverse cast.';
+    }
+
+    /**
+     * The cultural direction for pictures that rarely show people (explanatory diagrams).
+     *
+     * @param \stdClass $book
+     * @return string
+     */
+    public static function culture_people(\stdClass $book): string {
+        $place = self::culture($book);
+        return $place !== '' ? "If people or workplaces appear, they are in {$place}." : 'If people appear, a diverse cast.';
+    }
+
+    /**
+     * The rules that close every picture prompt: the visual style's rendering rule, then the teaching approach's
+     * rules on text and content. For a workplace story in the illustration style this is exactly IMAGE_GUARDRAILS.
+     *
+     * @param \stdClass $book
+     * @return string
+     */
+    public static function image_rules(\stdClass $book): string {
+        return 'STRICT RULES: ' . visual_styles::render_rule($book) . ' ' . approaches::of($book)->image_rules();
+    }
+
+    /**
      * The full prompt file a teacher pastes into ChatGPT.
      *
      * @param \stdClass $book
@@ -84,8 +119,22 @@ class prompt_builder {
             : 'NOT PROVIDED - infer the most suitable sub-industry from the content and return it in "subindustry".';
         $where = $industry !== '' ? $industry : 'the chosen industry';
         $max = (int)$book->maxpages;
-        $style = trim((string)$book->imagestyle) !== '' ? trim((string)$book->imagestyle)
-            : get_string('defaultimagestyle', 'mod_visuallearning');
+        $approach = approaches::of($book);
+        $visualstyle = visual_styles::of($book);
+        $style = visual_styles::direction($book);
+        $style = $style !== '' ? $style : get_string('defaultimagestyle', 'mod_visuallearning');
+        // Lessons made before approaches and styles existed keep exactly the inputs they always had.
+        $styleline = $visualstyle === visual_styles::DEFAULT ? "Illustration style chosen by the teacher: {$style}"
+            : 'Visual style chosen by the teacher: ' . get_string('visualstyle_' . $visualstyle, 'mod_visuallearning')
+                . ". {$style}";
+        if ($approach->key() !== approaches::DEFAULT) {
+            $styleline .= "\nTeaching approach: " . get_string('approach_' . $approach->key(), 'mod_visuallearning');
+        }
+        $intro = $approach->intro();
+        $cardsbrief = $approach->cards_brief($where);
+        $example = $approach->example();
+        $check = $approach->check();
+        $textcheck = $approach->text_check();
         $content = trim((string)$book->sourcecontent);
         $title = trim((string)$book->name);
         $place = self::culture($book);
@@ -116,14 +165,16 @@ modern workplaces that could be in many countries. Avoid customs that only make 
 CULTURE;
         }
 
+        $imagesbrief = $approach->images_brief($where, $cultureline, $language);
+        $culturestep = $approach->culture_brief($place) ?? $culturestep;
+        [$modestep, $modekey, $modecheck, $keycount] = self::picture_mode_brief($book, $language);
+        $imagesbrief .= $modestep;
+
         return <<<PROMPT
 VISUAL LEARNING LESSON - CONTENT GENERATION BRIEF
 ================================================
 
-You are an expert instructional designer, workplace trainer and illustrated-story author.
-Your job is to turn the teaching content below into an illustrated VISUAL LEARNING LESSON for adult learners.
-Every page teaches exactly ONE concept, shown as one illustration on the left and three short
-narrated cards on the right. A professional voice actor will read every card aloud, so write for the ear.
+{$intro} A professional voice actor will read every card aloud, so write for the ear.
 After every four pages the learner hears a short recap and then answers one check question about each
 of those pages, so each page also needs a one-sentence summary and one check question.
 
@@ -136,7 +187,7 @@ Sub-industry: {$subindustryline}
 Language for ALL learner-facing text: {$language} ({$book->language})
 Country / culture of the learners: {$cultureline}
 Maximum number of pages: {$max}
-Illustration style chosen by the teacher: {$style}
+{$styleline}
 
 Teaching content:
 <<<CONTENT
@@ -161,15 +212,7 @@ STEP 2 - MAKE IT CULTURALLY RIGHT
 ------------------------------------------------
 STEP 3 - WRITE EACH PAGE (THREE CARDS)
 ------------------------------------------------
-Every page has:
-- "title": the concept in 2-7 words (shown as the page heading and in the contents page).
-- "concept": Card 1 - THE IDEA. 1-2 sentences stating the concept and why it matters.
-- "action": Card 2 - THE ACTION. 1-2 sentences describing ONE specific, concrete thing a person
-  does in a real {$where} workplace to apply the concept. Use a named character
-  from the cast (see Step 5) doing the action. This is exactly what the illustration will show.
-- "outcome": Card 3 - THE OUTCOME. 1-2 sentences describing the consequence or positive result of
-  that action (or, where it teaches better, the negative consequence of NOT doing it).
-
+{$cardsbrief}
 Writing rules for the cards:
 - Plain, warm, confident language. Short sentences (under 25 words each). Active voice.
 - Each card is AT MOST 250 characters (the narrator reads one card per clip).
@@ -178,21 +221,7 @@ Writing rules for the cards:
 - Each card must make sense when heard on its own, and the three cards must read as one flowing story.
 - All card text and titles must be written in {$language}.
 
-Example of ONE good page (topic: promoting teamwork, English, Australia):
-  title:   "Teams that bond work better"
-  concept: "It's important for everyone in a team to get to know each other. People work together
-            more easily when they feel connected."
-  action:  "So, supervisor Maya organises a Friday team get-together at the local pub, where everyone
-            relaxes and chats over a drink."
-  outcome: "The team gets to know each other better and starts to trust one another. Back at work,
-            they share ideas and help each other more."
-  summary: "Teams that take time to bond trust each other and work better together."
-  question: {"type": "truefalse", "statement": "Getting to know your teammates makes it harder to
-            work together.", "answer": false, "feedback": "Teammates who know each other trust each
-            other, so they work together more easily."}
-  image_prompt: "A cheerful group of six co-workers of different ages sitting around a wooden table
-            in a cosy Australian pub, laughing and talking over drinks. Maya, the supervisor, raises her
-            glass in a friendly toast. Warm evening light through the windows."
+{$example}
 
 ------------------------------------------------
 STEP 4 - RECAP SENTENCE AND CHECK QUESTION
@@ -204,26 +233,7 @@ STEP 4 - RECAP SENTENCE AND CHECK QUESTION
 ------------------------------------------------
 STEP 5 - DESIGN THE ILLUSTRATIONS
 ------------------------------------------------
-- First define a "style_guide": 2-4 sentences of art direction that every illustration will share
-  (based on the teacher's chosen style above: medium, line quality, colour palette, lighting, mood).
-- Then define a small recurring "characters" cast (2-5 people) who appear across the lesson, each with
-  a name and a precise visual description (age range, hair, skin tone, build, clothing / uniform that
-  suits a {$where} workplace in {$cultureline}). Re-use these exact characters in the image prompts so
-  the lesson feels like one consistent story.
-- For each page write "image_prompt" IN ENGLISH, 40-90 words, describing ONE scene that shows the
-  ACTION card exactly as described - the same people, place and activity, with the cultural setting
-  from Step 2 (local setting, food, objects and customs). Describe: who is in the scene (use cast names
-  AND a short reminder of their look), what they are doing, the setting, facial expressions / body
-  language, and lighting. The scene must make the concept obvious at a glance.
-- Make every scene distinct and specific to its concept: vary the place, the activity and the composition
-  (close-up, wide shot, outdoors, on the job). Never fall back on a generic person at a laptop or a
-  meeting room unless the concept is really about that. Show only the people the scene needs, avoid
-  complicated hand actions, and show the real equipment and objects of a {$where} workplace.
-- Image rules: illustrations only (never photographs or photorealism), NO text, words, letters, numbers,
-  signs, logos or speech bubbles in the image, safe and respectful workplace imagery, one clear focal point.
-- "alt_text": one sentence in {$language} describing the image for screen-reader users.
-- Also write a "cover_image_prompt" (English, 40-90 words) for a welcoming cover illustration
-  showing the cast in their workplace, representing the overall topic. No text on the cover image.
+{$imagesbrief}
 
 ------------------------------------------------
 OUTPUT FORMAT - VERY IMPORTANT
@@ -251,16 +261,90 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
       "summary": "string",
       {$questionexample}
       "image_prompt": "string",
-      "alt_text": "string"
+{$modekey}      "alt_text": "string"
     }
   ]
 }
 
 Before you answer, silently check: maximum {$max} pages; one concept per page; every page has all
-nine keys; the action card and the image prompt describe the same scene; names, places, food and
-customs fit the learners' country; no text in any image prompt; every question follows its type's
+{$keycount} keys; {$check}{$modecheck} names, places, food and
+customs fit the learners' country; {$textcheck} every question follows its type's
 exact shape and tests only its own page; the JSON is valid (double quotes, no trailing commas).
 PROMPT;
+    }
+
+    /**
+     * The extra prompt-file step for the lesson's picture mode: [step text, output key line, self-check, key count].
+     * One picture per page adds nothing, so those lessons keep exactly the prompt they always had.
+     *
+     * @param \stdClass $book
+     * @param string $language
+     * @return array
+     */
+    public static function picture_mode_brief(\stdClass $book, string $language): array {
+        $mode = picture_modes::of($book);
+        if ($mode === picture_modes::SEQUENCE) {
+            $step = <<<TXT
+
+
+------------------------------------------------
+STEP 6 - ONE PICTURE PER CARD
+------------------------------------------------
+Each page also has "card_image_prompts": three picture prompts IN ENGLISH, one per card, that build ONE scene
+step by step, so each picture flows on from the one before:
+- Prompt 1 (40-90 words): the complete starting picture for card 1, written like "image_prompt" (setting,
+  composition, people or parts, lighting).
+- Prompts 2 and 3 (15-50 words each) are EDITS of the picture before. Start each with "Same picture, same
+  viewpoint and layout." and then say only what is added or changes to show that card.
+- Picture 3 is the finished scene. "image_prompt" describes that same finished scene in full; it is used for the
+  recap and the questions.
+- Keep the composition stable. Do not bring in new people in prompts 2 and 3 unless the card needs them.
+TXT;
+            return [$step, "      \"card_image_prompts\": [\"string\", \"string\", \"string\"],\n", ' card_image_prompts 2 and 3 only '
+                . 'describe changes to the picture before;', 'ten'];
+        }
+        if ($mode === picture_modes::ANIMATED) {
+            $max = diagram::MAX_LABEL;
+            $step = <<<TXT
+
+
+------------------------------------------------
+STEP 6 - ANIMATED DIAGRAMS
+------------------------------------------------
+Each page also has "diagram": a small specification that the lesson draws itself as an exact, animated diagram,
+or null when none of the types below really explains the page's concept (the picture is then used instead).
+- Labels are short (at most {$max} characters) and written in {$language}. Use only values and units that the
+  teaching content gives; never invent numbers.
+- Any element may have "card": 1, 2 or 3, the card whose narration introduces it, so the diagram builds up while
+  the cards are read. Elements without "card" are there from the start.
+- Colours: blue, red, green, orange, purple, teal, grey. Keep the lesson's colour code.
+- Angles are in degrees, anticlockwise from pointing right (90 = up, 270 = down). A negative phase lags.
+- The types and their exact shapes:
+  {"type": "waveform", "title": "string", "xlabel": "string", "ylabel": "string", "cycles": 2,
+   "waves": [{"label": "V", "colour": "blue", "phase": 0, "amplitude": 1, "card": 1}, ... up to 3],
+   "markers": [{"kind": "halfcycles", "wave": 0, "label": "string", "card": 2},
+               {"kind": "period", "label": "string", "card": 3},
+               {"kind": "lag", "from": 0, "to": 1, "label": "string", "card": 3},
+               {"kind": "peak", "wave": 0, "label": "string"}]}
+  {"type": "phasor", "rotate": true, "vectors": [{"label": "string", "colour": "blue", "angle": 0, "length": 1,
+   "card": 1}, ... up to 4], "arcs": [{"from": 0, "to": 1, "label": "string", "card": 2}]}
+  {"type": "circuit", "source": {"kind": "ac | dc | battery", "label": "string"},
+   "components": [{"kind": "resistor | inductor | capacitor | lamp | switch | motor | meter", "label": "string",
+   "card": 1}, ... up to 5, in one series loop],
+   "current": {"show": true, "direction": "clockwise", "alternating": true, "label": "string", "card": 2}}
+  {"type": "process", "steps": [{"label": "string", "detail": "string", "card": 1}, ... 2 to 6 in order],
+   "inputs": ["string"], "outputs": ["string"]}
+  {"type": "cycle", "steps": [{"label": "string", "detail": "string", "card": 1}, ... 3 to 6 round a loop]}
+  {"type": "forces", "object": "string", "forces": [{"label": "string", "angle": 270, "magnitude": 0.7,
+   "card": 1}, ... up to 6], "motion": {"angle": 0, "label": "string", "card": 3}}
+  {"type": "bars", "unit": "string", "bars": [{"label": "string", "value": 2.4, "card": 1}, ... 2 to 6]}
+- Amplitudes, lengths and magnitudes are relative (0.1 to 1). Keep "image_prompt" as well: it is the picture for
+  the recap, the questions and any page without a diagram.
+TXT;
+            return [$step, "      \"diagram\": {\"type\": \"string\", \"...\": \"see Step 6\"} or null,\n",
+                ' every diagram uses only the listed types and fields, and values from the content;', 'ten'];
+        }
+        return ['', '', '', 'nine'];
     }
 
     /**
@@ -290,7 +374,7 @@ PROMPT;
         }
         $lines[] = "- The types and their exact shapes:";
         foreach ($types as $type) {
-            $lines[] = self::question_shape($type, !empty($book->pickimages));
+            $lines[] = self::question_shape($type, !empty($book->pickimages), approaches::of($book)->option_brief());
         }
         return implode("\n", $lines);
     }
@@ -300,9 +384,10 @@ PROMPT;
      *
      * @param string $type
      * @param bool $pictures picture-pick options get their own pictures
+     * @param string $optionbrief what an option's picture shows (from the teaching approach)
      * @return string
      */
-    protected static function question_shape(string $type, bool $pictures): string {
+    protected static function question_shape(string $type, bool $pictures, string $optionbrief = ''): string {
         switch ($type) {
             case question::TRUEFALSE:
                 return <<<SHAPE
@@ -311,11 +396,7 @@ PROMPT;
     {"type": "truefalse", "statement": "string", "answer": true, "feedback": "string"}
 SHAPE;
             case question::PICK:
-                $picture = $pictures ? <<<PIC
-  Each option also has an "image_prompt" IN ENGLISH (20-50 words) for a SQUARE illustration of that
-  option alone, in the lesson's style, with the same recurring characters and culture, and NO text in the
-  image; plus "alt_text" in the lesson's language.
-PIC
+                $picture = $pictures ? $optionbrief
                     : '  Options are shown as text cards, so leave "image_prompt" empty.';
                 return <<<SHAPE
   PICK THE PICTURE - a question with EXACTLY 4 options, of which exactly one is right. The wrong options
@@ -366,12 +447,19 @@ SHAPE;
      */
     public static function image_prompt(\stdClass $book, string $sceneprompt, int $max = 0): string {
         $scene = trim(preg_replace('/\s+/u', ' ', $sceneprompt));
-        $style = trim((string)$book->imagestyle);
+        $approach = approaches::of($book);
+        $master = $approach->image_master();
+        $rules = self::image_rules($book);
+        $style = visual_styles::direction($book);
         $direction = trim((string)($book->styleguide ?? ''));
-        $culture = self::culture_direction($book);
-        $cast = self::characters_text($book);
-        $build = function () use (&$style, &$direction, &$culture, &$cast, &$scene): string {
+        $culture = $approach->whole_cast() ? self::culture_direction($book) : self::culture_people($book);
+        $cast = $approach->whole_cast() ? self::characters_text($book) : self::characters_text($book, $scene);
+        $label = $master !== '' ? 'EXPLAIN: ' : 'SCENE: ';
+        $build = function () use (&$style, &$direction, &$culture, &$cast, &$scene, $master, $rules, $label): string {
             $parts = [];
+            if ($master !== '') {
+                $parts[] = 'VISUAL EXPLANATION: ' . $master;
+            }
             if ($style !== '') {
                 $parts[] = 'ART STYLE: ' . $style;
             }
@@ -382,8 +470,8 @@ SHAPE;
             if ($cast !== '') {
                 $parts[] = 'RECURRING CHARACTERS (draw them exactly like this whenever they appear): ' . $cast;
             }
-            $parts[] = 'SCENE: ' . $scene;
-            $parts[] = self::IMAGE_GUARDRAILS;
+            $parts[] = $label . $scene;
+            $parts[] = $rules;
             return implode("\n\n", $parts);
         };
         $prompt = $build();
@@ -399,10 +487,8 @@ SHAPE;
         if ($over() > 0) {
             $direction = $cut($direction, $over());
         }
-        if ($over() > 0) {
-            $place = self::culture($book);
-            $culture = $place !== '' ? "Every scene takes place in {$place}, with authentic local people, settings and customs."
-                : 'Neutral, international setting with a diverse cast.';
+        if ($over() > 0 && $approach->whole_cast()) {
+            $culture = self::culture_short($book);
         }
         if ($over() > 0) {
             $style = $cut($style, $over());
@@ -414,6 +500,37 @@ SHAPE;
             $scene = $cut($scene, $over());
         }
         return \core_text::substr($build(), 0, $max);
+    }
+
+    /**
+     * The prompt that edits the picture before into the next card's picture (one picture per card).
+     *
+     * The picture before is sent with it, so only the change is described; the art direction and rules are repeated so
+     * the edit keeps the lesson's look and its accuracy rules.
+     *
+     * @param \stdClass $book
+     * @param string $change what is added or changes for this card
+     * @param int $max longest prompt in code points (0: no limit)
+     * @return string
+     */
+    public static function edit_prompt(\stdClass $book, string $change, int $max = 0): string {
+        $change = trim(preg_replace('/\s+/u', ' ', $change));
+        $style = visual_styles::direction($book);
+        $parts = ['EDIT THE ATTACHED PICTURE. Keep everything exactly as it is: the layout, viewpoint, framing, people, '
+            . 'objects, colours, lighting and art style. Change only what is described below, so this picture flows on '
+            . 'from the one before.'];
+        if ($style !== '') {
+            $parts[] = 'ART STYLE: ' . $style;
+        }
+        $parts[] = 'CHANGE: ' . $change;
+        $parts[] = self::image_rules($book);
+        $prompt = implode("\n\n", $parts);
+        if ($max > 0 && \core_text::strlen($prompt) > $max) {
+            // The art style goes first: the picture being edited already carries it.
+            unset($parts[1]);
+            $prompt = \core_text::substr(implode("\n\n", $parts), 0, $max);
+        }
+        return $prompt;
     }
 
     /**

@@ -39,7 +39,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
             ['id'],
             [
                 'name', 'intro', 'introformat', 'industry', 'subindustry', 'sourcecontent', 'maxpages',
-                'language', 'voice', 'speakingrate', 'imagestyle', 'navmode', 'autoplay', 'imageculture',
+                'language', 'voice', 'speakingrate', 'imagestyle', 'teachingapproach', 'visualstyle', 'picturemode', 'navmode', 'autoplay', 'imageculture',
                 'enablerecap', 'enablequiz', 'questiontypes', 'pickimages', 'sounds', 'styleguide', 'characters', 'coverprompt',
                 'coverstatus',
                 'covererror', 'completionlistened', 'completionquiz', 'grade', 'timecreated', 'timemodified',
@@ -52,7 +52,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
             [
                 'pagenum', 'title', 'concepttext', 'actiontext', 'outcometext', 'imageprompt', 'alttext',
                 'summarytext', 'tfstatement', 'tfanswer', 'qtype', 'qdata', 'feedback', 'imagestatus', 'audiostatus', 'lasterror',
-                'bundleid', 'slideid', 'bundlesite', 'bundledeliveries',
+                'bundleid', 'slideid', 'bundlesite', 'bundledeliveries', 'cardprompts', 'diagram',
                 'timemodified',
             ],
         );
@@ -83,6 +83,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
         $page->annotate_files('mod_visuallearning', 'image', 'id');
         $page->annotate_files('mod_visuallearning', 'audio', 'id');
         $page->annotate_files('mod_visuallearning', 'option', 'id');
+        $page->annotate_files('mod_visuallearning', 'card', 'id');
 
         return $this->prepare_activity_structure($book);
     }

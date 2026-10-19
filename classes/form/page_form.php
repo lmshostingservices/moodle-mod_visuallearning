@@ -47,17 +47,18 @@ class page_form extends \moodleform {
 
         // Each card is read as one voiceover clip.
         $max = \mod_visuallearning\local\ai\lmslabs::MAX_CLIP;
+        $approach = \mod_visuallearning\local\approaches::get($this->_customdata['approach'] ?? null);
         foreach (VISUALLEARNING_CARDS as $card) {
             $mform->addElement(
                 'textarea',
                 $card . 'text',
-                get_string('card_' . $card, 'mod_visuallearning'),
+                get_string($approach->card_string($card), 'mod_visuallearning'),
                 ['rows' => 3, 'cols' => 70, 'style' => 'width:100%']
             );
             $mform->setType($card . 'text', PARAM_TEXT);
             $mform->addRule($card . 'text', null, 'required', null, 'client');
             $mform->addRule($card . 'text', get_string('maximumchars', '', $max), 'maxlength', $max, 'client');
-            $mform->addHelpButton($card . 'text', 'card_' . $card, 'mod_visuallearning');
+            $mform->addHelpButton($card . 'text', $approach->card_string($card), 'mod_visuallearning');
         }
 
         $mform->addElement('text', 'summarytext', get_string('summarytext', 'mod_visuallearning'), ['size' => 80]);
@@ -171,6 +172,32 @@ class page_form extends \moodleform {
         $mform->addElement('text', 'alttext', get_string('alttext', 'mod_visuallearning'), ['size' => 60]);
         $mform->setType('alttext', PARAM_TEXT);
 
+        // One picture per card: three prompts, 2 and 3 edit the picture before.
+        $mode = \mod_visuallearning\local\picture_modes::clean($this->_customdata['picturemode'] ?? null);
+        if ($mode === \mod_visuallearning\local\picture_modes::SEQUENCE) {
+            for ($i = 1; $i <= \mod_visuallearning\local\picture_modes::CARDS; $i++) {
+                $mform->addElement(
+                    'textarea',
+                    'cardprompt' . $i,
+                    get_string('cardprompt', 'mod_visuallearning', $i),
+                    ['rows' => $i === 1 ? 4 : 2, 'cols' => 70, 'style' => 'width:100%']
+                );
+                $mform->setType('cardprompt' . $i, PARAM_TEXT);
+            }
+            $mform->addHelpButton('cardprompt1', 'cardprompt', 'mod_visuallearning');
+        }
+        // Animated diagram: its specification (JSON), checked when saved.
+        if ($mode === \mod_visuallearning\local\picture_modes::ANIMATED) {
+            $mform->addElement(
+                'textarea',
+                'diagram',
+                get_string('diagramspec', 'mod_visuallearning'),
+                ['rows' => 8, 'cols' => 70, 'style' => 'width:100%;font-family:monospace']
+            );
+            $mform->setType('diagram', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON decoded and allowlist-validated by diagram::clean() in validation() and on save.
+            $mform->addHelpButton('diagram', 'diagramspec', 'mod_visuallearning');
+        }
+
         $this->add_action_buttons(true, get_string('savechanges'));
     }
 
@@ -185,6 +212,16 @@ class page_form extends \moodleform {
         $errors = parent::validation($data, $files);
         if (($data['qtype'] ?? '') !== '' && question::from_form((object)$data) === null) {
             $errors['qtype'] = get_string('question_incomplete_' . $data['qtype'], 'mod_visuallearning');
+        }
+        if (trim((string)($data['diagram'] ?? '')) !== '' && \mod_visuallearning\local\diagram::clean($data['diagram']) === null) {
+            $errors['diagram'] = get_string('diagramspec_invalid', 'mod_visuallearning');
+        }
+        if (array_key_exists('cardprompt1', $data)) {
+            $filled = array_filter([$data['cardprompt1'] ?? '', $data['cardprompt2'] ?? '', $data['cardprompt3'] ?? ''],
+                fn($t) => trim((string)$t) !== '');
+            if ($filled && count($filled) < \mod_visuallearning\local\picture_modes::CARDS) {
+                $errors['cardprompt1'] = get_string('cardprompt_all', 'mod_visuallearning');
+            }
         }
         return $errors;
     }

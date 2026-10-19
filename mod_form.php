@@ -105,6 +105,34 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->addElement('select', 'speakingrate', get_string('speakingrate', 'mod_visuallearning'), $rates);
         $mform->setDefault('speakingrate', '1.00');
 
+        // What the pages explain, and how the pictures look: two independent choices.
+        $mform->addElement(
+            'select',
+            'teachingapproach',
+            get_string('teachingapproach', 'mod_visuallearning'),
+            \mod_visuallearning\local\approaches::options()
+        );
+        $mform->setDefault('teachingapproach', \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null));
+        $mform->addHelpButton('teachingapproach', 'teachingapproach', 'mod_visuallearning');
+
+        $mform->addElement(
+            'select',
+            'visualstyle',
+            get_string('visualstyle', 'mod_visuallearning'),
+            \mod_visuallearning\local\visual_styles::options()
+        );
+        $mform->setDefault('visualstyle', \mod_visuallearning\local\visual_styles::clean($config->defaultvisualstyle ?? null));
+        $mform->addHelpButton('visualstyle', 'visualstyle', 'mod_visuallearning');
+
+        $mform->addElement(
+            'select',
+            'picturemode',
+            get_string('picturemode', 'mod_visuallearning'),
+            \mod_visuallearning\local\picture_modes::options()
+        );
+        $mform->setDefault('picturemode', \mod_visuallearning\local\picture_modes::clean($config->defaultpicturemode ?? null));
+        $mform->addHelpButton('picturemode', 'picturemode', 'mod_visuallearning');
+
         $mform->addElement(
             'textarea',
             'imagestyle',

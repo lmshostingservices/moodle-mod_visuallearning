@@ -50,6 +50,7 @@ class book_data {
         $out = [];
         $missing = false;
         $position = 0;
+        $mode = picture_modes::of($book);
         foreach ($pages as $page) {
             // Learners play what has been made; nothing here ever asks LMS Labs for anything.
             $image = media::image_file($context, media::AREA_IMAGE, (int)$page->id);
@@ -58,6 +59,15 @@ class book_data {
                 return isset($clips[$part])
                     ? visuallearning_file_url(media::clip_file($context, $book, $page, $part, $clips[$part])) : '';
             };
+            // One picture per card: each card's current picture in the chain (none yet: the page picture shows).
+            $cardimages = [];
+            if ($mode === picture_modes::SEQUENCE) {
+                foreach (media::card_chain($context, $book, $page) as $n => $link) {
+                    $cardimages[$n] = $link['file'] ? visuallearning_file_url($link['file']) : '';
+                }
+            }
+            $diagram = $mode === picture_modes::ANIMATED
+                ? diagram::clean(json_decode((string)($page->diagram ?? ''), true)) : null;
             $cards = [];
             foreach (VISUALLEARNING_CARDS as $card) {
                 $text = trim((string)$page->{$card . 'text'});
@@ -70,9 +80,10 @@ class book_data {
                 }
                 $cards[] = [
                     'key' => $card,
-                    'label' => get_string('card_' . $card, 'mod_visuallearning'),
+                    'label' => approaches::card_label($book, $card),
                     'text' => format_text($text, FORMAT_PLAIN, ['context' => $context, 'para' => false]),
                     'audio' => $audio,
+                    'image' => $cardimages[array_search($card, VISUALLEARNING_CARDS, true) + 1] ?? '',
                 ];
             }
             if (!$image) {
@@ -88,6 +99,7 @@ class book_data {
                 'image' => visuallearning_file_url($image),
                 'alt' => s((string)$page->alttext),
                 'cards' => $cards,
+                'diagram' => $diagram,
                 'summary' => format_text($summary, FORMAT_PLAIN, ['context' => $context, 'para' => false]),
                 // The recap clip says its number first, so no separate number clip is needed.
                 'summaryaudio' => $clipurl('summary'),
@@ -134,7 +146,7 @@ class book_data {
                 'nextlocked', 'relistentitle', 'relistentext', 'backtoquestion', 'welcomeback', 'thatsit',
                 'gotfirst', 'gotnth', 'tapmatch', 'matchedof', 'tapsort', 'stilltosort', 'dropin', 'soundon',
                 'soundoff', 'yourresults', 'firsttry', 'ntries', 'rightfirst', 'answerstotal', 'timespent', 'notyet',
-                'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel'] as $key
+                'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel', 'cardpicture', 'diagramlabel'] as $key
         ) {
             $strings[$key] = get_string('player_' . strtolower($key), 'mod_visuallearning');
         }
@@ -153,6 +165,7 @@ class book_data {
             'quiz' => (bool)$book->enablequiz,
             'sounds' => !empty($book->sounds),
             'pictures' => question::pictures($book),
+            'numbered' => approaches::of($book)->numbered_cards(),
             'groupsize' => VISUALLEARNING_GROUP_SIZE,
             'numbers' => $numbers,
             'pages' => $out,

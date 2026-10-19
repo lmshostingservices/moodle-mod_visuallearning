@@ -77,6 +77,9 @@ class lmslabs {
     /** @var int Credits per voiceover clip, as AI Soft Skills; needs owner approval for this product. */
     public const VOICE_CREDITS = 2;
 
+    /** @var int Proposed price of one extra card picture (one picture per card); needs owner approval. */
+    public const CARD_CREDITS = 2;
+
     /** @var int Longest picture prompt, in Unicode code points. */
     public const MAX_PROMPT = 2000;
 
@@ -257,6 +260,7 @@ class lmslabs {
             $data['tariff'] = [
                 'page' => $data['bundle']['slideCredits'] ?? null,
                 'image' => $data['remakes']['pictureCredits'] ?? null,
+                'card' => $data['cardPictures']['credits'] ?? null,
                 'tts' => $data['remakes']['voice']['credits'] ?? null,
                 'clipRefSupported' => true,
                 'maxCreditsRequired' => true,
@@ -283,7 +287,7 @@ class lmslabs {
      */
     public static function published_price(string $operation): ?int {
         $map = ['page' => ['pages', 'page'], 'import' => ['pages', 'page'], 'image' => ['images', 'image'],
-            'option' => ['images', 'image'], 'voice' => ['speech', 'tts']];
+            'option' => ['images', 'image'], 'voice' => ['speech', 'tts'], 'card' => ['images', 'card']];
         [$kind, $field] = $map[$operation];
         $price = self::capabilities($kind)['tariff'][$field] ?? null;
         return is_int($price) && $price >= 0 ? $price : null;
@@ -297,7 +301,7 @@ class lmslabs {
      */
     public static function approved_price(string $operation): int {
         $prices = ['page' => self::PAGE_CREDITS, 'import' => self::PAGE_CREDITS, 'image' => self::IMAGE_CREDITS,
-            'option' => self::IMAGE_CREDITS, 'voice' => self::VOICE_CREDITS];
+            'option' => self::IMAGE_CREDITS, 'voice' => self::VOICE_CREDITS, 'card' => self::CARD_CREDITS];
         return $prices[$operation];
     }
 
@@ -319,9 +323,13 @@ class lmslabs {
             return 'notactivated';
         }
         $setting = ['page' => 'aiwrite', 'image' => 'aiimages', 'option' => 'aiimages', 'voice' => 'aivoice',
-            'import' => ''][$operation];
+            'import' => '', 'card' => 'aiimages'][$operation];
         if ($setting !== '' && !get_config('mod_visuallearning', $setting)) {
             return 'off';
+        }
+        if ($operation === 'card' && !in_array('sequence', self::picture_modes(), true)) {
+            // Card pictures are made only once LMS Labs says it makes them (they edit the picture before).
+            return 'nosequence';
         }
         if ($operation === 'option' && !in_array(\mod_visuallearning\local\media::OPTION_ASPECT, self::aspect_ratios(), true)) {
             // Square option pictures are made only once LMS Labs says it makes them.
@@ -334,6 +342,51 @@ class lmslabs {
             return 'priceunknown';
         }
         return $published === self::approved_price($operation) ? null : 'pricechanged';
+    }
+
+    /**
+     * The teaching approaches LMS Labs AI writes pages for (its v2 capabilities list "teachingApproaches"). Only the
+     * workplace story is assumed when it says nothing.
+     *
+     * @return string[]
+     */
+    public static function teaching_approaches(): array {
+        $list = self::capabilities('pages')['teachingApproaches'] ?? ['story'];
+        return is_array($list) ? array_values(array_filter($list, 'is_string')) : ['story'];
+    }
+
+    /**
+     * The visual styles LMS Labs accepts by name (its v2 capabilities list "visualStyles"). Only the illustration
+     * style is assumed when it says nothing; every style's look is also written into the picture prompt itself.
+     *
+     * @return string[]
+     */
+    public static function visual_styles(): array {
+        $list = self::capabilities('pages')['visualStyles'] ?? ['illustration'];
+        return is_array($list) ? array_values(array_filter($list, 'is_string')) : ['illustration'];
+    }
+
+    /**
+     * The picture modes LMS Labs AI writes pages for (its v2 capabilities list "draftPictureModes"): it then adds the
+     * per-card picture prompts or the diagram specs to the pages it writes. Only one picture per page is assumed when
+     * it says nothing.
+     *
+     * @return string[]
+     */
+    public static function draft_picture_modes(): array {
+        $list = self::capabilities('pages')['draftPictureModes'] ?? ['single'];
+        return is_array($list) ? array_values(array_filter($list, 'is_string')) : ['single'];
+    }
+
+    /**
+     * The picture modes LMS Labs makes pictures for (its v2 capabilities list "pictureModes"). Only one picture per
+     * page is assumed when it says nothing; animated diagrams are drawn by the plugin and need nothing from LMS Labs.
+     *
+     * @return string[]
+     */
+    public static function picture_modes(): array {
+        $list = self::capabilities('images')['pictureModes'] ?? ['single'];
+        return is_array($list) ? array_values(array_filter($list, 'is_string')) : ['single'];
     }
 
     /**

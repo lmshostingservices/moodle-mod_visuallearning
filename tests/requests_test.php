@@ -82,6 +82,10 @@ final class requests_test extends \advanced_testcase {
                     'locales' => $this->caps['speech']['locales'] ?? [],
                     'questionTypes' => $this->caps['pages']['questionTypes'] ?? ['truefalse'],
                     'aspectRatios' => $this->caps['images']['aspectRatios'] ?? ['4:3'],
+                    'pictureModes' => $this->caps['images']['pictureModes'] ?? null,
+                    'draftPictureModes' => $this->caps['pages']['draftPictureModes'] ?? null,
+                    'cardPictures' => isset($this->caps['images']['cardCredits'])
+                        ? ['credits' => $this->caps['images']['cardCredits']] : null,
                 ])];
             }
             foreach ($this->caps as $kind => $data) {
@@ -773,5 +777,111 @@ final class requests_test extends \advanced_testcase {
         $this->assertSame(['truefalse', 'pick', 'sort'], $body['questionTypes']);
         $this->assertArrayNotHasKey('trueFalse', $body);
         $this->assertSame((int)$book->maxpages * lmslabs::PAGE_CREDITS, $body['maxCredits']);
+    }
+
+    /**
+     * A purchased slide in a lesson with one picture per card, and its three card picture prompts.
+     *
+     * @return array [lesson, context, teacher, page]
+     */
+    protected function card_fixture(): array {
+        global $DB;
+        [$book, $context, $teacher, $page] = $this->bundle_fixture();
+        $DB->set_field('visuallearning', 'picturemode', 'sequence', ['id' => $book->id]);
+        $DB->set_field('visuallearning_pages', 'cardprompts', json_encode(['A bench with a coil.',
+            'Same picture, same viewpoint and layout. Add a battery.',
+            'Same picture, same viewpoint and layout. Add glowing field lines.']), ['id' => $page->id]);
+        return [$DB->get_record('visuallearning', ['id' => $book->id]), $context, $teacher,
+            $DB->get_record('visuallearning_pages', ['id' => $page->id])];
+    }
+
+    public function test_card_pictures_are_priced_chained_and_each_edits_the_one_before(): void {
+        $this->caps['images']['pictureModes'] = ['single', 'sequence'];
+        $this->caps['images']['cardCredits'] = lmslabs::CARD_CREDITS;
+        [$book, $context, $teacher, $page] = $this->card_fixture();
+        $plans = media::plan($book, $context, 'missing', (int)$page->id, ['card']);
+        $this->assertSame(['1', '2', '3'], array_column($plans, 'part'));
+        $summary = requests::quote($book, (int)$teacher->id, $plans);
+        $this->assertNull($summary['hold']);
+        $this->assertSame(3 * lmslabs::CARD_CREDITS, $summary['credits']);
+
+        $bytes = ["\x89PNG\r\n\x1a\nfirst", "\x89PNG\r\n\x1a\nsecond", "\x89PNG\r\n\x1a\nthird"];
+        $this->answers['/images'] = array_map(fn($b) => [200, ['content-type' => 'image/png', 'x-credits-charged' => '2',
+            'x-delivery-id' => \core\uuid::generate()], $b], $bytes);
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+
+        $posts = $this->posts('/images');
+        $this->assertCount(3, $posts);
+        $sent = array_map(fn($c) => json_decode($c[2], true), $posts);
+        foreach ($sent as $n => $body) {
+            $this->assertSame('card' . ($n + 1), $body['slot']);
+            $this->assertSame($page->bundleid, $body['bundleId']);
+            $this->assertSame(lmslabs::CARD_CREDITS, $body['maxCredits']);
+            $this->assertSame([], preg_grep('/^_/', array_keys($body)), 'local keys are never sent');
+        }
+        // Card 1 is a new picture; card 2 edits card 1's picture, and card 3 edits card 2's.
+        $this->assertArrayNotHasKey('referenceImage', $sent[0]);
+        $this->assertSame(base64_encode($bytes[0]), $sent[1]['referenceImage']);
+        $this->assertSame('image/png', $sent[1]['referenceMime']);
+        $this->assertSame(base64_encode($bytes[1]), $sent[2]['referenceImage']);
+        $this->assertStringStartsWith('EDIT THE ATTACHED PICTURE.', $sent[1]['prompt']);
+
+        $chain = media::card_chain($context, $book, $page);
+        foreach ($chain as $n => $link) {
+            $this->assertSame($bytes[$n - 1], $link['file']->get_content());
+        }
+        $this->assertSame([], media::plan($book, $context, 'missing', (int)$page->id, ['card']));
+        global $DB;
+        $saved = json_decode($DB->get_field('visuallearning_pages', 'bundledeliveries', ['id' => $page->id]), true);
+        $this->assertArrayHasKey('card3', $saved);
+    }
+
+    public function test_card_picture_waits_for_the_one_it_edits_and_is_cancelled_if_it_never_comes(): void {
+        global $DB;
+        $this->caps['images']['pictureModes'] = ['single', 'sequence'];
+        $this->caps['images']['cardCredits'] = lmslabs::CARD_CREDITS;
+        [$book, $context, $teacher, $page] = $this->card_fixture();
+        $summary = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'missing', (int)$page->id, ['card']));
+        // Card 1 fails: nothing is charged and cards 2 and 3 are never sent.
+        $this->answers['/images'] = [[502, ['content-type' => 'application/json'],
+            json_encode(['error' => ['code' => 'provider_failed']])]];
+        requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
+        $this->run_tasks();
+        $this->assertCount(1, $this->posts('/images'));
+        $rows = $DB->get_records('visuallearning_aireq', ['visuallearningid' => $book->id, 'operation' => 'card'], 'part');
+        $bypart = array_column(array_values($rows), null, 'part');
+        $this->assertSame('failed', $bypart['1']->status);
+        $this->assertSame('cancelled', $bypart['2']->status);
+        $this->assertSame('needsprevious', $bypart['2']->errorcode);
+        $this->assertSame('0', (string)$bypart['2']->tries);
+        $this->assertSame('cancelled', $bypart['3']->status);
+    }
+
+    public function test_card_pictures_wait_for_lms_labs_and_never_block_the_rest(): void {
+        [$book, $context, $teacher, $page] = $this->card_fixture();
+        $this->bundleslots = ['picture' => ['state' => 'awaiting-retry']];
+        $plans = media::plan($book, $context, 'missing', (int)$page->id, ['image', 'card']);
+        $summary = requests::quote($book, (int)$teacher->id, $plans);
+        $this->assertNull($summary['hold']);
+        $this->assertSame(3, $summary['droppedcards']);
+        $this->assertSame('nosequence', $summary['droppedcardshold']);
+        $this->assertArrayNotHasKey('card', $summary['items']);
+        // Asking only for card pictures says why nothing can be made.
+        $only = requests::quote($book, (int)$teacher->id, media::plan($book, $context, 'all', (int)$page->id, ['card']));
+        $this->assertSame('nosequence', $only['hold']);
+    }
+
+    public function test_written_pages_ask_for_card_prompts_or_diagrams_only_when_lms_labs_writes_them(): void {
+        global $DB;
+        [$book] = $this->book(0, ['sourcecontent' => 'Inductors oppose changes in current.']);
+        $this->assertArrayNotHasKey('pictureMode', requests::write_body($book));
+        $book->picturemode = 'animated';
+        $this->assertArrayNotHasKey('pictureMode', requests::write_body($book));
+        $this->caps['pages']['draftPictureModes'] = ['single', 'sequence', 'animated'];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        $this->assertSame('animated', requests::write_body($book)['pictureMode']);
+        $book->picturemode = 'single';
+        $this->assertArrayNotHasKey('pictureMode', requests::write_body($book));
     }
 }

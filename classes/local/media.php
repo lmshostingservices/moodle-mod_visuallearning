@@ -47,6 +47,9 @@ class media {
     /** @var string Pictures of picture-pick options (item id: page id; one file per option). */
     public const AREA_OPTION = 'option';
 
+    /** @var string File area of the per-card pictures (item: page id; files card1-…, card2-…, card3-…). */
+    public const AREA_CARD = 'card';
+
     /** @var string Aspect ratio of page and cover illustrations. */
     public const ASPECT = '4:3';
 
@@ -382,6 +385,145 @@ class media {
     }
 
     /**
+     * The full prompts of a page's three card pictures (empty when the lesson is not in "one picture per card" or the
+     * page has no card prompts). Card 1 is a picture like any other; cards 2 and 3 edit the picture before.
+     *
+     * @param stdClass $book
+     * @param stdClass $page
+     * @return array card number (1-3) => full prompt
+     */
+    public static function card_prompts(stdClass $book, stdClass $page): array {
+        if (picture_modes::of($book) !== picture_modes::SEQUENCE || !picture_modes::has_sequence($page)) {
+            return [];
+        }
+        $out = [];
+        foreach (picture_modes::card_prompts($page) as $i => $scene) {
+            $out[$i + 1] = $i === 0 ? prompt_builder::image_prompt($book, $scene, lmslabs::MAX_PROMPT)
+                : prompt_builder::edit_prompt($book, $scene, lmslabs::MAX_PROMPT);
+        }
+        return $out;
+    }
+
+    /**
+     * The chain of a page's card pictures: for each card, its prompt, the picture it edits (content hash of the
+     * current picture of the card before; '' for card 1) and its current picture, or null when it must be made.
+     *
+     * A card picture is current only when it was made from this prompt AND from the current picture before it, so a new
+     * picture for card 1 makes cards 2 and 3 out of date too.
+     *
+     * @param \context $context
+     * @param stdClass $book
+     * @param stdClass $page
+     * @return array card => ['prompt', 'reference' (content hash or ''), 'file' (stored_file|null)]
+     */
+    public static function card_chain(\context $context, stdClass $book, stdClass $page): array {
+        $out = [];
+        $reference = '';
+        foreach (self::card_prompts($book, $page) as $card => $prompt) {
+            $file = null;
+            if ($card === 1 || $reference !== '') {
+                $name = self::card_stem($card, $prompt, $reference);
+                foreach (self::card_files($context, (int)$page->id) as $candidate) {
+                    if (str_starts_with($candidate->get_filename(), $name . '.')) {
+                        $file = $candidate;
+                    }
+                }
+            }
+            $out[$card] = ['prompt' => $prompt, 'reference' => $card === 1 ? '' : $reference, 'file' => $file];
+            $reference = $file ? $file->get_contenthash() : '';
+        }
+        return $out;
+    }
+
+    /**
+     * File name stem of a card picture: its card, its prompt and the picture it edits.
+     *
+     * @param int $card
+     * @param string $prompt
+     * @param string $reference content hash of the picture it edits, '' for card 1
+     * @return string
+     */
+    public static function card_stem(int $card, string $prompt, string $reference): string {
+        return 'card' . $card . '-' . sha1($prompt . '|' . $reference);
+    }
+
+    /**
+     * Every card picture of a page.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param string $sort
+     * @return \stored_file[]
+     */
+    public static function card_files(\context $context, int $pageid, string $sort = 'id'): array {
+        return get_file_storage()->get_area_files($context->id, 'mod_visuallearning', self::AREA_CARD, $pageid, $sort, false);
+    }
+
+    /**
+     * The picture learners see for one card: the latest made for it, or null.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param int $card
+     * @return \stored_file|null
+     */
+    public static function card_file(\context $context, int $pageid, int $card): ?\stored_file {
+        foreach (self::card_files($context, $pageid, 'timemodified DESC, id DESC') as $file) {
+            if (str_starts_with($file->get_filename(), 'card' . $card . '-')) {
+                return $file;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * A card picture by content hash (the picture a later card edits).
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param string $contenthash
+     * @return \stored_file|null
+     */
+    public static function card_by_hash(\context $context, int $pageid, string $contenthash): ?\stored_file {
+        foreach (self::card_files($context, $pageid) as $file) {
+            if ($file->get_contenthash() === $contenthash) {
+                return $file;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Saves a delivered card picture; older pictures of that card are removed.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param int $card
+     * @param string $prompt
+     * @param string $reference content hash of the picture it edits, '' for card 1
+     * @param string $bytes
+     * @param string $ext
+     */
+    public static function save_card(
+        \context $context,
+        int $pageid,
+        int $card,
+        string $prompt,
+        string $reference,
+        string $bytes,
+        string $ext
+    ): void {
+        $name = self::card_stem($card, $prompt, $reference) . '.' . $ext;
+        $mimes = ['png' => 'image/png', 'webp' => 'image/webp', 'jpg' => 'image/jpeg'];
+        self::save($context, self::AREA_CARD, $pageid, $name, $bytes, $mimes[$ext]);
+        foreach (self::card_files($context, $pageid) as $file) {
+            if (str_starts_with($file->get_filename(), 'card' . $card . '-') && $file->get_filename() !== $name) {
+                $file->delete();
+            }
+        }
+    }
+
+    /**
      * The file name stem of an illustration: a hash of its full prompt.
      *
      * @param string $prompt
@@ -547,6 +689,17 @@ class media {
                     }
                 }
             }
+            if (in_array('card', $kinds, true) && !empty($page->bundleid)) {
+                // Made in order; a card whose picture before is still to be made waits for it when sent.
+                $remake = $scope === 'all';
+                foreach (self::card_chain($context, $book, $page) as $card => $link) {
+                    $remake = $remake || $link['file'] === null;
+                    if ($remake) {
+                        $out[] = ['operation' => 'card', 'targetid' => (int)$page->id, 'part' => (string)$card,
+                            'prompt' => $link['prompt']];
+                    }
+                }
+            }
             if (in_array('voice', $kinds, true)) {
                 foreach (self::clips($book, $page, $index, count($pages)) as $part => $text) {
                     if (!self::part_available($part)) {
@@ -578,7 +731,7 @@ class media {
         $open = [];
         $failed = [];
         foreach ($DB->get_records('visuallearning_aireq', ['visuallearningid' => $book->id], 'id ASC') as $row) {
-            $kind = ['voice' => 'audio', 'option' => 'image'][$row->operation] ?? $row->operation;
+            $kind = ['voice' => 'audio', 'option' => 'image', 'card' => 'image'][$row->operation] ?? $row->operation;
             $key = $kind . ':' . $row->targetid;
             if (in_array($row->status, ['pending', 'uncertain'], true)) {
                 $open[$key] = true;
@@ -602,6 +755,11 @@ class media {
             $pictures = self::image_current($context, self::AREA_IMAGE, (int)$page->id, $prompt);
             foreach (self::option_prompts($book, $page) as $option => $optionprompt) {
                 $pictures = $pictures && self::option_current($context, (int)$page->id, $option, $optionprompt);
+            }
+            if (!empty($page->bundleid)) {
+                foreach (self::card_chain($context, $book, $page) as $link) {
+                    $pictures = $pictures && $link['file'] !== null;
+                }
             }
             $image = $state($pictures, 'image:' . $page->id);
             $allclips = true;
