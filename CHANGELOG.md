@@ -2,6 +2,11 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.5.6] - 2026-10-20
+
+- Align the packaged pricing table with the approved 2-credit charge for every deliberate
+  picture or voice remake, including legacy clips. No change to the 10-credit inclusive slide price.
+
 ## [1.5.5] - 2026-10-20
 
 - Slides remain 10 credits including their first pictures and narration.

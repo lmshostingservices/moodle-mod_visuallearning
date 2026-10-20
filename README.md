@@ -54,8 +54,8 @@ confirmed first.
 | New slide, whether AI-written, imported or manually added | slide | 10 credits, including text and first pictures and narration |
 | Initial slide and cover pictures, question option pictures and narration | purchased slide | Included, no extra charge |
 | Optional new picture after successful delivery | picture | 2 credits |
-| Voice remake after successful delivery | clip | Ten free remakes per rolling 30 days, then 2 credits |
-| Pictures and voice for legacy v1.0 slides | picture or clip | Original 2-credit media price; applicable voice remake allowance remains available |
+| Voice remake after successful delivery | clip | 2 credits for every deliberate remake |
+| Pictures and voice for legacy v1.0 slides | picture or clip | 2 credits per generation, including every deliberate remake |
 
 The slide charge settles when its text is delivered. Included media remains owed if delivery fails; do not buy another
 slide to recover it. Prices are confirmed against the live server before spending. Text editing and reordering existing
