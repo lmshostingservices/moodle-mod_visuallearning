@@ -2,6 +2,14 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.5.5] - 2026-10-20
+
+- Slides remain 10 credits including their first pictures and narration.
+- Every deliberate picture or voice remake costs 2 credits; no free voice-remake allowance.
+- Quotes use the server's current remake allowance rather than a hard-coded allowance.
+- Simplified included-media wording; retries still cannot create duplicate charges.
+- Requires the matching LMS Labs billing update. Existing receipts remain unchanged.
+
 ## [1.5.4] - 2026-10-20
 
 - Striking pictures, for any topic. The prompt file now gives your AI assistant a recipe for every picture prompt.

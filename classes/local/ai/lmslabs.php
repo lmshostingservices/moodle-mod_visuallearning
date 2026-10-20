@@ -264,8 +264,8 @@ class lmslabs {
                 'tts' => $data['remakes']['voice']['credits'] ?? null,
                 'clipRefSupported' => true,
                 'maxCreditsRequired' => true,
-                'ttsRemakeLimit' => 10,
-                'ttsRemakeWindowDays' => 30,
+                'ttsRemakeLimit' => $data['remakes']['voice']['limit'] ?? 0,
+                'ttsRemakeWindowDays' => $data['remakes']['voice']['windowDays'] ?? 30,
             ];
         } else {
             $data = [];

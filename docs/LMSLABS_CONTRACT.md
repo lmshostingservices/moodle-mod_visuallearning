@@ -50,7 +50,7 @@ picture-pick option pictures (those options show as text cards) and still makes 
 ```json
 {
   "tariff": {"tts": 2, "clipRefSupported": true, "maxCreditsRequired": true,
-             "ttsRemakeLimit": 10, "ttsRemakeWindowDays": 30},
+             "ttsRemakeLimit": 0, "ttsRemakeWindowDays": 30},
   "locales": [{"locale": "en-AU", "ttsLanguageCode": "en-AU",
                "voices": [{"name": "en-AU-Chirp3-HD-Aoede"}, {"name": "en-AU-Chirp3-HD-Charon"}]}]
 }
@@ -130,7 +130,7 @@ request after completion → `410 RESULT_NOT_RETAINED`, with no new generation a
 
 ### Voiceover (Chirp 3 HD through LMS Labs)
 
-`POST /speech/quote` `{"clipRef": "64 hex"}` → `{"credits": 0 | 2, "firstClip": bool, "freeRemakesRemaining": n}`
+`POST /speech/quote` `{"clipRef": "64 hex"}` → `{"credits": 2, "firstClip": bool, "freeRemakesRemaining": 0}`
 (free; nothing made, charged or reserved).
 
 `POST /speech/tts` (Accept: audio/mpeg, application/json)
@@ -145,14 +145,14 @@ request after completion → `410 RESULT_NOT_RETAINED`, with no new generation a
 `clipRef` = SHA-256 of `["mod_visuallearning", site identifier, activity id, page id, part]`, where the part is concept,
 action, outcome, summary, question (the check question, read when it opens) or feedback (read after a right answer).
 Each page therefore has up to six clips. It never changes when the text or the voice changes. It is never reused after
-deletion, because page ids are never reused. Proposed billing, the Soft Skills reference:
+deletion, because page ids are never reused. Visual Learning billing:
 
-- 2 credits per clip;
-- 10 free re-makes per clip per rolling 30 days;
-- failed synthesis does not use a free re-make;
-- the server decides eligibility.
+- Legacy clips cost 2 credits per generation;
+- New 10-credit slide bundles include their initial narration;
+- Every deliberate voice remake costs 2 credits, with no free-remake allowance;
+- Failed synthesis does not charge; the server enforces the confirmed quote.
 
-`maxCredits: 0` for a quoted free re-make: if it is no longer free → `409 price_changed`. Not retained: same-key
+`maxCredits: 0` cannot authorise a paid remake: the server returns `409 price_changed`. Audio is not retained: same-key
 after completion → 410.
 
 ## Outcomes the plugin handles
