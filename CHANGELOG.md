@@ -2,6 +2,29 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.5.7] - 2026-10-20
+
+- Includes Replit's 1.5.5 and 1.5.6 billing changes (below).
+- **Learner level** (new setting, with a site default): Primary school (about 5 to 11), Secondary school (about
+  12 to 17), Adult and vocational learners (as before), and University and professional.
+  - It sets how the cards, recaps and questions are written.
+  - It sets how every picture is drawn: page, cover, option and card pictures, and card edits. Young learners get
+    very simple, bright pictures with at most three main parts. University and professional learners get detailed,
+    textbook-quality figures.
+  - It sets how detailed animated diagrams are.
+  - Adult lessons send exactly the same picture prompts as before.
+  - LMS Labs AI gets the level as a field once it lists it, and as text until then.
+- **Pages come in 4, 8 or 12** ("Number of pages"), so every recap shows four even, square pictures.
+  - The AI is asked for exactly that many pages.
+  - Existing settings move to the nearest count; existing pages are kept.
+  - A short group left at the end by pages added by hand is recapped and checked on its own, with square pictures.
+    It is no longer merged into a squashed five-picture recap.
+- **Animated diagrams are now a Visual style choice**: "Animated diagrams (drawn live with the narration, no
+  credits)". Picture mode (one picture per page or per card) is hidden when it is chosen.
+- Activity settings: Teaching approach, Visual style, Picture mode and the art direction have their own section,
+  "Teaching approach and pictures" (open by default). The voice section becomes "Voice and playback".
+- The build page shows the picture mode and the learner level.
+
 ## [1.5.6] - 2026-10-20
 
 - Align the packaged pricing table with the approved 2-credit charge for every deliberate

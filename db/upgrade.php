@@ -150,5 +150,32 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026101816, 'visuallearning');
     }
+
+    if ($oldversion < 2026102006) {
+        // Lessons are written with 4, 8 or 12 pages (whole recap groups): each setting moves to the nearest
+        // allowed count. Pages already in a lesson are kept as they are.
+        $table = new xmldb_table('visuallearning');
+        $field = new xmldb_field('maxpages', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '8', 'sourcecontent');
+        $dbman->change_field_default($table, $field);
+        $DB->execute("UPDATE {visuallearning} SET maxpages = 4 WHERE maxpages <= 4");
+        $DB->execute("UPDATE {visuallearning} SET maxpages = 8 WHERE maxpages > 4 AND maxpages <= 8");
+        $DB->execute("UPDATE {visuallearning} SET maxpages = 12 WHERE maxpages > 8");
+        $default = get_config('mod_visuallearning', 'defaultmaxpages');
+        if ($default !== false) {
+            $value = (int)$default;
+            set_config('defaultmaxpages', $value <= 4 ? 4 : ($value <= 8 ? 8 : 12), 'mod_visuallearning');
+        }
+        // Who the lesson is for; existing lessons are for adult learners, as before.
+        $field = new xmldb_field('learnerlevel', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'adult', 'picturemode');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        // Animated diagrams are now chosen as a visual style.
+        if (get_config('mod_visuallearning', 'defaultpicturemode') === 'animated') {
+            set_config('defaultvisualstyle', 'animated', 'mod_visuallearning');
+            set_config('defaultpicturemode', 'single', 'mod_visuallearning');
+        }
+        upgrade_mod_savepoint(true, 2026102006, 'visuallearning');
+    }
     return true;
 }

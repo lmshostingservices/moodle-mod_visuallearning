@@ -367,6 +367,17 @@ class lmslabs {
     }
 
     /**
+     * The learner levels LMS Labs AI writes pages for (its v2 capabilities list "learnerLevels"). Adult learners
+     * are assumed when it says nothing.
+     *
+     * @return string[]
+     */
+    public static function learner_levels(): array {
+        $list = self::capabilities('pages')['learnerLevels'] ?? ['adult'];
+        return is_array($list) ? array_values(array_filter($list, 'is_string')) : ['adult'];
+    }
+
+    /**
      * Optional fields LMS Labs accepts in picture requests (its v2 capabilities list "imageFields"). None are sent
      * until it lists them, so its strict schema never sees an unknown field.
      *

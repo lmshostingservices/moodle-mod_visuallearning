@@ -140,7 +140,7 @@ class book_data {
                 'gradepassedfull', 'gradenotyet', 'gradenotyetpages', 'gradeonly', 'gotoquestion', 'gradeheadpassed',
                 'gradeheadnotyet', 'locked', 'listenedstatus', 'notlistened', 'nowreading',
                 'imagecoming', 'listenfirst', 'pagescount', 'cover', 'listen', 'listening', 'listenagain',
-                'recaptitle', 'recapsubtitle', 'recaptoc', 'true', 'false', 'correct', 'continue', 'pressplay',
+                'recaptitle', 'recapsubtitle', 'recapsubtitleone', 'recaptoc', 'recaptocone', 'true', 'false', 'correct', 'continue', 'pressplay',
                 'checkx', 'questionof', 'frompage', 'qtype_truefalse', 'qtype_pick', 'qtype_match', 'qtype_sort',
                 'checkanswer', 'nextquestion', 'notquite', 'notquitetext', 'golisten', 'nopenalty', 'attemptx',
                 'nextlocked', 'relistentitle', 'relistentext', 'backtoquestion', 'welcomeback', 'thatsit',

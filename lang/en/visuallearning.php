@@ -313,6 +313,17 @@ $string['kpi_firsttime'] = 'Questions right first time';
 $string['kpi_started'] = 'Learners started';
 $string['language'] = 'Narration language';
 $string['language_help'] = 'The language of the page text and the voiceover. The pages are written in this language and read aloud by a Google Chirp 3 HD voice through LMS Labs.';
+$string['learnerlevel'] = 'Learner level';
+$string['learnerlevel_adult'] = 'Adult and vocational learners';
+$string['learnerlevel_advanced'] = 'University and professional';
+$string['learnerlevel_help'] = 'Who the lesson is for. It sets how the cards, recaps and questions are written and how every picture and animated diagram is drawn.
+
+* **Primary school (about 5 to 11)**: short sentences, everyday words, friendly comparisons; very simple, bright pictures with at most three main parts; the simplest diagrams.
+* **Secondary school (about 12 to 17)**: correct terms, each explained when it first appears; clear pictures with moderate detail and a few labels.
+* **Adult and vocational learners**: workplace-ready explanations, as before.
+* **University and professional**: precise technical language and detailed, textbook-quality pictures and diagrams.';
+$string['learnerlevel_primary'] = 'Primary school (about 5 to 11)';
+$string['learnerlevel_secondary'] = 'Secondary school (about 12 to 17)';
 $string['learnersfinished'] = 'Learners finished';
 $string['listen'] = 'Listen to the voiceover';
 $string['listenedcol'] = 'Listened';
@@ -323,8 +334,8 @@ $string['lmslabssiteid'] = 'Standalone LMS Labs Site ID';
 $string['lmslabssiteid_desc'] = 'Leave empty when LMS Labs Central Config (local_aiconfig) is installed: its Site ID and API key are used automatically. Used only when Central Config does not have both, and only together with the standalone API key.';
 $string['male'] = 'male';
 $string['managepages'] = 'Build the lesson';
-$string['maxpages'] = 'Maximum pages (concepts)';
-$string['maxpages_help'] = 'Each page teaches one concept. The AI uses up to this many pages (maximum 20) and fewer if the content is small. Writing the pages costs per page created.';
+$string['maxpages'] = 'Number of pages';
+$string['maxpages_help'] = 'Each page teaches one concept, and every four pages are recapped (four square pictures) and checked together. So a lesson is written with 4, 8 or 12 pages, and the AI covers the content in exactly that many. Writing the pages costs per page created.';
 $string['maxpagesreached'] = 'A lesson can have at most 20 pages.';
 $string['media_alldone'] = 'Every picture and voiceover clip is ready.';
 $string['media_attention'] = 'Needs your attention ({$a})';
@@ -372,6 +383,7 @@ $string['optionlabel'] = 'Option {$a}';
 $string['optionprompt'] = 'Picture prompt for option {$a}';
 $string['optionx'] = 'Option {$a}';
 $string['page'] = 'Page';
+$string['pagecount'] = '{$a} pages';
 $string['pagedeleted'] = 'Page deleted.';
 $string['pages'] = 'Pages';
 $string['pagesaved'] = 'Page saved.';
@@ -388,14 +400,19 @@ $string['pickimages_help'] = 'On: each of the four options in a "Pick the pictur
 $string['pickimages_label'] = 'Give each "Pick the picture" option its own square picture ({$a} credits each)';
 $string['picturehdr'] = 'Picture';
 $string['picturemode'] = 'Picture mode';
-$string['picturemode_animated'] = 'Animated diagrams';
-$string['picturemode_help'] = 'How each page is pictured.
+$string['picturemode_animated'] = 'Animated diagrams (drawn and animated live with the narration, no credits)';
+$string['picturemode_animated_short'] = 'Animated diagrams';
+$string['picturemode_help'] = 'For illustrated styles, how many pictures each page has.
 
-* **One picture per page**: one picture for the whole page, as always.
-* **One picture per card (builds the scene)**: three pictures per page, one for each card, shown as each card is read. Card 2\'s picture is made by editing card 1\'s and card 3\'s by editing card 2\'s, so the scene builds up step by step. Each card picture costs LMS Labs credits; the price is shown before anything is made. The page picture stays as the recap, cover and question picture.
-* **Animated diagrams**: the player draws an accurate, moving diagram (waveforms, phasors, circuits with flowing current, process steps, cycles, force arrows, bar charts) that builds up card by card in time with the narration. No extra credits. Pages that fit no diagram keep their picture. Best with the scientific and technical approach.';
-$string['picturemode_sequence'] = 'One picture per card (builds the scene)';
+* **One picture per page**: one picture for the whole page.
+* **One picture per card (builds the scene)**: three pictures per page, one per card, shown as each card is read. Card 2\'s picture is made by editing card 1\'s, and card 3\'s by editing card 2\'s, so the scene builds up step by step. Each card picture costs LMS Labs credits; the price is shown before anything is made.
+
+Not shown when the visual style is Animated diagrams.';
+$string['picturemode_sequence'] = 'One picture per card (builds the scene, extra credits)';
+$string['picturemode_sequence_short'] = 'One picture per card';
 $string['picturemode_single'] = 'One picture per page';
+$string['picturemode_single_short'] = 'One picture per page';
+$string['picturesheader'] = 'Teaching approach and pictures';
 $string['player_answerstotal'] = 'answers in total';
 $string['player_attemptx'] = 'Attempt {$a}';
 $string['player_backtocourse'] = 'Back to course';
@@ -484,8 +501,10 @@ $string['player_qtype_truefalse'] = 'True or false';
 $string['player_questionof'] = 'Question {$a->n} of {$a->total}';
 $string['player_readagain'] = 'Read again';
 $string['player_recapsubtitle'] = 'Pages {$a->from} to {$a->to}';
+$string['player_recapsubtitleone'] = 'Page {$a}';
 $string['player_recaptitle'] = 'Let\'s recap';
 $string['player_recaptoc'] = 'Recap: pages {$a->from}–{$a->to}';
+$string['player_recaptocone'] = 'Recap: page {$a}';
 $string['player_relistentext'] = 'You came here from the check. When the voice finishes, go back and try the question again.';
 $string['player_relistentitle'] = 'Listening again for question {$a}';
 $string['player_replay'] = 'Replay this page';
@@ -632,6 +651,8 @@ $string['settings_defaultapproach'] = 'Default teaching approach';
 $string['settings_defaultapproach_desc'] = 'Pre-selected for new lessons; teachers can change it per lesson.';
 $string['settings_defaultimagestyle'] = 'Default illustration style';
 $string['settings_defaultimagestyle_desc'] = 'Pre-filled for new lessons; teachers can change it per lesson.';
+$string['settings_defaultlearnerlevel'] = 'Default learner level';
+$string['settings_defaultlearnerlevel_desc'] = 'Pre-selected for new lessons; teachers can change it per lesson.';
 $string['settings_defaultpicturemode'] = 'Default picture mode';
 $string['settings_defaultpicturemode_desc'] = 'Pre-selected for new lessons; teachers can change it per lesson. One picture per card needs LMS Labs to offer it and costs extra credits per card picture.';
 $string['settings_defaultsheading'] = 'Defaults for new lessons';
@@ -686,10 +707,18 @@ $string['visuallearning:useai'] = 'Use paid LMS Labs AI in AI Visual Learning (p
 $string['visuallearning:view'] = 'View AI Visual Learning activities';
 $string['visuallearning:viewreports'] = 'View AI Visual Learning reports';
 $string['visualstyle'] = 'Visual style';
+$string['visualstyle_animated'] = 'Animated diagrams (drawn live with the narration, no credits)';
 $string['visualstyle_diagram'] = 'Technical diagram';
 $string['visualstyle_diagram_desc'] = 'Clean, flat technical diagrams with precise linework, consistent colour coding and white backgrounds.';
 $string['visualstyle_diagram_direction'] = 'Modern professional educational diagram: precise, clean vector linework, flat colours with a consistent colour code, clear visual hierarchy, generous white space, plain white or very light background, subtle shading only where it shows depth or a cutaway.';
-$string['visualstyle_help'] = 'How the pictures look. Illustration: warm hand-illustrated pictures. Technical diagram: clean, flat diagrams with precise linework. Whiteboard sketch: hand-drawn marker sketches, like a teacher explaining at the board. The art direction below fine-tunes the look; leave it as it is to use the style\'s own default.';
+$string['visualstyle_help'] = 'How each page is pictured.
+
+* **Illustration**: warm hand-illustrated pictures.
+* **Technical diagram**: clean, flat diagrams with precise linework.
+* **Whiteboard sketch**: hand-drawn marker sketches, like a teacher explaining at the board.
+* **Animated diagrams**: the lesson draws an accurate diagram and animates it in time with the narration, card by card (a voltage trace rising on card 1 and falling on card 2, current reversing, a step lighting up). No picture credits. Pages that fit no diagram, and the recap, cover and question pictures, use the Technical diagram style.
+
+The art direction below fine-tunes the look of pictures; leave it as it is to use the style\'s own default.';
 $string['visualstyle_illustration'] = 'Illustration';
 $string['visualstyle_illustration_desc'] = 'Warm, hand-illustrated pictures of people, places and equipment.';
 $string['visualstyle_whiteboard'] = 'Whiteboard sketch';
@@ -697,7 +726,7 @@ $string['visualstyle_whiteboard_desc'] = 'Hand-drawn marker sketches on a white 
 $string['visualstyle_whiteboard_direction'] = 'Hand-drawn whiteboard sketch: confident black marker outlines with slightly uneven, natural strokes on a clean plain white background, a few bright marker colours (blue, red, green, orange) used to colour-code the parts, simple flat fills, hand-drawn arrows, generous white space, clear left-to-right flow.';
 $string['voice'] = 'Narrator voice';
 $string['voice_help'] = 'The Google Chirp 3 HD voice that reads every page, from the voices LMS Labs offers. Changing the voice later means the voiceover needs making again (priced and confirmed first); the old voiceover keeps playing until then.';
-$string['voiceheader'] = 'Voice and illustrations';
+$string['voiceheader'] = 'Voice and playback';
 $string['voicenotoffered'] = 'LMS Labs does not offer this voice for the chosen language. Voices for it: {$a}.';
 $string['voiceover'] = 'Voiceover';
 $string['wizard_back'] = 'Back';

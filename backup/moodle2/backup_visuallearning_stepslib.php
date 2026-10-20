@@ -39,7 +39,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
             ['id'],
             [
                 'name', 'intro', 'introformat', 'industry', 'subindustry', 'sourcecontent', 'maxpages',
-                'language', 'voice', 'speakingrate', 'imagestyle', 'teachingapproach', 'visualstyle', 'picturemode', 'navmode', 'autoplay', 'imageculture',
+                'language', 'voice', 'speakingrate', 'imagestyle', 'teachingapproach', 'visualstyle', 'picturemode', 'learnerlevel', 'navmode', 'autoplay', 'imageculture',
                 'enablerecap', 'enablequiz', 'questiontypes', 'pickimages', 'sounds', 'styleguide', 'characters', 'coverprompt',
                 'coverstatus',
                 'covererror', 'completionlistened', 'completionquiz', 'grade', 'timecreated', 'timemodified',

@@ -78,6 +78,15 @@ class picture_modes {
     }
 
     /**
+     * The picture modes teachers pick under "Picture mode" (animated diagrams are picked as a visual style).
+     *
+     * @return array
+     */
+    public static function form_options(): array {
+        return array_intersect_key(self::options(), [self::SINGLE => 1, self::SEQUENCE => 1]);
+    }
+
+    /**
      * The three card picture prompts of a page (empty strings where there are none).
      *
      * @param \stdClass $page

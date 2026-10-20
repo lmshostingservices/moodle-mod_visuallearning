@@ -259,4 +259,54 @@ final class picture_modes_test extends \advanced_testcase {
         $this->assertStringContainsString('"stages"', $text);
         $this->assertStringContainsString('Rising to the peak is 0 to 90', $text);
     }
+
+    public function test_lessons_come_in_whole_groups_of_four(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/visuallearning/lib.php');
+        $this->assertSame([4, 8, 12], array_keys(visuallearning_page_counts()));
+        $this->assertSame(4, visuallearning_page_count(3));
+        $this->assertSame(8, visuallearning_page_count(5));
+        $this->assertSame(12, visuallearning_page_count(20));
+        // Recap numbers restart every four pages, including a short group left by pages added by hand.
+        $this->assertSame([1, 2, 3, 4, 1], array_map(fn($i) => visuallearning_recap_number($i, 5), range(0, 4)));
+        $this->resetAfterTest();
+        [$book] = $this->lesson(['maxpages' => 12]);
+        $text = prompt_builder::chatgpt_prompt($book);
+        $this->assertStringContainsString('Number of pages: exactly 12', $text);
+        $this->assertStringContainsString('EXACTLY 12 pages', $text);
+    }
+
+    public function test_animated_diagrams_are_a_visual_style_choice(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->assertArrayHasKey('animated', \mod_visuallearning\local\visual_styles::form_options());
+        $this->assertSame(['single', 'sequence'], array_keys(picture_modes::form_options()));
+        [$book] = $this->lesson(['visualstyle' => 'animated', 'picturemode' => 'sequence']);
+        $this->assertSame('diagram', $book->visualstyle);
+        $this->assertSame('animated', $book->picturemode);
+    }
+
+    public function test_learner_level_shapes_every_picture_and_the_prompt_file(): void {
+        $this->resetAfterTest();
+        [$adult] = $this->lesson();
+        $this->assertSame('adult', \mod_visuallearning\local\learner_levels::of($adult));
+        $this->assertStringNotContainsString('AUDIENCE:', prompt_builder::image_prompt($adult, 'An engine.', 2000));
+        $this->assertStringNotContainsString('LEARNER LEVEL', prompt_builder::chatgpt_prompt($adult));
+
+        [$kids] = $this->lesson(['learnerlevel' => 'primary', 'picturemode' => 'animated']);
+        $picture = prompt_builder::image_prompt($kids, 'A car engine with its pistons moving.', 2000);
+        $this->assertStringContainsString('AUDIENCE: primary school children', $picture);
+        $this->assertStringContainsString('at most three main parts', $picture);
+        $this->assertStringNotContainsString('Adults in a professional', $picture);
+        $this->assertStringContainsString('Age-appropriate', $picture);
+        $this->assertLessThanOrEqual(2000, \core_text::strlen($picture));
+        $this->assertStringContainsString('AUDIENCE: primary', prompt_builder::edit_prompt($kids, 'Add a spark.', 2000));
+        $file = prompt_builder::chatgpt_prompt($kids);
+        $this->assertStringContainsString('LEARNER LEVEL: primary school children', $file);
+        $this->assertStringContainsString('keep every diagram very simple', $file);
+
+        [$pro] = $this->lesson(['learnerlevel' => 'advanced']);
+        $this->assertStringContainsString('AUDIENCE: university students and professionals',
+            prompt_builder::image_prompt($pro, 'A four-stroke engine cycle.', 2000));
+    }
 }

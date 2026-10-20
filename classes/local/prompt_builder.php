@@ -100,7 +100,13 @@ class prompt_builder {
      * @return string
      */
     public static function image_rules(\stdClass $book): string {
-        return 'STRICT RULES: ' . visual_styles::render_rule($book) . ' ' . approaches::of($book)->image_rules();
+        $rules = approaches::of($book)->image_rules();
+        if (learner_levels::young($book)) {
+            // School-age learners: the people shown need not be adults at work.
+            $rules = str_replace('Adults in a professional, workplace-appropriate setting with respectful representation.',
+                'Age-appropriate, safe and respectful representation.', $rules);
+        }
+        return 'STRICT RULES: ' . visual_styles::render_rule($book) . ' ' . $rules;
     }
 
     /**
@@ -129,6 +135,10 @@ class prompt_builder {
                 . ". {$style}";
         if ($approach->key() !== approaches::DEFAULT) {
             $styleline .= "\nTeaching approach: " . get_string('approach_' . $approach->key(), 'mod_visuallearning');
+        }
+        if (($level = learner_levels::brief($book, 'text')) !== '') {
+            // Who the lesson is for: how every card, question and picture is pitched. Adult learners add nothing.
+            $styleline .= "\n" . $level . "\nWrite every card, summary, question and picture prompt for these learners.";
         }
         $intro = $approach->intro();
         $cardsbrief = $approach->cards_brief($where);
@@ -186,7 +196,7 @@ Industry: {$industryline}
 Sub-industry: {$subindustryline}
 Language for ALL learner-facing text: {$language} ({$book->language})
 Country / culture of the learners: {$cultureline}
-Maximum number of pages: {$max}
+Number of pages: exactly {$max}
 {$styleline}
 
 Teaching content:
@@ -197,8 +207,10 @@ CONTENT
 ------------------------------------------------
 STEP 1 - BREAK THE CONTENT INTO CONCEPTS
 ------------------------------------------------
-- Identify the key concepts a learner must understand from the content. Cover the content fully,
-  but use NO MORE than {$max} pages. If the content is small, use fewer pages - never pad.
+- Identify the key concepts a learner must understand from the content. Cover the content fully in
+  EXACTLY {$max} pages: the lesson recaps and checks every four pages, so the count matters. If the
+  content has fewer concepts, split the biggest ideas into their steps or parts; if it has more, merge
+  closely related ones or leave out the least important. Never pad with invented facts.
 - ONE concept per page. A concept is a single, simple, memorable idea. Never combine two ideas.
 - Order the pages so they build logically: foundations first, then application, then the big picture.
 - Stay faithful to the content. Do not invent facts, laws, figures or procedures that are not in it.
@@ -266,7 +278,7 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
   ]
 }
 
-Before you answer, silently check: maximum {$max} pages; one concept per page; every page has all
+Before you answer, silently check: exactly {$max} pages; one concept per page; every page has all
 {$keycount} keys; {$check}{$modecheck} names, places, food and
 customs fit the learners' country; {$textcheck} every question follows its type's
 exact shape and tests only its own page; the JSON is valid (double quotes, no trailing commas).
@@ -354,6 +366,9 @@ or null when none of the types below really explains the page's concept (the pic
   - process, cycle, forces, bars: "focus" = the number (from 1) of the step, force or bar the card is about.
   Each stage must match what its card says, in the same order.
 TXT;
+            if (($level = learner_levels::brief($book, 'diagram')) !== '') {
+                $step .= "\n" . $level;
+            }
             return [$step, "      \"diagram\": {\"type\": \"string\", \"...\": \"see Step 6\"} or null,\n",
                 ' every diagram uses only the listed types and fields, and values from the content;', 'ten'];
         }
@@ -468,7 +483,9 @@ SHAPE;
         $culture = $approach->whole_cast() ? self::culture_direction($book) : self::culture_people($book);
         $cast = $approach->whole_cast() ? self::characters_text($book) : self::characters_text($book, $scene);
         $label = $master !== '' ? 'EXPLAIN: ' : 'SCENE: ';
-        $build = function () use (&$style, &$direction, &$culture, &$cast, &$scene, $master, $rules, $label): string {
+        $audience = learner_levels::brief($book, 'picture');
+        $build = function () use (&$style, &$direction, &$culture, &$cast, &$scene, $master, $rules, $label,
+                $audience): string {
             $parts = [];
             if ($master !== '') {
                 $parts[] = 'VISUAL EXPLANATION: ' . $master;
@@ -478,6 +495,10 @@ SHAPE;
             }
             if ($direction !== '') {
                 $parts[] = 'ART DIRECTION: ' . $direction;
+            }
+            if ($audience !== '') {
+                // Who the picture is for: how simple or detailed it is.
+                $parts[] = $audience;
             }
             $parts[] = 'CULTURAL SETTING: ' . $culture;
             if ($cast !== '') {
@@ -534,6 +555,9 @@ SHAPE;
             . 'from the one before.'];
         if ($style !== '') {
             $parts[] = 'ART STYLE: ' . $style;
+        }
+        if (($audience = learner_levels::brief($book, 'picture')) !== '') {
+            $parts[] = $audience;
         }
         $parts[] = 'CHANGE: ' . $change;
         $parts[] = self::image_rules($book);

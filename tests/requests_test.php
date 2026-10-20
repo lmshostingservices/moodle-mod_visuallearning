@@ -85,6 +85,7 @@ final class requests_test extends \advanced_testcase {
                     'pictureModes' => $this->caps['images']['pictureModes'] ?? null,
                     'draftPictureModes' => $this->caps['pages']['draftPictureModes'] ?? null,
                     'imageFields' => $this->caps['images']['imageFields'] ?? null,
+                    'learnerLevels' => $this->caps['pages']['learnerLevels'] ?? null,
                     'cardPictures' => isset($this->caps['images']['cardCredits'])
                         ? ['credits' => $this->caps['images']['cardCredits']] : null,
                 ])];
@@ -629,17 +630,17 @@ final class requests_test extends \advanced_testcase {
 
     public function test_written_pages_are_imported_when_delivered(): void {
         global $DB;
-        [$book, $context, $teacher] = $this->book(0, ['maxpages' => 3]);
+        [$book, $context, $teacher] = $this->book(0, ['maxpages' => 4]);
         $summary = requests::quote($book, (int)$teacher->id, [['operation' => requests::WRITE]]);
-        $this->assertSame(3 * lmslabs::PAGE_CREDITS, $summary['credits']);
+        $this->assertSame(4 * lmslabs::PAGE_CREDITS, $summary['credits']);
         $draft = ['pages' => [['title' => 'One', 'concept' => 'C.', 'action' => 'A.', 'outcome' => 'O.',
             'image_prompt' => 'Scene.', 'summary' => 'S.', 'tf_statement' => 'T.', 'tf_answer' => false]]];
         $this->answers['/pages/draft'] = [[200, [], json_encode(['draft' => $draft, 'creditsCharged' => 2])]];
         requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
         $this->run_tasks();
         $sent = json_decode($this->posts('/pages/draft')[0][2], true);
-        $this->assertSame(3, $sent['maxPages']);
-        $this->assertSame(3 * lmslabs::PAGE_CREDITS, $sent['maxCredits']);
+        $this->assertSame(4, $sent['maxPages']);
+        $this->assertSame(4 * lmslabs::PAGE_CREDITS, $sent['maxCredits']);
         $this->assertSame('Australia', $sent['culture']);
         $this->assertSame(1, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
         $this->assertSame('completed', $DB->get_field('visuallearning_aireq', 'status', ['operation' => 'write']));
@@ -910,5 +911,20 @@ final class requests_test extends \advanced_testcase {
         $quote = requests::quote($book, (int)$teacher->id, $plan);
         $rows = requests::quoted($book->id, $quote['batch']);
         $this->assertArrayNotHasKey('teachingApproach', json_decode(reset($rows)->body, true));
+    }
+
+    public function test_written_pages_are_pitched_at_the_learner_level(): void {
+        [$book] = $this->book(0, ['sourcecontent' => 'How an engine works.', 'learnerlevel' => 'primary']);
+        $body = requests::write_body($book);
+        $this->assertArrayNotHasKey('learnerLevel', $body);
+        $this->assertStringContainsString('LEARNER LEVEL: primary school children', $body['imageStyle']);
+        $this->caps['pages']['learnerLevels'] = ['primary', 'secondary', 'adult', 'advanced'];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        $body = requests::write_body($book);
+        $this->assertSame('primary', $body['learnerLevel']);
+        $this->assertStringNotContainsString('LEARNER LEVEL', $body['imageStyle']);
+        // Adult learners send exactly what they always did.
+        $book->learnerlevel = 'adult';
+        $this->assertArrayNotHasKey('learnerLevel', requests::write_body($book));
     }
 }

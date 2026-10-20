@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot . '/mod/visuallearning/lib.php');
+
 if ($ADMIN->fulltree) {
     $component = 'mod_visuallearning';
 
@@ -95,7 +97,7 @@ if ($ADMIN->fulltree) {
             get_string('settings_defaultvisualstyle', $component),
             get_string('settings_defaultvisualstyle_desc', $component),
             \mod_visuallearning\local\visual_styles::DEFAULT,
-            \mod_visuallearning\local\visual_styles::options()
+            \mod_visuallearning\local\visual_styles::form_options()
         )
     );
     $settings->add(
@@ -104,7 +106,16 @@ if ($ADMIN->fulltree) {
             get_string('settings_defaultpicturemode', $component),
             get_string('settings_defaultpicturemode_desc', $component),
             \mod_visuallearning\local\picture_modes::SINGLE,
-            \mod_visuallearning\local\picture_modes::options()
+            \mod_visuallearning\local\picture_modes::form_options()
+        )
+    );
+    $settings->add(
+        new admin_setting_configselect(
+            "$component/defaultlearnerlevel",
+            get_string('settings_defaultlearnerlevel', $component),
+            get_string('settings_defaultlearnerlevel_desc', $component),
+            \mod_visuallearning\local\learner_levels::DEFAULT,
+            \mod_visuallearning\local\learner_levels::options()
         )
     );
     $settings->add(
@@ -135,14 +146,13 @@ if ($ADMIN->fulltree) {
             \mod_visuallearning\local\voices::voice_options('', $default)
         )
     );
-    $pages = array_combine(range(3, 20), range(3, 20));
     $settings->add(
         new admin_setting_configselect(
             "$component/defaultmaxpages",
             get_string('maxpages', $component),
             '',
-            20,
-            $pages
+            8,
+            visuallearning_page_counts()
         )
     );
 }

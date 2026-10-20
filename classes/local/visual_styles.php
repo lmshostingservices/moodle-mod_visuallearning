@@ -31,6 +31,9 @@ class visual_styles {
     /** @var string The style of every lesson made before styles existed. */
     public const DEFAULT = 'illustration';
 
+    /** @var string The "Visual style" choice that means animated diagrams drawn by the plugin. */
+    public const ANIMATED = 'animated';
+
     /**
      * Every style.
      *
@@ -90,6 +93,28 @@ class visual_styles {
             $out[$key] = get_string('visualstyle_' . $key, 'mod_visuallearning');
         }
         return $out;
+    }
+
+    /**
+     * The choice teachers see as "Visual style": every style, plus animated diagrams. Animated diagrams are stored
+     * as the picture mode "animated" with the Technical diagram style (for the recap, cover and question pictures).
+     *
+     * @return array
+     */
+    public static function form_options(): array {
+        return self::options() + [self::ANIMATED => get_string('visualstyle_animated', 'mod_visuallearning')];
+    }
+
+    /**
+     * Turns the form's visual style choice into the stored style and picture mode.
+     *
+     * @param \stdClass $data form or instance data (visualstyle, picturemode); changed in place
+     */
+    public static function apply_choice(\stdClass $data): void {
+        if (($data->visualstyle ?? '') === self::ANIMATED) {
+            $data->visualstyle = 'diagram';
+            $data->picturemode = picture_modes::ANIMATED;
+        }
     }
 
     /**

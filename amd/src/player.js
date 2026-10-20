@@ -183,14 +183,11 @@ class Player {
     pageGroups() {
         const size = this.data.groupsize || 4;
         const total = this.pages.length;
-        // Groups of four; a single page left over joins the group before it (5 pages: one group of 5; 9: 4 + 5),
-        // so every page gets its recap and check. Must match visuallearning_recap_number() in lib.php.
+        // Groups of four (lessons are written with 4, 8 or 12 pages). A smaller group left at the end by pages added
+        // by hand is recapped and checked on its own. Must match visuallearning_recap_number() in lib.php.
         const ends = [];
         for (let end = size; end < total; end += size) {
             ends.push(end);
-        }
-        if (total > size && total % size === 1) {
-            ends.pop();
         }
         ends.push(total);
         const groups = [];
@@ -220,8 +217,8 @@ class Player {
             for (const i of group) {
                 steps.push({type: 'page', page: i});
             }
-            // A full group always gets a review; a final partial group only if it has two or more concepts.
-            if (group.length >= 2) {
+            // Every group is recapped and checked, so every page is.
+            if (group.length) {
                 const range = {from: group[0] + 1, to: group[group.length - 1] + 1};
                 if (this.data.recap) {
                     steps.push({type: 'recap', group, ...range});
@@ -795,7 +792,7 @@ class Player {
         if (step.type === 'question') {
             return this.str('checkx', step.check) + ' · ' + this.str('questionof', {n: step.n, total: step.total});
         }
-        return this.str('recaptoc', {from: step.from, to: step.to});
+        return step.from === step.to ? this.str('recaptocone', step.from) : this.str('recaptoc', {from: step.from, to: step.to});
     }
 
     /**
@@ -1368,7 +1365,8 @@ class Player {
      */
     renderRecap(step) {
         Sounds.play('sparkle');
-        this.q('.pb-recap-label').textContent = this.str('recapsubtitle', {from: step.from, to: step.to});
+        this.q('.pb-recap-label').textContent = step.from === step.to ? this.str('recapsubtitleone', step.from)
+            : this.str('recapsubtitle', {from: step.from, to: step.to});
         this.q('.pb-recap-title').textContent = this.str('recaptitle');
         const mosaic = this.q('.pb-recap-mosaic');
         mosaic.innerHTML = '';

@@ -148,7 +148,7 @@ final class importer_test extends \advanced_testcase {
             'pickimages' => 1,
         ];
         $prompt = prompt_builder::chatgpt_prompt($book);
-        $this->assertStringContainsString('Maximum number of pages: 12', $prompt);
+        $this->assertStringContainsString('Number of pages: exactly 12', $prompt);
         $this->assertStringContainsString('Thai (th-TH)', $prompt);
         $this->assertStringContainsString('NOT PROVIDED', $prompt);
         $this->assertStringContainsString('Get to know each other.', $prompt);

@@ -68,9 +68,18 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->addRule('sourcecontent', null, 'required', null, 'client');
         $mform->addHelpButton('sourcecontent', 'sourcecontent', 'mod_visuallearning');
 
-        $pages = array_combine(range(3, 20), range(3, 20));
-        $mform->addElement('select', 'maxpages', get_string('maxpages', 'mod_visuallearning'), $pages);
-        $mform->setDefault('maxpages', $config->defaultmaxpages ?? 20);
+        // Pages come in groups of four: each group is recapped (four square pictures) and checked together.
+        $mform->addElement(
+            'select',
+            'learnerlevel',
+            get_string('learnerlevel', 'mod_visuallearning'),
+            \mod_visuallearning\local\learner_levels::options()
+        );
+        $mform->setDefault('learnerlevel', \mod_visuallearning\local\learner_levels::clean($config->defaultlearnerlevel ?? null));
+        $mform->addHelpButton('learnerlevel', 'learnerlevel', 'mod_visuallearning');
+
+        $mform->addElement('select', 'maxpages', get_string('maxpages', 'mod_visuallearning'), visuallearning_page_counts());
+        $mform->setDefault('maxpages', visuallearning_page_count($config->defaultmaxpages ?? 8));
         $mform->addHelpButton('maxpages', 'maxpages', 'mod_visuallearning');
 
         // Voice and visuals.
@@ -105,44 +114,6 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->addElement('select', 'speakingrate', get_string('speakingrate', 'mod_visuallearning'), $rates);
         $mform->setDefault('speakingrate', '1.00');
 
-        // What the pages explain, and how the pictures look: two independent choices.
-        $mform->addElement(
-            'select',
-            'teachingapproach',
-            get_string('teachingapproach', 'mod_visuallearning'),
-            \mod_visuallearning\local\approaches::options()
-        );
-        $mform->setDefault('teachingapproach', \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null));
-        $mform->addHelpButton('teachingapproach', 'teachingapproach', 'mod_visuallearning');
-
-        $mform->addElement(
-            'select',
-            'visualstyle',
-            get_string('visualstyle', 'mod_visuallearning'),
-            \mod_visuallearning\local\visual_styles::options()
-        );
-        $mform->setDefault('visualstyle', \mod_visuallearning\local\visual_styles::clean($config->defaultvisualstyle ?? null));
-        $mform->addHelpButton('visualstyle', 'visualstyle', 'mod_visuallearning');
-
-        $mform->addElement(
-            'select',
-            'picturemode',
-            get_string('picturemode', 'mod_visuallearning'),
-            \mod_visuallearning\local\picture_modes::options()
-        );
-        $mform->setDefault('picturemode', \mod_visuallearning\local\picture_modes::clean($config->defaultpicturemode ?? null));
-        $mform->addHelpButton('picturemode', 'picturemode', 'mod_visuallearning');
-
-        $mform->addElement(
-            'textarea',
-            'imagestyle',
-            get_string('imagestyle', 'mod_visuallearning'),
-            ['rows' => 4, 'cols' => 80, 'style' => 'width:100%']
-        );
-        $mform->setType('imagestyle', PARAM_TEXT);
-        $mform->setDefault('imagestyle', $config->defaultimagestyle ?? get_string('defaultimagestyle', 'mod_visuallearning'));
-        $mform->addHelpButton('imagestyle', 'imagestyle', 'mod_visuallearning');
-
         $mform->addElement(
             'select',
             'navmode',
@@ -162,6 +133,53 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         );
         $mform->setDefault('autoplay', 0);
         $mform->addHelpButton('autoplay', 'autoplay', 'mod_visuallearning');
+
+        // What the pages explain and how they are pictured: teaching approach, visual style and picture mode
+        // (one picture per page, one picture per card, or animated diagrams).
+        $mform->addElement('header', 'picturesheader', get_string('picturesheader', 'mod_visuallearning'));
+        $mform->setExpanded('picturesheader');
+        $mform->addElement(
+            'select',
+            'teachingapproach',
+            get_string('teachingapproach', 'mod_visuallearning'),
+            \mod_visuallearning\local\approaches::options()
+        );
+        $mform->setDefault('teachingapproach', \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null));
+        $mform->addHelpButton('teachingapproach', 'teachingapproach', 'mod_visuallearning');
+
+        $mform->addElement(
+            'select',
+            'visualstyle',
+            get_string('visualstyle', 'mod_visuallearning'),
+            \mod_visuallearning\local\visual_styles::form_options()
+        );
+        $defaultstyle = (string)($config->defaultvisualstyle ?? '');
+        $mform->setDefault('visualstyle', isset(\mod_visuallearning\local\visual_styles::form_options()[$defaultstyle])
+            ? $defaultstyle : \mod_visuallearning\local\visual_styles::DEFAULT);
+        $mform->addHelpButton('visualstyle', 'visualstyle', 'mod_visuallearning');
+
+        $mform->addElement(
+            'select',
+            'picturemode',
+            get_string('picturemode', 'mod_visuallearning'),
+            \mod_visuallearning\local\picture_modes::form_options()
+        );
+        $defaultmode = (string)($config->defaultpicturemode ?? '');
+        $mform->setDefault('picturemode', isset(\mod_visuallearning\local\picture_modes::form_options()[$defaultmode])
+            ? $defaultmode : \mod_visuallearning\local\picture_modes::SINGLE);
+        $mform->addHelpButton('picturemode', 'picturemode', 'mod_visuallearning');
+        // Animated diagrams replace the pictures, so the picture mode does not apply.
+        $mform->hideIf('picturemode', 'visualstyle', 'eq', \mod_visuallearning\local\visual_styles::ANIMATED);
+
+        $mform->addElement(
+            'textarea',
+            'imagestyle',
+            get_string('imagestyle', 'mod_visuallearning'),
+            ['rows' => 4, 'cols' => 80, 'style' => 'width:100%']
+        );
+        $mform->setType('imagestyle', PARAM_TEXT);
+        $mform->setDefault('imagestyle', $config->defaultimagestyle ?? get_string('defaultimagestyle', 'mod_visuallearning'));
+        $mform->addHelpButton('imagestyle', 'imagestyle', 'mod_visuallearning');
 
         // Recap and checks.
         $mform->addElement('header', 'reviewheader', get_string('reviewheader', 'mod_visuallearning'));
@@ -237,6 +255,11 @@ class mod_visuallearning_mod_form extends moodleform_mod {
             foreach (\mod_visuallearning\local\question::TYPES as $type) {
                 $defaultvalues['qt_' . $type] = in_array($type, $chosen, true) ? 1 : 0;
             }
+        }
+        if (($defaultvalues['picturemode'] ?? '') === \mod_visuallearning\local\picture_modes::ANIMATED) {
+            // Animated diagrams are chosen as a visual style.
+            $defaultvalues['visualstyle'] = \mod_visuallearning\local\visual_styles::ANIMATED;
+            $defaultvalues['picturemode'] = \mod_visuallearning\local\picture_modes::SINGLE;
         }
         if (isset($defaultvalues['speakingrate'])) {
             $rate = (float)$defaultvalues['speakingrate'];

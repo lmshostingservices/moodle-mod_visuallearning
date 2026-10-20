@@ -338,6 +338,10 @@ $summary = [
         . \mod_visuallearning\local\approaches::options()[\mod_visuallearning\local\approaches::of($book)->key()],
     get_string('visualstyle', 'mod_visuallearning') . ': '
         . \mod_visuallearning\local\visual_styles::options()[\mod_visuallearning\local\visual_styles::of($book)],
+    get_string('picturemode', 'mod_visuallearning') . ': '
+        . get_string('picturemode_' . \mod_visuallearning\local\picture_modes::of($book) . '_short', 'mod_visuallearning'),
+    get_string('learnerlevel', 'mod_visuallearning') . ': '
+        . \mod_visuallearning\local\learner_levels::options()[\mod_visuallearning\local\learner_levels::of($book)],
     get_string('maxpages', 'mod_visuallearning') . ': ' . (int)$book->maxpages,
 ];
 echo html_writer::tag(

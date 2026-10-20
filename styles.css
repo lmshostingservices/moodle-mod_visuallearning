@@ -1349,9 +1349,36 @@
     min-height: 0;
 }
 
-.mod-visuallearning .pb-recap-mosaic[data-count="5"] .pb-recap-tile:nth-child(-n+2),
-.mod-visuallearning .pb-recap-mosaic[data-count="2"] .pb-recap-tile {
-    grid-column: span 3;
+/* A shorter last group (pages added by hand): its pictures stay square too, side by side. */
+.mod-visuallearning .pb-recap-mosaic[data-count="1"],
+.mod-visuallearning .pb-recap-mosaic[data-count="2"],
+.mod-visuallearning .pb-recap-mosaic[data-count="3"] {
+    height: auto;
+    margin: auto 0;
+    grid-template-columns: repeat(var(--pb-cols), minmax(0, 1fr));
+    grid-auto-rows: auto;
+    align-content: center;
+}
+
+.mod-visuallearning .pb-recap-mosaic[data-count="1"] {
+    --pb-cols: 1;
+    width: min(100%, calc(var(--pb-avail) - 12px));
+    margin: auto;
+}
+
+.mod-visuallearning .pb-recap-mosaic[data-count="2"] {
+    --pb-cols: 2;
+}
+
+.mod-visuallearning .pb-recap-mosaic[data-count="3"] {
+    --pb-cols: 3;
+}
+
+.mod-visuallearning .pb-recap-mosaic[data-count="1"] .pb-recap-tile,
+.mod-visuallearning .pb-recap-mosaic[data-count="2"] .pb-recap-tile,
+.mod-visuallearning .pb-recap-mosaic[data-count="3"] .pb-recap-tile {
+    grid-column: auto;
+    aspect-ratio: 1 / 1;
 }
 
 /* A full recap: four even, square illustrations in a 2 x 2 grid, as large as the column allows. */

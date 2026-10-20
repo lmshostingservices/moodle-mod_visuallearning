@@ -196,11 +196,35 @@ class requests {
      * @return array
      */
     public static function image_hints(stdClass $book): array {
+        $out = [];
         $approach = approaches::of($book)->key();
-        if ($approach === approaches::DEFAULT || !in_array('teachingApproach', lmslabs::image_fields(), true)) {
+        if ($approach !== approaches::DEFAULT && in_array('teachingApproach', lmslabs::image_fields(), true)) {
+            $out['teachingApproach'] = $approach;
+        }
+        $level = \mod_visuallearning\local\learner_levels::of($book);
+        if ($level !== \mod_visuallearning\local\learner_levels::DEFAULT && in_array('learnerLevel', lmslabs::image_fields(), true)) {
+            $out['learnerLevel'] = $level;
+        }
+        return $out;
+    }
+
+    /**
+     * The learner level in a page-writing request. Adult learners send nothing new. Other levels send
+     * "learnerLevel" once LMS Labs lists the level in its v2 capabilities "learnerLevels"; until then the level's
+     * brief travels at the end of "imageStyle" ({@see write_body()}), so LMS Labs AI still writes for those learners.
+     *
+     * @param stdClass $book
+     * @return array
+     */
+    public static function level_fields(stdClass $book): array {
+        $level = \mod_visuallearning\local\learner_levels::of($book);
+        if ($level === \mod_visuallearning\local\learner_levels::DEFAULT) {
             return [];
         }
-        return ['teachingApproach' => $approach];
+        if (in_array($level, lmslabs::learner_levels(), true)) {
+            return ['learnerLevel' => $level];
+        }
+        return [];
     }
 
     /**
@@ -241,7 +265,7 @@ class requests {
             throw new moodle_exception('write_toolong', 'mod_visuallearning', '', lmslabs::MAX_CONTENT);
         }
         $max = (int)$book->maxpages;
-        return array_merge([
+        $body = array_merge([
             'title' => (string)$book->name,
             'industry' => trim((string)$book->industry),
             'subindustry' => trim((string)$book->subindustry),
@@ -256,7 +280,13 @@ class requests {
                 ? array_values(array_intersect(question::allowed($book), lmslabs::question_types())) : [],
             'content' => $content,
             'maxCredits' => $max * lmslabs::PAGE_CREDITS,
-        ], self::picture_mode_fields($book));
+        ], self::picture_mode_fields($book), self::level_fields($book));
+        $level = \mod_visuallearning\local\learner_levels::brief($book, 'text');
+        if ($level !== '' && !isset($body['learnerLevel'])) {
+            // Until LMS Labs takes the level as a field, its brief travels with the art direction.
+            $body['imageStyle'] = trim($body['imageStyle'] . ' ' . $level);
+        }
+        return $body;
     }
 
     /**

@@ -55,22 +55,50 @@ define(
 /** Concepts per recap / true-false group. */
 define('VISUALLEARNING_GROUP_SIZE', 4);
 
+/** Page counts a lesson is written with: whole recap groups. */
+define('VISUALLEARNING_PAGE_COUNTS', [4, 8, 12]);
+
+/**
+ * The page counts a lesson can be written with: whole groups of four, so every recap shows four square pictures.
+ *
+ * @return array count => label
+ */
+function visuallearning_page_counts(): array {
+    $out = [];
+    foreach (VISUALLEARNING_PAGE_COUNTS as $count) {
+        $out[$count] = get_string('pagecount', 'mod_visuallearning', $count);
+    }
+    return $out;
+}
+
+/**
+ * The allowed page count nearest a value (rounded up to a whole group of four, at most 12).
+ *
+ * @param mixed $value
+ * @return int
+ */
+function visuallearning_page_count($value): int {
+    $value = (int)$value;
+    foreach (VISUALLEARNING_PAGE_COUNTS as $count) {
+        if ($value <= $count) {
+            return $count;
+        }
+    }
+    return max(VISUALLEARNING_PAGE_COUNTS);
+}
+
 /**
  * A page's number (1-based) within its recap group.
  *
- * Pages are grouped in fours. A single page left over at the end joins the group before it (5 pages make one
- * group of 5, 9 make 4 + 5), so every page is recapped and checked. Must match buildSteps() in amd/src/player.js.
+ * Pages are grouped in fours; lessons are written with 4, 8 or 12 pages. If pages added by hand leave a smaller
+ * group at the end, it is recapped and checked on its own. Must match pageGroups() in amd/src/player.js.
  *
  * @param int $position 0-based position of the page in the lesson
  * @param int $total number of pages in the lesson
  * @return int
  */
 function visuallearning_recap_number(int $position, int $total): int {
-    $size = VISUALLEARNING_GROUP_SIZE;
-    if ($total > $size && $total % $size === 1 && $position >= $total - $size - 1) {
-        return $position - ($total - $size - 1) + 1;
-    }
-    return ($position % $size) + 1;
+    return ($position % VISUALLEARNING_GROUP_SIZE) + 1;
 }
 
 /**
@@ -169,7 +197,7 @@ function visuallearning_update_instance($data, $mform = null) {
  * @param stdClass $data
  */
 function visuallearning_clean_instance_data(stdClass $data): void {
-    $data->maxpages = max(1, min(20, (int)($data->maxpages ?? 20)));
+    $data->maxpages = visuallearning_page_count($data->maxpages ?? 8);
     if (!\mod_visuallearning\local\voices::is_valid_voice($data->voice ?? '')) {
         $data->voice = 'Aoede';
     }
@@ -178,7 +206,9 @@ function visuallearning_clean_instance_data(stdClass $data): void {
     }
     $data->speakingrate = max(0.5, min(1.5, (float)($data->speakingrate ?? 1)));
     $data->teachingapproach = \mod_visuallearning\local\approaches::clean($data->teachingapproach ?? null);
+    \mod_visuallearning\local\visual_styles::apply_choice($data);
     $data->visualstyle = \mod_visuallearning\local\visual_styles::clean($data->visualstyle ?? null);
+    $data->learnerlevel = \mod_visuallearning\local\learner_levels::clean($data->learnerlevel ?? null);
     $data->picturemode = \mod_visuallearning\local\picture_modes::clean($data->picturemode ?? null);
     $data->completionlistened = empty($data->completionlistened) ? 0 : 1;
     $data->completionquiz = empty($data->completionquiz) ? 0 : 1;
