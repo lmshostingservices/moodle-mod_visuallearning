@@ -1175,7 +1175,7 @@ class Player {
         }
         this.diagram = Diagrams.render(box, page.diagram, {label: this.str('diagramlabel', page.alt || page.title)});
         if (this.diagram) {
-            this.diagram.reveal(card);
+            this.diagram.finish(card);
         }
         return box;
     }
@@ -1185,9 +1185,14 @@ class Player {
      *
      * @param {number} i card position
      */
-    showCard(i) {
+    showCard(i, ms = 0) {
         if (this.diagram) {
-            this.diagram.reveal(i + 1);
+            if (ms) {
+                // Read aloud: the card's part of the diagram plays over the length of its clip.
+                this.diagram.stage(i + 1, ms);
+            } else {
+                this.diagram.finish(i + 1);
+            }
             return;
         }
         this.showLayer(this.q('.pb-page-figure .pb-card-image[data-card="' + i + '"]'));
@@ -1290,16 +1295,15 @@ class Player {
             placeholder.hidden = false;
             placeholder.textContent = this.str('imagecoming');
         }
-        const heard = page.listened || this.returnTo !== null;
         let first = page.image ? img : placeholder;
         if (page.diagram) {
             // Animated diagram: drawn here, building up card by card (all of it once the page has been heard).
             figure.classList.add('has-layers', 'has-diagram');
-            first = this.drawDiagram(page, heard ? 3 : 1);
+            // Every visit starts the diagram from the beginning: it builds again as the cards are read.
+            first = this.drawDiagram(page, 0);
         } else if (page.cards.some((card) => card.image)) {
             // One picture per card: stacked, each rising into place as its card is read.
             figure.classList.add('has-layers');
-            let last = null;
             page.cards.forEach((card, i) => {
                 if (!card.image) {
                     return;
@@ -1310,14 +1314,10 @@ class Player {
                 layer.src = card.image;
                 layer.alt = this.str('cardpicture', card.label);
                 figure.appendChild(layer);
-                last = layer;
                 if (i === 0) {
                     first = layer;
                 }
             });
-            if (heard && last) {
-                first = last;
-            }
         }
         // Every picture rises gently into place with the cards (same easing and length as their entrance).
         first.getBoundingClientRect();
@@ -2096,7 +2096,7 @@ class Player {
         if (step.type === 'page') {
             const els = this.root.querySelectorAll('.pb-card');
             return this.pages[step.page].cards.map((card, i) => ({el: els[i], urls: [card.audio], text: card.text,
-                start: () => this.showCard(i)}));
+                start: () => this.showCard(i, Math.max(1800, Math.round(wordCount(card.text) / WORDS_PER_SECOND * 1000)))}));
         }
         if (step.type === 'recap') {
             const els = this.root.querySelectorAll('.pb-recap-item');
@@ -2136,8 +2136,8 @@ class Player {
             this.focusRecapTile(null);
         }
         if (step.type === 'page' && this.pages[step.page].diagram && this.diagram) {
-            // Read from the start: the diagram builds up again from card 1.
-            this.drawDiagram(this.pages[step.page], 1);
+            // Read from the start: the diagram builds up again from card 1, its movement waiting for card 1's clip.
+            this.drawDiagram(this.pages[step.page], 0);
         }
         this.narrating = true;
         this.paused = false;
@@ -2213,6 +2213,12 @@ class Player {
                 return;
             }
             this.audio.src = url;
+            this.audio.addEventListener('loadedmetadata', () => {
+                // The diagram's movement for this card lasts exactly as long as the clip.
+                if (token === this.token && this.diagram) {
+                    this.diagram.retime(this.audio.duration * 1000);
+                }
+            }, {once: true});
             const promise = this.audio.play();
             if (promise) {
                 promise.catch((err) => {
@@ -2292,11 +2298,17 @@ class Player {
         if (!this.paused) {
             this.paused = true;
             this.audio.pause();
+            if (this.diagram) {
+                this.diagram.pause(true);
+            }
             window.clearTimeout(this.fallbackTimer);
             this.setListenState('paused');
             return;
         }
         this.paused = false;
+        if (this.diagram) {
+            this.diagram.pause(false);
+        }
         this.setListenState('playing');
         if (this.audio.getAttribute('src') && !this.audio.ended) {
             this.audio.play().catch(() => this.finishClip());

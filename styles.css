@@ -4575,3 +4575,27 @@
 .mod-visuallearning .pb-page-figure.has-diagram > .pb-image-placeholder {
     display: none;
 }
+
+/* Staged diagrams: the card's step, force or bar stands out; its caption shows along the bottom. */
+.mod-visuallearning .dg-el.is-on.is-dim {
+    opacity: .28;
+}
+
+.mod-visuallearning .dg-el.is-focus > rect:first-of-type {
+    stroke-width: 6;
+}
+
+.mod-visuallearning .dg-note {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .6s var(--pb-ease), transform .6s var(--pb-ease);
+}
+
+.mod-visuallearning .dg-note.is-on {
+    opacity: 1;
+    transform: none;
+}
+
+.mod-visuallearning .dg-el[data-focus] {
+    transition: opacity .6s var(--pb-ease), transform .6s var(--pb-ease);
+}

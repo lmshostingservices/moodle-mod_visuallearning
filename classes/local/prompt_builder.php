@@ -305,6 +305,7 @@ TXT;
         }
         if ($mode === picture_modes::ANIMATED) {
             $max = diagram::MAX_LABEL;
+            $note = diagram::MAX_NOTE;
             $step = <<<TXT
 
 
@@ -340,6 +341,18 @@ or null when none of the types below really explains the page's concept (the pic
   {"type": "bars", "unit": "string", "bars": [{"label": "string", "value": 2.4, "card": 1}, ... 2 to 6]}
 - Amplitudes, lengths and magnitudes are relative (0.1 to 1). Keep "image_prompt" as well: it is the picture for
   the recap, the questions and any page without a diagram.
+- Make the movement follow the narration with "stages": what the diagram DOES while each card is read. Each card's
+  movement plays once while that card is read and stops where the next card carries on, so card 1, card 2 and
+  card 3 tell one continuous story. Give every stage a "note": a caption of at most {$note} characters saying what
+  is happening right now (for example "Voltage rises to its peak"). Use the field that fits the type:
+  "stages": {"1": {"to": 90, "note": "string"}, "2": {"to": 270, "note": "string"}, "3": {"to": 360, "note": "string"}}
+  - waveform: "to" = how far along the time axis the trace has run by the end of the card, in degrees (one cycle =
+    360, so 0 to 360 × cycles). It starts where the card before stopped. Rising to the peak is 0 to 90, falling
+    through zero to the trough is 90 to 270, back to zero is 270 to 360.
+  - phasor: "turn" = the angle all vectors have turned to by the end of the card (for example 90, then 180, then 360).
+  - circuit: "flow" = "clockwise", "anticlockwise" or "stopped" (alternating current: clockwise, then anticlockwise).
+  - process, cycle, forces, bars: "focus" = the number (from 1) of the step, force or bar the card is about.
+  Each stage must match what its card says, in the same order.
 TXT;
             return [$step, "      \"diagram\": {\"type\": \"string\", \"...\": \"see Step 6\"} or null,\n",
                 ' every diagram uses only the listed types and fields, and values from the content;', 'ten'];

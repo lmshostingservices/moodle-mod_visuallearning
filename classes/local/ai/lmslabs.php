@@ -367,6 +367,17 @@ class lmslabs {
     }
 
     /**
+     * Optional fields LMS Labs accepts in picture requests (its v2 capabilities list "imageFields"). None are sent
+     * until it lists them, so its strict schema never sees an unknown field.
+     *
+     * @return string[]
+     */
+    public static function image_fields(): array {
+        $list = self::capabilities('images')['imageFields'] ?? [];
+        return is_array($list) ? array_values(array_filter($list, 'is_string')) : [];
+    }
+
+    /**
      * The picture modes LMS Labs AI writes pages for (its v2 capabilities list "draftPictureModes"): it then adds the
      * per-card picture prompts or the diagram specs to the pages it writes. Only one picture per page is assumed when
      * it says nothing.

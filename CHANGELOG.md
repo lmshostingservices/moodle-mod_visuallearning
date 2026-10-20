@@ -2,6 +2,51 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.5.4] - 2026-10-20
+
+- Striking pictures, for any topic. The prompt file now gives your AI assistant a recipe for every picture prompt.
+  - Workplace stories:
+    - a hero subject;
+    - a deliberate camera viewpoint with depth;
+    - light that carries meaning;
+    - the moment of action, with small motion cues;
+    - a subtle reveal when the idea is invisible (germs, heat, trust).
+  - Scientific lessons:
+    - the real object as the hero;
+    - a cutaway, x-ray or magnified reveal of the mechanism inside it;
+    - glow and colour as information;
+    - motion cues (arrows, flowing particles, a faded "before" view);
+    - a three-quarter camera view.
+  - The worked examples and the AI's self-checks follow the recipe.
+- Only the prompt file changes. The art style and rules wrapped around each picture prompt are unchanged, so no
+  existing picture needs remaking.
+- Pictures for scientific lessons can tell LMS Labs what they are for (`"teachingApproach": "science"`), so it can
+  use the image model best at accurate technical illustration. This is sent only once LMS Labs lists it, and story
+  pictures send exactly what they always did.
+
+## [1.5.3] - 2026-10-20
+
+- Every visit to a page starts again from the beginning, even on pages already heard:
+  - the animated diagram rebuilds from card 1;
+  - with one picture per card, card 1's picture shows first.
+
+## [1.5.2] - 2026-10-20
+
+- Animated diagrams now play in stages, card by card. Each card's movement plays once while that card is read,
+  lasting exactly as long as its voiceover clip, and stops where the next card carries on. For example:
+  - card 1: the voltage trace rises to its peak;
+  - card 2: it falls through zero to the trough;
+  - card 3: it returns to zero, completing the cycle.
+- What stages can do, by diagram type:
+  - waveform: trace a range of the wave;
+  - phasor: turn the vectors to an angle;
+  - circuit: make the current flow clockwise or anticlockwise, or stop;
+  - process, cycle, forces and bars: highlight one step, force or bar.
+- Each stage can carry a short caption ("Voltage rises to its peak"), shown under the diagram while its card is read.
+- Pausing the narration pauses the movement. Replaying the page starts it again from card 1. Reduced motion jumps
+  straight to each card's end state.
+- The prompt file explains stages to your AI assistant. Stages are optional: diagrams without them move as in 1.5.0.
+
 ## [1.5.1] - 2026-10-20
 
 - Document the validated JSON-only diagram form field for the release security checker.

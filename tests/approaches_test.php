@@ -169,4 +169,20 @@ final class approaches_test extends \advanced_testcase {
         $this->assertStringContainsString('Whiteboard sketch', prompt_builder::chatgpt_prompt($story));
         $this->assertSame('illustration', requests::image_style($book));
     }
+
+    /**
+     * The prompt file asks for striking pictures, in both approaches, without changing how pictures are wrapped.
+     */
+    public function test_prompt_file_asks_for_striking_pictures(): void {
+        $this->resetAfterTest();
+        $story = prompt_builder::chatgpt_prompt($this->book('story', 'illustration'));
+        foreach (['HERO:', 'CAMERA:', 'LIGHT:', 'MOMENT:', 'REVEAL'] as $part) {
+            $this->assertStringContainsString($part, $story);
+        }
+        $science = prompt_builder::chatgpt_prompt($this->book('science', 'diagram'));
+        foreach (['HERO:', 'REVEAL:', 'LIGHT AND COLOUR AS INFORMATION:', 'MOTION CUES:', 'CAMERA:'] as $part) {
+            $this->assertStringContainsString($part, $science);
+        }
+        $this->assertStringContainsString('a reveal of the mechanism, a motion cue', $science);
+    }
 }

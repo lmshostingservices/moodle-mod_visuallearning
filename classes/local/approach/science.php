@@ -98,12 +98,14 @@ Example of ONE good page (topic: alternating current, English, Australia):
   question: {"type": "truefalse", "statement": "At fifty hertz, one complete cycle takes twenty milliseconds.",
             "answer": true, "feedback": "Fifty cycles fit into one second, so each cycle lasts one fiftieth of a
             second, which is twenty milliseconds."}
-  image_prompt: "Explanatory diagram of alternating current. Top: a simple circuit loop with a sine-wave AC
-            source, arrows showing current flowing clockwise in one panel and anticlockwise in a second
-            panel. Bottom: one sine wave on a time axis showing exactly one complete cycle, the positive
-            half-cycle shaded blue above the axis and the negative half-cycle shaded red below it, with a
-            bracket marking one cycle. Accuracy: equal positive and negative halves, smooth symmetrical
-            wave. Exclude: people, numbers other than what the content gives."
+  image_prompt: "Three-quarter view of an open switchboard in a workshop, one circuit breaker in the
+            foreground. A transparent cutaway of the cable behind it reveals glowing electrons flowing
+            forward, then reversing, shown as two faint motion trails in opposite directions. Above the
+            board, a large oscilloscope screen shows exactly one complete sine wave cycle, its positive
+            half-cycle glowing blue above the axis and its negative half-cycle glowing red below it, with a
+            bracket marking one cycle. Soft workshop light, shallow depth of field. Accuracy: equal positive
+            and negative halves, smooth symmetrical wave. Exclude: people, numbers other than what the
+            content gives."
 TXT;
     }
 
@@ -124,7 +126,7 @@ TXT;
 - "characters" is optional for this lesson. Leave it as an empty list [] unless some pictures really need
   people (for example a worker using a meter); then describe at most 3, as in a {$where} workplace in
   {$cultureline}.
-- For each page write "image_prompt" IN ENGLISH, 60-100 words, that EXPLAINS the page's concept so a
+- For each page write "image_prompt" IN ENGLISH, 70-110 words, that EXPLAINS the page's concept so a
   learner understands it from the picture alone. Work it out from these parts, then write one
   self-contained description (do not list the letters):
   A. the single concept the learner must understand;
@@ -134,7 +136,17 @@ TXT;
      phasor diagram, force, motion or energy-flow arrows, molecular or biological process, a sequence of
      steps, a before-and-after comparison, an annotated equipment diagram or a cause-and-effect chain
      (up to three related panels when the mechanism needs them; do not force every page into one layout);
-  E. how the visual style applies, without weakening the explanation;
+  E. how the visual style applies, without weakening the explanation, and how the picture becomes striking:
+     - HERO: one main subject, large in the frame, ideally the real object the learner will meet on the job
+       (a switchboard, a forklift, a leaf, a pump) rather than an abstract box;
+     - REVEAL: a cutaway, cross-section, x-ray view or magnified inset circle that shows the hidden
+       mechanism inside that real object;
+     - LIGHT AND COLOUR AS INFORMATION: glow for energy or activity, the lesson's colour code for every part
+       that recurs, darker or cooler tones for what is inactive;
+     - MOTION CUES: arrows, flowing particles, trails or a faded "before" ghost, so the still picture shows
+       what happens and in which direction;
+     - CAMERA: a three-quarter or low viewpoint with a clear foreground and background for depth (a flat
+       front-on view only for graphs and schematics, where it is clearer);
   F. accuracy: end with "Accuracy:" and the relationships, directions or proportions that must be right;
   G. exclusions: end with "Exclude:" and anything misleading or unnecessary (usually people, logos,
      invented numbers).
@@ -161,7 +173,8 @@ TXT;
      */
     public function check(): string {
         return 'the three key points build in order and every image prompt explains the same concept, with '
-            . 'scientifically correct relationships and an Accuracy and Exclude sentence;';
+            . 'scientifically correct relationships, a hero, a reveal of the mechanism, a motion cue, and an Accuracy '
+            . 'and Exclude sentence;';
     }
 
     /**

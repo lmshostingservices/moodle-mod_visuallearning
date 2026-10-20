@@ -139,6 +139,52 @@ const marker = (svg, fill) => {
 const step = (parent, card) => el('g', {'class': 'dg-el', 'data-card': card || 1}, parent);
 
 /**
+ * Smooth start and stop for staged movement.
+ *
+ * @param {number} p 0 to 1
+ * @returns {number}
+ */
+const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+
+/**
+ * The value a staged quantity has reached: each card moves it from where the card before left it.
+ *
+ * @param {Object} stages card => stage
+ * @param {string} key the stage field (to, turn)
+ * @param {Object} st {card, p}
+ * @param {number} start value before any card
+ * @returns {number}
+ */
+const staged = (stages, key, st, start) => {
+    let at = start;
+    for (let card = 1; card <= 3; card++) {
+        const stage = stages[card];
+        if (!stage || stage[key] === undefined) {
+            continue;
+        }
+        const from = key === 'to' && stage.from !== undefined ? stage.from : at;
+        if (card < st.card) {
+            at = stage[key];
+        } else if (card === st.card) {
+            return from + (stage[key] - from) * ease(st.p);
+        } else if (st.card === 0 && key === 'to') {
+            // Before anything is read the trace waits where card 1 starts.
+            return from;
+        }
+    }
+    return at;
+};
+
+/**
+ * Whether any stage sets a field.
+ *
+ * @param {Object} stages
+ * @param {string} key
+ * @returns {boolean}
+ */
+const uses = (stages, key) => Object.values(stages).some((stage) => stage && stage[key] !== undefined);
+
+/**
  * Draws one diagram type into the svg and returns its frame function (or null when nothing moves).
  */
 const DRAW = {
@@ -154,7 +200,9 @@ const DRAW = {
         const x0 = box.x + 40;
         const x1 = box.x + box.w - 70;
         const mid = box.y + box.h / 2;
-        const amp = box.h / 2 - 40;
+        // Room under the wave for the period bracket and its label.
+        const period = (spec.markers || []).some((m) => m.kind === 'period');
+        const amp = box.h / 2 - (period ? 58 : 40);
         const cycles = spec.cycles || 2;
         const xAt = (t) => x0 + t * (x1 - x0);
         const yAt = (w, t) => mid - amp * w.amplitude * Math.sin(2 * Math.PI * cycles * t + rad(w.phase));
@@ -205,16 +253,38 @@ const DRAW = {
                 text(g, m.label, (x0 + x1) / 2, box.y + 12, {'font-size': 16, fill: MUTED});
             }
         });
+        const stages = spec.stages || {};
+        const tracing = uses(stages, 'to');
+        let clip = null;
+        if (tracing) {
+            // The waves stay faint ahead of the trace and are drawn boldly up to it.
+            const id = 'dg-clip-' + Math.random().toString(36).slice(2);
+            const cp = el('clipPath', {id}, el('defs', {}, svg));
+            clip = el('rect', {x: 0, y: 0, width: x0, height: H}, cp);
+            clip.dataset.id = id;
+        }
         const paths = [];
         spec.waves.forEach((w) => {
             const g = step(svg, w.card);
+            if (clip) {
+                let ghost = '';
+                for (let i = 0; i <= 240; i++) {
+                    const t = i / 240;
+                    ghost += (i ? ' L' : 'M') + xAt(t).toFixed(1) + ',' + yAt(w, t).toFixed(1);
+                }
+                el('path', {d: ghost, fill: 'none', stroke: colour(w.colour), 'stroke-width': 3, opacity: 0.22,
+                    'stroke-dasharray': '2 7', 'stroke-linecap': 'round'}, g);
+            }
             let d = '';
             for (let i = 0; i <= 240; i++) {
                 const t = i / 240;
                 d += (i ? ' L' : 'M') + xAt(t).toFixed(1) + ',' + yAt(w, t).toFixed(1);
             }
-            const path = el('path', {d, fill: 'none', stroke: colour(w.colour), 'stroke-width': 4,
-                'stroke-linecap': 'round', 'class': 'dg-trace', pathLength: 1}, g);
+            const path = el('path', {d, fill: 'none', stroke: colour(w.colour), 'stroke-width': clip ? 5 : 4,
+                'stroke-linecap': 'round', 'class': clip ? '' : 'dg-trace', pathLength: 1}, g);
+            if (clip) {
+                path.setAttribute('clip-path', 'url(#' + clip.dataset.id + ')');
+            }
             paths.push(path);
             if (w.label) {
                 // Legend, top right: a short line in the wave's colour and its label.
@@ -271,9 +341,13 @@ const DRAW = {
         const cursor = el('line', {y1: mid - amp - 4, y2: mid + amp + 4, stroke: INK, 'stroke-width': 1.5, opacity: 0.35}, svg);
         const dots = spec.waves.map((w) => el('circle', {r: 7, fill: colour(w.colour), stroke: '#fff', 'stroke-width': 2,
             'class': 'dg-dot', 'data-card': w.card}, svg));
-        return (time, shown) => {
-            const t = (time / 6000) % 1;
+        return (time, shown, st) => {
+            // Staged: the trace runs from where the card before stopped to where this card ends, then waits.
+            const t = tracing ? staged(stages, 'to', st, 0) / (360 * cycles) : (time / 6000) % 1;
             const x = xAt(t);
+            if (clip) {
+                clip.setAttribute('width', Math.max(0, x).toFixed(1));
+            }
             cursor.setAttribute('x1', x);
             cursor.setAttribute('x2', x);
             dots.forEach((dot, i) => {
@@ -344,6 +418,11 @@ const DRAW = {
             });
         };
         place(0);
+        const stages = spec.stages || {};
+        if (uses(stages, 'turn')) {
+            // Staged: the vectors turn together to each card's angle, from where the card before left them.
+            return (time, shown, st) => place(staged(stages, 'turn', st, 0));
+        }
         return spec.rotate ? (time) => place((time / 8000 * 360) % 360) : null;
     },
 
@@ -471,17 +550,47 @@ const DRAW = {
                     stroke: colour('green'), 'stroke-width': 2, 'stroke-dasharray': '6 6', 'class': 'dg-field'}, field);
             });
         }
+        let pointer = null;
         if (cur.label) {
             text(cg, cur.label, right - 10, top + 40, {'font-size': 17, 'font-weight': 700, fill: colour(cur.colour),
                 'text-anchor': 'end'});
             const dir = cur.clockwise ? 1 : -1;
-            el('line', {x1: right - 130 - 30 * dir, y1: top + 56, x2: right - 130 + 30 * dir, y2: top + 56,
+            pointer = el('line', {x1: right - 130 - 30 * dir, y1: top + 56, x2: right - 130 + 30 * dir, y2: top + 56,
                 stroke: colour(cur.colour), 'stroke-width': 3, 'marker-end': marker(svg, colour(cur.colour)),
                 'marker-start': cur.alternating ? marker(svg, colour(cur.colour)) : ''}, cg);
         }
         const dir = cur.clockwise ? 1 : -1;
-        return (time) => {
-            const offset = cur.alternating ? Math.sin(time / 2000 * 2 * Math.PI) * perimeter / count * 1.6
+        const stages = spec.stages || {};
+        const staging = uses(stages, 'flow');
+        // Staged flow: each card sets the way the current goes (the dots carry on from where they are).
+        let travelled = 0;
+        let last = null;
+        return (time, shown, st) => {
+            let offset;
+            let strength;
+            if (staging && st.card && stages[st.card] && stages[st.card].flow) {
+                const flow = stages[st.card].flow;
+                const way = flow === 'stopped' ? 0 : (flow === 'clockwise' ? 1 : -1);
+                travelled += last === null ? 0 : (time - last) / 1000 * 70 * way;
+                offset = travelled;
+                strength = way === 0 ? 0 : 1;
+                if (pointer) {
+                    pointer.style.opacity = way === 0 ? 0 : 1;
+                    pointer.setAttribute('transform', way === -dir ? `rotate(180 ${right - 130} ${top + 56})` : '');
+                }
+                last = time;
+                dots.forEach((dot, i) => {
+                    const [x, y] = along(offset + i * perimeter / count);
+                    dot.setAttribute('cx', x.toFixed(1));
+                    dot.setAttribute('cy', y.toFixed(1));
+                });
+                if (field) {
+                    field.style.opacity = (0.15 + 0.85 * strength).toFixed(2);
+                }
+                return;
+            }
+            last = time;
+            offset = cur.alternating ? Math.sin(time / 2000 * 2 * Math.PI) * perimeter / count * 1.6
                 : (time / 1000 * 70) % perimeter;
             dots.forEach((dot, i) => {
                 const [x, y] = along(dir * offset + i * perimeter / count);
@@ -516,6 +625,7 @@ const DRAW = {
         spec.steps.forEach((s, i) => {
             const x = startx + i * (bw + gap);
             const g = step(svg, s.card);
+            g.dataset.focus = i + 1;
             el('rect', {x, y: cy - bh / 2, width: bw, height: bh, rx: 16, fill: tint(s.colour), stroke: colour(s.colour),
                 'stroke-width': 3, 'class': 'dg-box', 'data-index': i}, g);
             el('circle', {cx: x + 22, cy: cy - bh / 2 + 22, r: 14, fill: colour(s.colour)}, g);
@@ -591,6 +701,7 @@ const DRAW = {
                 `A${rx},${ry} 0 0 1 ${(cx + rx * Math.cos(a2)).toFixed(1)},${(cy + ry * Math.sin(a2)).toFixed(1)}`,
                 fill: 'none', stroke: LINE, 'stroke-width': 3, 'marker-end': marker(svg, LINE)}, ag);
             const g = step(svg, s.card);
+            g.dataset.focus = i + 1;
             const bw = 190;
             const bh = s.detail ? 92 : 70;
             const rect = el('rect', {x: x - bw / 2, y: y - bh / 2, width: bw, height: bh, rx: 16, fill: tint(s.colour),
@@ -601,7 +712,12 @@ const DRAW = {
             }
             boxes.push(rect);
         });
+        const focused = uses(spec.stages || {}, 'focus');
         return (time) => {
+            if (focused) {
+                // Staged: the card's step is highlighted instead of a highlight travelling round.
+                return;
+            }
             const active = Math.floor(time / 1500) % n;
             boxes.forEach((rect, i) => rect.setAttribute('stroke-width', i === active ? 6 : 3));
         };
@@ -633,8 +749,9 @@ const DRAW = {
             const k = Math.min(Math.abs((ow / 2) / (dx || 1e-9)), Math.abs((oh / 2) / (dy || 1e-9)));
             return [cx + dx * k, cy + dy * k];
         };
-        const arrows = spec.forces.map((f) => {
+        const arrows = spec.forces.map((f, i) => {
             const g = step(svg, f.card);
+            g.dataset.focus = i + 1;
             const a = rad(f.angle);
             const [sx, sy] = edge(a);
             // Room to the edge of the drawing in this direction, less space for the label.
@@ -697,6 +814,7 @@ const DRAW = {
         el('line', {x1: box.x + 40, y1: base, x2: box.x + box.w - 40, y2: base, stroke: LINE, 'stroke-width': 2}, svg);
         spec.bars.forEach((b, i) => {
             const g = step(svg, b.card);
+            g.dataset.focus = i + 1;
             const x = box.x + 40 + slot * i + (slot - bw) / 2;
             const h = (base - topy) * b.value / max;
             el('rect', {x, y: base - h, width: bw, height: h, rx: 8, fill: colour(b.colour), 'class': 'dg-bar',
@@ -712,10 +830,13 @@ const DRAW = {
 /**
  * Draw a diagram.
  *
+ * The controller builds it card by card: reveal(card) shows what appears on a card; stage(card, ms) also plays that
+ * card's movement (from the spec's stages) once over ms, the length of the card's clip, and shows its caption.
+ *
  * @param {HTMLElement} container emptied and filled with the SVG
  * @param {Object} spec cleaned specification
  * @param {Object} [options] {label: accessible description, reduced: no movement}
- * @returns {{reveal: Function, destroy: Function, svg: SVGElement}|null}
+ * @returns {Object|null} {svg, reveal, stage, retime, finish, pause, destroy}
  */
 export const render = (container, spec, options = {}) => {
     if (!container || !spec || !DRAW[spec.type]) {
@@ -730,20 +851,60 @@ export const render = (container, spec, options = {}) => {
         text(svg, spec.title, W / 2, 50, {'font-size': 24, 'font-weight': 800});
         top = 80;
     }
-    const frame = DRAW[spec.type](svg, spec, {x: 20, y: top, w: W - 40, h: H - top - 20});
+    const stages = spec.stages || {};
+    const captioned = Object.values(stages).some((stage) => stage && stage.note);
+    const frame = DRAW[spec.type](svg, spec, {x: 20, y: top, w: W - 40, h: H - top - (captioned ? 64 : 20)});
+    // The caption of the card being read, in a band along the bottom.
+    let caption = null;
+    if (captioned) {
+        const band = el('g', {'class': 'dg-note'}, svg);
+        const pill = el('rect', {x: W / 2 - 200, y: H - 58, width: 400, height: 40, rx: 20, fill: '#1f2433'}, band);
+        const words = text(band, '', W / 2, H - 31, {'font-size': 18, 'font-weight': 700, fill: '#fff'});
+        caption = {band, pill, words};
+    }
     const reduced = options.reduced !== undefined ? options.reduced
         : window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     svg.classList.toggle('is-still', !!reduced);
     let shown = 0;
     let raf = 0;
     const start = performance.now();
+    // The card whose movement is playing: when it started, how long it lasts, and when it was paused.
+    const play = {card: 0, start: 0, length: 1, paused: null};
+    const state = (now) => {
+        if (!play.card) {
+            return {card: 0, p: 0};
+        }
+        const at = (play.paused === null ? now : play.paused) - play.start;
+        return {card: play.card, p: reduced ? 1 : Math.max(0, Math.min(1, at / play.length))};
+    };
+    const draw = (now) => {
+        if (frame) {
+            frame(reduced ? 1500 : now - start, shown, state(now));
+        }
+    };
     const tick = (now) => {
         if (!svg.isConnected) {
             raf = 0;
             return;
         }
-        frame(now - start, shown);
+        draw(now);
         raf = window.requestAnimationFrame(tick);
+    };
+    const focus = (card) => {
+        const stage = stages[card];
+        const target = stage && stage.focus ? String(stage.focus) : null;
+        svg.querySelectorAll('[data-focus]').forEach((g) => {
+            g.classList.toggle('is-dim', target !== null && g.dataset.focus !== target);
+            g.classList.toggle('is-focus', target !== null && g.dataset.focus === target);
+        });
+        if (caption) {
+            const note = stage && stage.note ? stage.note : '';
+            caption.words.textContent = note;
+            const width = Math.min(W - 40, Math.max(160, note.length * 10.5 + 48));
+            caption.pill.setAttribute('x', ((W - width) / 2).toFixed(1));
+            caption.pill.setAttribute('width', width.toFixed(1));
+            caption.band.classList.toggle('is-on', note !== '');
+        }
     };
     const controller = {
         svg,
@@ -757,8 +918,53 @@ export const render = (container, spec, options = {}) => {
             svg.querySelectorAll('.dg-el').forEach((g) => {
                 g.classList.toggle('is-on', Number(g.dataset.card) <= shown);
             });
-            if (frame && reduced) {
-                frame(1500, shown);
+            draw(performance.now());
+        },
+        /**
+         * Play a card: show what appears on it and play its movement once, over the given time.
+         *
+         * @param {number} card
+         * @param {number} ms how long the card is read
+         */
+        stage(card, ms) {
+            controller.reveal(card);
+            Object.assign(play, {card, start: performance.now(), length: Math.max(800, ms || 0), paused: null});
+            focus(card);
+            draw(performance.now());
+        },
+        /**
+         * The card's clip turned out longer or shorter than estimated: its movement keeps pace with it.
+         *
+         * @param {number} ms
+         */
+        retime(ms) {
+            if (play.card && ms > 0 && isFinite(ms)) {
+                play.length = Math.max(800, ms);
+            }
+        },
+        /**
+         * Show a card with its movement already played (for a page the learner has heard).
+         *
+         * @param {number} card
+         */
+        finish(card) {
+            controller.reveal(card);
+            Object.assign(play, {card, start: -1e9, length: 1, paused: null});
+            focus(card);
+            draw(performance.now());
+        },
+        /**
+         * Hold or resume the movement with the narration.
+         *
+         * @param {boolean} on
+         */
+        pause(on) {
+            const now = performance.now();
+            if (on && play.paused === null) {
+                play.paused = now;
+            } else if (!on && play.paused !== null) {
+                play.start += now - play.paused;
+                play.paused = null;
             }
         },
         /**
@@ -774,8 +980,6 @@ export const render = (container, spec, options = {}) => {
     controller.reveal(1);
     if (frame && !reduced) {
         raf = window.requestAnimationFrame(tick);
-    } else if (frame) {
-        frame(1500, shown);
     }
     return controller;
 };

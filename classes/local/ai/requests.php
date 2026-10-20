@@ -187,6 +187,23 @@ class requests {
     }
 
     /**
+     * What a picture is for, so LMS Labs can send it to the image model that draws it best (for example technical
+     * explanations to the model strongest at accurate diagrams and labels). Sent only for lessons that are not
+     * workplace stories, and only once LMS Labs lists "teachingApproach" in its v2 capabilities "imageFields";
+     * story pictures send exactly what they always did.
+     *
+     * @param stdClass $book
+     * @return array
+     */
+    public static function image_hints(stdClass $book): array {
+        $approach = approaches::of($book)->key();
+        if ($approach === approaches::DEFAULT || !in_array('teachingApproach', lmslabs::image_fields(), true)) {
+            return [];
+        }
+        return ['teachingApproach' => $approach];
+    }
+
+    /**
      * The teaching approach and visual style in a page-writing request.
      *
      * Workplace stories in the illustration style send exactly what they always did. Other lessons send
@@ -342,6 +359,9 @@ class requests {
             } else {
                 $body = $plan['body'];
                 $price = (int)$body['maxCredits'];
+            }
+            if (in_array($operation, [self::IMAGE, self::COVER, self::OPTION, self::CARD], true)) {
+                $body += self::image_hints($book);
             }
             $included = false;
             if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD], true)) {

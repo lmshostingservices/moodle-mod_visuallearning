@@ -219,4 +219,44 @@ final class picture_modes_test extends \advanced_testcase {
         $this->assertSame('waveform', $data['pages'][0]['diagram']['type']);
         $this->assertSame('', $data['pages'][0]['cards'][0]['image']);
     }
+
+    public function test_stages_play_each_cards_part_in_order(): void {
+        $spec = ['type' => 'waveform', 'cycles' => 1, 'waves' => [['label' => 'V', 'colour' => 'blue']],
+            'stages' => [
+                '1' => ['to' => 90, 'note' => 'Voltage rises to its peak'],
+                '2' => ['to' => 270, 'note' => 'It falls through zero to the trough, then keeps going'],
+                '3' => ['to' => 999],
+                '4' => ['to' => 10],
+            ]];
+        $clean = diagram::clean($spec);
+        $this->assertSame(['note' => 'Voltage rises to its peak', 'from' => 0.0, 'to' => 90.0], $clean['stages'][1]);
+        // Each card starts where the one before stopped; values stay on the axis; notes are kept short.
+        $this->assertSame(90.0, $clean['stages'][2]['from']);
+        $this->assertLessThanOrEqual(diagram::MAX_NOTE, \core_text::strlen($clean['stages'][2]['note']));
+        $this->assertSame(['from' => 270.0, 'to' => 360.0], $clean['stages'][3]);
+        $this->assertArrayNotHasKey(4, $clean['stages']);
+        // Stored and read back as an object keyed by card.
+        $this->assertSame($clean, diagram::clean(json_decode(diagram::json($clean), true)));
+
+        $circuit = diagram::clean(['type' => 'circuit', 'source' => ['kind' => 'ac'], 'components' => [['kind' => 'lamp']],
+            'current' => ['show' => true], 'stages' => ['1' => ['flow' => 'clockwise'], '2' => ['flow' => 'sideways',
+            'note' => 'Current reverses'], '3' => ['flow' => 'anticlockwise']]]);
+        $this->assertSame('clockwise', $circuit['stages'][1]['flow']);
+        $this->assertSame(['note' => 'Current reverses'], $circuit['stages'][2]);
+        $phasor = diagram::clean(['type' => 'phasor', 'vectors' => [['label' => 'V']], 'stages' => ['1' => ['turn' => 9000]]]);
+        $this->assertSame(720.0, $phasor['stages'][1]['turn']);
+        $process = diagram::clean(['type' => 'process', 'steps' => [['label' => 'A'], ['label' => 'B']],
+            'stages' => ['1' => ['focus' => 1], '2' => ['focus' => 2], '3' => ['focus' => 7]]]);
+        $this->assertSame([1 => ['focus' => 1], 2 => ['focus' => 2]], $process['stages']);
+        // No stages: nothing added (the diagram moves on its own, as in 1.5.0).
+        $this->assertArrayNotHasKey('stages', diagram::clean($this->specs()['ac']));
+    }
+
+    public function test_prompt_file_explains_stages(): void {
+        $this->resetAfterTest();
+        [$animated] = $this->lesson(['picturemode' => 'animated']);
+        $text = prompt_builder::chatgpt_prompt($animated);
+        $this->assertStringContainsString('"stages"', $text);
+        $this->assertStringContainsString('Rising to the peak is 0 to 90', $text);
+    }
 }

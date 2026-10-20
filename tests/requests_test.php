@@ -84,6 +84,7 @@ final class requests_test extends \advanced_testcase {
                     'aspectRatios' => $this->caps['images']['aspectRatios'] ?? ['4:3'],
                     'pictureModes' => $this->caps['images']['pictureModes'] ?? null,
                     'draftPictureModes' => $this->caps['pages']['draftPictureModes'] ?? null,
+                    'imageFields' => $this->caps['images']['imageFields'] ?? null,
                     'cardPictures' => isset($this->caps['images']['cardCredits'])
                         ? ['credits' => $this->caps['images']['cardCredits']] : null,
                 ])];
@@ -883,5 +884,31 @@ final class requests_test extends \advanced_testcase {
         $this->assertSame('animated', requests::write_body($book)['pictureMode']);
         $book->picturemode = 'single';
         $this->assertArrayNotHasKey('pictureMode', requests::write_body($book));
+    }
+
+    public function test_scientific_pictures_say_what_they_are_for_once_lms_labs_routes_them(): void {
+        global $DB;
+        [$book, $context, $teacher] = $this->book(1, ['teachingapproach' => 'science']);
+        $pages = visuallearning_get_pages($book->id);
+        $page = reset($pages);
+        $plan = [['operation' => requests::IMAGE, 'targetid' => $page->id, 'prompt' => 'A coil and its field.']];
+        $quote = requests::quote($book, (int)$teacher->id, $plan);
+        $rows = requests::quoted($book->id, $quote['batch']);
+        $this->assertArrayNotHasKey('teachingApproach', json_decode(reset($rows)->body, true));
+        requests::cancel_quote($book->id, $quote['batch']);
+
+        $this->caps['images']['imageFields'] = ['teachingApproach'];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        $quote = requests::quote($book, (int)$teacher->id, $plan);
+        $rows = requests::quoted($book->id, $quote['batch']);
+        $this->assertSame('science', json_decode(reset($rows)->body, true)['teachingApproach']);
+        requests::cancel_quote($book->id, $quote['batch']);
+
+        // Workplace stories never send it.
+        $DB->set_field('visuallearning', 'teachingapproach', 'story', ['id' => $book->id]);
+        $book = $DB->get_record('visuallearning', ['id' => $book->id]);
+        $quote = requests::quote($book, (int)$teacher->id, $plan);
+        $rows = requests::quoted($book->id, $quote['batch']);
+        $this->assertArrayNotHasKey('teachingApproach', json_decode(reset($rows)->body, true));
     }
 }

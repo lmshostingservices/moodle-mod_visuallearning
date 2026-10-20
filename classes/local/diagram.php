@@ -42,6 +42,12 @@ class diagram {
     /** @var int Longest detail line under a process step, in characters. */
     public const MAX_DETAIL = 60;
 
+    /** @var int Longest caption of a stage (shown under the diagram while its card is read). */
+    public const MAX_NOTE = 48;
+
+    /** @var string[] Ways current can flow round a circuit during a stage. */
+    public const FLOWS = ['clockwise', 'anticlockwise', 'stopped'];
+
     /** @var string[] Circuit components the renderer draws. */
     public const COMPONENTS = ['resistor', 'inductor', 'capacitor', 'lamp', 'switch', 'motor', 'meter'];
 
@@ -69,7 +75,66 @@ class diagram {
         }
         $method = 'clean_' . $spec['type'];
         $body = self::$method($spec);
-        return $body === null ? null : $out + $body;
+        if ($body === null) {
+            return null;
+        }
+        $stages = self::stages($spec['stages'] ?? null, $out + $body);
+        return $out + $body + ($stages ? ['stages' => $stages] : []);
+    }
+
+    /**
+     * What the diagram does while each card is read, card by card: the movement plays once over the card's clip and
+     * stops where the next card carries on. All optional; without stages the diagram moves on its own.
+     *
+     * - every type: "note", a short caption shown while the card is read;
+     * - waveform: "from" and "to", in degrees along the time axis (0 to 360 × cycles): the trace runs from one to the
+     *   other ("from" defaults to where the card before stopped);
+     * - phasor: "turn", the angle in degrees all vectors have turned to by the end of the card;
+     * - circuit: "flow", clockwise, anticlockwise or stopped;
+     * - process, cycle, forces, bars: "focus", the number of the step, force or bar to highlight (from 1).
+     *
+     * @param mixed $stages
+     * @param array $spec the cleaned diagram
+     * @return array card (1 to 3) => stage
+     */
+    protected static function stages($stages, array $spec): array {
+        if (!is_array($stages)) {
+            return [];
+        }
+        $out = [];
+        $at = 0.0;
+        $end = 360.0 * ($spec['cycles'] ?? 1);
+        $lists = ['process' => 'steps', 'cycle' => 'steps', 'forces' => 'forces', 'bars' => 'bars'];
+        for ($card = 1; $card <= picture_modes::CARDS; $card++) {
+            $stage = $stages[$card] ?? $stages[(string)$card] ?? null;
+            if (!is_array($stage)) {
+                continue;
+            }
+            $clean = [];
+            $note = self::label($stage['note'] ?? '', self::MAX_NOTE);
+            if ($note !== '') {
+                $clean['note'] = $note;
+            }
+            if ($spec['type'] === 'waveform' && isset($stage['to']) && is_numeric($stage['to'])) {
+                $from = self::number($stage['from'] ?? $at, $at, 0, $end);
+                $to = self::number($stage['to'], $from, 0, $end);
+                $clean += ['from' => $from, 'to' => $to];
+                $at = $to;
+            } else if ($spec['type'] === 'phasor' && isset($stage['turn']) && is_numeric($stage['turn'])) {
+                $clean['turn'] = self::number($stage['turn'], 0, -720, 720);
+            } else if ($spec['type'] === 'circuit' && in_array($stage['flow'] ?? null, self::FLOWS, true)) {
+                $clean['flow'] = $stage['flow'];
+            } else if (isset($lists[$spec['type']]) && isset($stage['focus']) && is_numeric($stage['focus'])) {
+                $focus = (int)$stage['focus'];
+                if ($focus >= 1 && $focus <= count($spec[$lists[$spec['type']]])) {
+                    $clean['focus'] = $focus;
+                }
+            }
+            if ($clean) {
+                $out[$card] = $clean;
+            }
+        }
+        return $out;
     }
 
     /**
