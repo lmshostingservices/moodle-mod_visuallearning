@@ -1,0 +1,327 @@
+{
+  "book_title": "Contact reverses rotation",
+  "industry": "Education",
+  "subindustry": "Demonstration",
+  "language": "en-AU",
+  "style_guide": "Pale industrial mint, navy linework and burnt-orange driver. Precise axes and tick marks, no decorative motion.",
+  "characters": [],
+  "cover_image_prompt": "Create a clear explanatory schematic of this concept: Two external spur gears, 12 and 24 schematic teeth. The smaller driver turns clockwise through 360 degrees while the larger output turns counterclockwise through 180 degrees. Equal pitch-line travel gives a 2:1 speed reduction; no friction or losses are modelled. Use the same visual direction and semantic colour conventions as the supplied lesson. Keep this a static explanatory fallback, with readable essential labels and no decorative motion. Do not invent measurements, people or additional mechanisms.",
+  "pages": [
+    {
+      "page": 1,
+      "title": "Contact reverses rotation",
+      "concept": "Both gears have the same tooth pitch; the output has twice as many teeth.",
+      "action": "At their shared contact, equal tangential travel requires opposite angular directions.",
+      "outcome": "One input revolution corresponds to half an output revolution.",
+      "summary": "One input revolution corresponds to half an output revolution.",
+      "question": null,
+      "image_prompt": "Create a clear explanatory schematic of this concept: Two external spur gears, 12 and 24 schematic teeth. The smaller driver turns clockwise through 360 degrees while the larger output turns counterclockwise through 180 degrees. Equal pitch-line travel gives a 2:1 speed reduction; no friction or losses are modelled. Use the same visual direction and semantic colour conventions as the supplied lesson. Keep this a static explanatory fallback, with readable essential labels and no decorative motion. Do not invent measurements, people or additional mechanisms.",
+      "alt_text": "A 12-tooth external gear drives a 24-tooth gear. Tooth outlines are schematic; shaft centres stay fixed.",
+      "diagram": {
+        "type": "animated_scene",
+        "version": "1.0",
+        "title": "Contact reverses rotation",
+        "description": "Two external spur gears, 12 and 24 schematic teeth. The smaller driver turns clockwise through 360 degrees while the larger output turns counterclockwise through 180 degrees. Equal pitch-line travel gives a 2:1 speed reduction; no friction or losses are modelled.",
+        "representation": "schematic",
+        "viewBox": [
+          0,
+          0,
+          800,
+          520
+        ],
+        "aspectRatio": "meet",
+        "style": {
+          "reference": "Engineering notebook · enamel",
+          "artDirection": "Pale industrial mint, navy linework and burnt-orange driver. Precise axes and tick marks, no decorative motion.",
+          "background": "#eaf0e6",
+          "foreground": "#25414b",
+          "accent": "#ad603c",
+          "font": "monospace",
+          "fontSize": 18,
+          "strokeWidth": 2
+        },
+        "layers": [
+          {
+            "id": "machine",
+            "label": "Gear pair and shaft centres"
+          },
+          {
+            "id": "labels",
+            "label": "Gear ratio explanation"
+          }
+        ],
+        "paths": [],
+        "gradients": [],
+        "objects": [
+          {
+            "id": "input",
+            "kind": "group",
+            "role": "draw",
+            "layer": "machine",
+            "label": "12-tooth input gear",
+            "geometry": {},
+            "initial": {
+              "x": 260,
+              "y": 265
+            }
+          },
+          {
+            "id": "smallGear",
+            "kind": "gear",
+            "role": "draw",
+            "layer": "machine",
+            "parent": "input",
+            "label": "Clockwise driver",
+            "geometry": {
+              "radius": 78,
+              "teeth": 12
+            },
+            "initial": {
+              "fill": "#dba789",
+              "stroke": "#ad603c",
+              "strokeWidth": 3
+            }
+          },
+          {
+            "id": "inputMark",
+            "kind": "line",
+            "role": "draw",
+            "layer": "machine",
+            "parent": "input",
+            "label": "Input rotation witness mark",
+            "geometry": {
+              "x2": 55,
+              "y2": 0
+            },
+            "initial": {
+              "stroke": "#ad603c",
+              "strokeWidth": 5
+            }
+          },
+          {
+            "id": "output",
+            "kind": "group",
+            "role": "draw",
+            "layer": "machine",
+            "label": "24-tooth output gear",
+            "geometry": {},
+            "initial": {
+              "x": 470,
+              "y": 265,
+              "rotation": 7.5
+            }
+          },
+          {
+            "id": "largeGear",
+            "kind": "gear",
+            "role": "draw",
+            "layer": "machine",
+            "parent": "output",
+            "label": "Counterclockwise output",
+            "geometry": {
+              "radius": 156,
+              "teeth": 24
+            },
+            "initial": {
+              "fill": "#b8cecb",
+              "stroke": "#25414b",
+              "strokeWidth": 3
+            }
+          },
+          {
+            "id": "outputMark",
+            "kind": "line",
+            "role": "draw",
+            "layer": "machine",
+            "parent": "output",
+            "label": "Output rotation witness mark",
+            "geometry": {
+              "x2": 115,
+              "y2": 0
+            },
+            "initial": {
+              "stroke": "#25414b",
+              "strokeWidth": 5
+            }
+          },
+          {
+            "id": "centreA",
+            "kind": "circle",
+            "role": "draw",
+            "layer": "machine",
+            "label": "Fixed input shaft",
+            "geometry": {
+              "radius": 7
+            },
+            "initial": {
+              "x": 260,
+              "y": 265,
+              "fill": "#25414b"
+            }
+          },
+          {
+            "id": "centreB",
+            "kind": "circle",
+            "role": "draw",
+            "layer": "machine",
+            "label": "Fixed output shaft",
+            "geometry": {
+              "radius": 7
+            },
+            "initial": {
+              "x": 470,
+              "y": 265,
+              "fill": "#25414b"
+            }
+          },
+          {
+            "id": "titleNote",
+            "kind": "text",
+            "role": "draw",
+            "layer": "labels",
+            "label": "EXTERNAL GEARS / SAME PITCH",
+            "geometry": {},
+            "initial": {
+              "x": 155,
+              "y": 55,
+              "fill": "#25414b",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "inputLabel",
+            "kind": "text",
+            "role": "draw",
+            "layer": "labels",
+            "label": "12 teeth · +360°",
+            "geometry": {},
+            "initial": {
+              "x": 130,
+              "y": 390,
+              "fill": "#ad603c",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "outputLabel",
+            "kind": "text",
+            "role": "draw",
+            "layer": "labels",
+            "label": "24 teeth · −180°",
+            "geometry": {},
+            "initial": {
+              "x": 435,
+              "y": 455,
+              "fill": "#25414b",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "ratio",
+            "kind": "text",
+            "role": "draw",
+            "layer": "labels",
+            "label": "Output speed = ½ input speed",
+            "geometry": {},
+            "initial": {
+              "x": 210,
+              "y": 495,
+              "fill": "#25414b",
+              "strokeWidth": 0,
+              "visible": false
+            }
+          }
+        ],
+        "stages": [
+          {
+            "title": "One contact, fixed centres",
+            "description": "Both gears have the same tooth pitch; the output has twice as many teeth.",
+            "durationMs": 1500,
+            "actions": [
+              {
+                "target": "smallGear",
+                "startMs": 0,
+                "durationMs": 1500,
+                "easing": "smooth",
+                "operation": {
+                  "type": "highlight",
+                  "params": {
+                    "colour": "#ad603c",
+                    "width": 6
+                  },
+                  "final": {
+                    "stroke": "#ad603c",
+                    "strokeWidth": 3
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "title": "Opposite directions",
+            "description": "At their shared contact, equal tangential travel requires opposite angular directions.",
+            "durationMs": 4800,
+            "actions": [
+              {
+                "target": "input",
+                "startMs": 0,
+                "durationMs": 4800,
+                "easing": "linear",
+                "operation": {
+                  "type": "rotate",
+                  "params": {},
+                  "final": {
+                    "rotation": 360
+                  }
+                }
+              },
+              {
+                "target": "output",
+                "startMs": 0,
+                "durationMs": 4800,
+                "easing": "linear",
+                "operation": {
+                  "type": "rotate",
+                  "params": {},
+                  "final": {
+                    "rotation": -172.5
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "title": "A two-to-one reduction",
+            "description": "One input revolution corresponds to half an output revolution.",
+            "durationMs": 1500,
+            "actions": [
+              {
+                "target": "ratio",
+                "startMs": 0,
+                "durationMs": 1000,
+                "easing": "smooth",
+                "operation": {
+                  "type": "reveal",
+                  "params": {},
+                  "final": {
+                    "visible": true,
+                    "opacity": 1
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "accessibility": {
+          "summary": "A 12-tooth external gear drives a 24-tooth gear. Tooth outlines are schematic; shaft centres stay fixed.",
+          "reducedMotion": "stage-final",
+          "stageDescriptions": [
+            "The output has twice the input tooth count.",
+            "The input has rotated clockwise by 360 degrees and the output counterclockwise by 180 degrees.",
+            "The output rotates at half the input speed, in the opposite direction."
+          ]
+        }
+      }
+    }
+  ]
+}

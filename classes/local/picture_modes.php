@@ -61,6 +61,13 @@ class picture_modes {
      * @return string
      */
     public static function of(\stdClass $book): string {
+        $animation = animation_settings::values($book)['animationmode'];
+        if ($animation === 'automatic' || $animation === 'animated') {
+            return self::ANIMATED;
+        }
+        if ($animation === 'static') {
+            return self::SINGLE;
+        }
         return self::clean($book->picturemode ?? null);
     }
 

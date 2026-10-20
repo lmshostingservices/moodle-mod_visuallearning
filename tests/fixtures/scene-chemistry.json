@@ -1,0 +1,43 @@
+{
+  "type":"animated_scene","version":"1.0","title":"New bonds, same atoms",
+  "description":"Schematic rearrangement H₂ + Cl₂ → 2 HCl. Atom identities and counts are preserved. This is stoichiometric bookkeeping, not an elementary reaction mechanism; photochemical initiation, collision energy and intermediates are intentionally not modelled.",
+  "representation":"schematic","viewBox":[0,0,800,520],"aspectRatio":"meet",
+  "style":{"reference":"Chemical plate · porcelain","artDirection":"Porcelain peach, terracotta hydrogen and muted jade chlorine. Letter labels distinguish atoms independently of colour. Relationships should visibly disconnect before new bonds form.","background":"#f4e9e1","foreground":"#3e4b47","accent":"#ad624c","font":"serif","fontSize":20,"strokeWidth":2},
+  "layers":[{"id":"bonds","label":"Changing bonds"},{"id":"atoms","label":"Conserved atoms"},{"id":"labels","label":"Equation and conventions"}],"paths":[],"gradients":[],
+  "objects":[
+    {"id":"HH","kind":"connector","role":"draw","layer":"bonds","label":"Hydrogen bond","geometry":{"from":"H1","to":"H2"},"initial":{"connected":true,"stroke":"#ad624c","strokeWidth":5}},
+    {"id":"ClCl","kind":"connector","role":"draw","layer":"bonds","label":"Chlorine bond","geometry":{"from":"Cl1","to":"Cl2"},"initial":{"connected":true,"stroke":"#4c7a69","strokeWidth":5}},
+    {"id":"HClA","kind":"connector","role":"draw","layer":"bonds","label":"First new hydrogen chloride bond","geometry":{"from":"H1","to":"Cl1"},"initial":{"connected":false,"stroke":"#3e4b47","strokeWidth":5}},
+    {"id":"HClB","kind":"connector","role":"draw","layer":"bonds","label":"Second new hydrogen chloride bond","geometry":{"from":"H2","to":"Cl2"},"initial":{"connected":false,"stroke":"#3e4b47","strokeWidth":5}},
+    {"id":"H1","kind":"group","role":"draw","layer":"atoms","label":"First hydrogen atom","geometry":{},"initial":{"x":210,"y":230}},
+    {"id":"H1shape","kind":"circle","role":"draw","layer":"atoms","parent":"H1","label":"","geometry":{"radius":25},"initial":{"fill":"#d7a18f","stroke":"#ad624c"}},
+    {"id":"H1label","kind":"text","role":"draw","layer":"atoms","parent":"H1","label":"H","geometry":{},"initial":{"x":-8,"fill":"#3e4b47","strokeWidth":0}},
+    {"id":"H2","kind":"group","role":"draw","layer":"atoms","label":"Second hydrogen atom","geometry":{},"initial":{"x":285,"y":230}},
+    {"id":"H2shape","kind":"circle","role":"draw","layer":"atoms","parent":"H2","label":"","geometry":{"radius":25},"initial":{"fill":"#d7a18f","stroke":"#ad624c"}},
+    {"id":"H2label","kind":"text","role":"draw","layer":"atoms","parent":"H2","label":"H","geometry":{},"initial":{"x":-8,"fill":"#3e4b47","strokeWidth":0}},
+    {"id":"Cl1","kind":"group","role":"draw","layer":"atoms","label":"First chlorine atom","geometry":{},"initial":{"x":485,"y":230}},
+    {"id":"Cl1shape","kind":"circle","role":"draw","layer":"atoms","parent":"Cl1","label":"","geometry":{"radius":33},"initial":{"fill":"#b0c8b9","stroke":"#4c7a69"}},
+    {"id":"Cl1label","kind":"text","role":"draw","layer":"atoms","parent":"Cl1","label":"Cl","geometry":{},"initial":{"x":-13,"fill":"#3e4b47","strokeWidth":0}},
+    {"id":"Cl2","kind":"group","role":"draw","layer":"atoms","label":"Second chlorine atom","geometry":{},"initial":{"x":575,"y":230}},
+    {"id":"Cl2shape","kind":"circle","role":"draw","layer":"atoms","parent":"Cl2","label":"","geometry":{"radius":33},"initial":{"fill":"#b0c8b9","stroke":"#4c7a69"}},
+    {"id":"Cl2label","kind":"text","role":"draw","layer":"atoms","parent":"Cl2","label":"Cl","geometry":{},"initial":{"x":-13,"fill":"#3e4b47","strokeWidth":0}},
+    {"id":"equation","kind":"text","role":"draw","layer":"labels","label":"H₂ + Cl₂  →  2 HCl","geometry":{},"initial":{"x":270,"y":75,"fill":"#3e4b47","strokeWidth":0}},
+    {"id":"count","kind":"text","role":"draw","layer":"labels","label":"2 hydrogen + 2 chlorine atoms, before and after","geometry":{},"initial":{"x":172,"y":400,"fill":"#3e4b47","strokeWidth":0}},
+    {"id":"caveat","kind":"text","role":"draw","layer":"labels","label":"Bookkeeping model · not a reaction mechanism","geometry":{},"initial":{"x":185,"y":455,"fill":"#4c7a69","strokeWidth":0}}
+  ],
+  "stages":[
+    {"title":"Count the reactants","description":"One hydrogen molecule and one chlorine molecule contain two atoms of each element.","durationMs":1300,"actions":[]},
+    {"title":"Rearrange relationships","description":"Break the old connections, preserve the four atom identities, then pair unlike atoms.","durationMs":3800,"actions":[
+      {"target":"HH","startMs":0,"durationMs":700,"easing":"smooth","operation":{"type":"disconnect","params":{},"final":{"connected":false}}},
+      {"target":"ClCl","startMs":0,"durationMs":700,"easing":"smooth","operation":{"type":"disconnect","params":{},"final":{"connected":false}}},
+      {"target":"H1","startMs":700,"durationMs":1800,"easing":"smooth","operation":{"type":"move","params":{},"final":{"x":230,"y":270}}},
+      {"target":"Cl1","startMs":700,"durationMs":1800,"easing":"smooth","operation":{"type":"move","params":{},"final":{"x":310,"y":270}}},
+      {"target":"H2","startMs":700,"durationMs":1800,"easing":"smooth","operation":{"type":"move","params":{},"final":{"x":480,"y":270}}},
+      {"target":"Cl2","startMs":700,"durationMs":1800,"easing":"smooth","operation":{"type":"move","params":{},"final":{"x":560,"y":270}}},
+      {"target":"HClA","startMs":2500,"durationMs":900,"easing":"smooth","operation":{"type":"connect","params":{},"final":{"connected":true}}},
+      {"target":"HClB","startMs":2500,"durationMs":900,"easing":"smooth","operation":{"type":"connect","params":{},"final":{"connected":true}}}
+    ]},
+    {"title":"Count the products","description":"Two hydrogen chloride molecules contain the same two hydrogen and two chlorine atoms.","durationMs":1400,"actions":[{"target":"count","startMs":0,"durationMs":1400,"easing":"smooth","operation":{"type":"change_colour","params":{},"final":{"fill":"#ad624c"}}}]}
+  ],
+  "accessibility":{"summary":"Two H atoms and two Cl atoms retain their identities as H–H and Cl–Cl bonds are replaced by two H–Cl bonds. Not an elementary mechanism.","reducedMotion":"stage-final","stageDescriptions":["The reactants are one H₂ and one Cl₂ molecule.","The same four atoms are now arranged as two HCl molecules.","Atom counts are unchanged: two hydrogen and two chlorine atoms."]}
+}

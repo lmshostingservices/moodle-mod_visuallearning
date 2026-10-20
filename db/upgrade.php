@@ -177,5 +177,15 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026102006, 'visuallearning');
     }
+    if ($oldversion < 2026102010) {
+        $table = new xmldb_table('visuallearning');
+        foreach (\mod_visuallearning\local\animation_settings::OPTIONS as $name => $values) {
+            $field = new xmldb_field($name, XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, $values[0]);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_mod_savepoint(true, 2026102010, 'visuallearning');
+    }
     return true;
 }

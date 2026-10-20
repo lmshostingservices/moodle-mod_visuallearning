@@ -1,0 +1,37 @@
+{
+  "type":"animated_scene","version":"1.0","title":"The slope changes, the intercept does not",
+  "description":"Compare y = x and y = 2x for 0 ≤ x ≤ 4 on fixed axes. Each x-unit is 100 screen units; each y-unit is 40. Lines pivot at the shared origin; no data measurement is implied.",
+  "representation":"proportional","viewBox":[0,0,800,520],"aspectRatio":"meet",
+  "style":{"reference":"Mathematical folio","artDirection":"Lavender-tinted paper, plum axes, restrained teal and copper comparisons. Fixed equal axis scales between stages; annotated slope changes are the subject.","background":"#eeebef","foreground":"#4c4055","accent":"#9d6547","font":"serif","fontSize":18,"strokeWidth":2},
+  "layers":[{"id":"axes","label":"Fixed coordinate system"},{"id":"plot","label":"Linear relationships"},{"id":"labels","label":"Axis values and equation"}],
+  "paths":[
+    {"id":"lineOne","segments":[{"command":"M","values":[180,420]},{"command":"L","values":[580,260]}]},
+    {"id":"lineTwo","segments":[{"command":"M","values":[180,420]},{"command":"L","values":[580,100]}]}
+  ],"gradients":[],
+  "objects":[
+    {"id":"xAxis","kind":"arrow","role":"draw","layer":"axes","label":"x axis from zero to four","geometry":{"x2":460,"y2":0},"initial":{"x":180,"y":420,"stroke":"#4c4055"}},
+    {"id":"yAxis","kind":"arrow","role":"draw","layer":"axes","label":"y axis from zero to eight","geometry":{"x2":0,"y2":-360},"initial":{"x":180,"y":420,"stroke":"#4c4055"}},
+    {"id":"tick4","kind":"line","role":"draw","layer":"axes","label":"x equals four","geometry":{"x2":0,"y2":8},"initial":{"x":580,"y":420,"stroke":"#4c4055"}},
+    {"id":"tick8","kind":"line","role":"draw","layer":"axes","label":"y equals eight","geometry":{"x2":-8,"y2":0},"initial":{"x":180,"y":100,"stroke":"#4c4055"}},
+    {"id":"original","kind":"path","role":"draw","layer":"plot","label":"Original y equals x","geometry":{"path":"lineOne"},"initial":{"fill":"none","stroke":"#43817e","strokeWidth":3,"opacity":0.35}},
+    {"id":"relationship","kind":"path","role":"draw","layer":"plot","label":"Changing linear relationship","geometry":{"path":"lineOne"},"initial":{"fill":"none","stroke":"#9d6547","strokeWidth":4,"drawProgress":0}},
+    {"id":"point","kind":"circle","role":"draw","layer":"plot","label":"Value at x equals four","geometry":{"radius":7},"initial":{"x":580,"y":260,"fill":"#9d6547","strokeWidth":0}},
+    {"id":"zero","kind":"text","role":"draw","layer":"labels","label":"0","geometry":{},"initial":{"x":155,"y":447,"fill":"#4c4055","strokeWidth":0}},
+    {"id":"x4","kind":"text","role":"draw","layer":"labels","label":"4","geometry":{},"initial":{"x":575,"y":450,"fill":"#4c4055","strokeWidth":0}},
+    {"id":"y8","kind":"text","role":"draw","layer":"labels","label":"8","geometry":{},"initial":{"x":150,"y":100,"fill":"#4c4055","strokeWidth":0}},
+    {"id":"xLabel","kind":"text","role":"draw","layer":"labels","label":"x","geometry":{},"initial":{"x":655,"y":420,"fill":"#4c4055","strokeWidth":0}},
+    {"id":"yLabel","kind":"text","role":"draw","layer":"labels","label":"y","geometry":{},"initial":{"x":177,"y":42,"fill":"#4c4055","strokeWidth":0}},
+    {"id":"slope","kind":"text","role":"draw","layer":"labels","label":"y = mx    m =","geometry":{},"initial":{"x":340,"y":50,"fill":"#4c4055","strokeWidth":0,"value":1}},
+    {"id":"outcome","kind":"text","role":"draw","layer":"labels","label":"At the same x, doubling m doubles y","geometry":{},"initial":{"x":250,"y":492,"fill":"#4c4055","strokeWidth":0,"visible":false}}
+  ],
+  "stages":[
+    {"title":"Start with y = x","description":"Draw the original relationship on fixed axes.","durationMs":2200,"actions":[{"target":"relationship","startMs":0,"durationMs":2200,"easing":"linear","operation":{"type":"draw_path","params":{},"final":{"drawProgress":1}}}]},
+    {"title":"Double the gradient","description":"The line pivots about the origin while the scale and intercept remain unchanged.","durationMs":3000,"actions":[
+      {"target":"relationship","startMs":0,"durationMs":3000,"easing":"smooth","operation":{"type":"morph","params":{},"final":{"path":"lineTwo"}}},
+      {"target":"point","startMs":0,"durationMs":3000,"easing":"smooth","operation":{"type":"move","params":{},"final":{"x":580,"y":100}}},
+      {"target":"slope","startMs":0,"durationMs":3000,"easing":"smooth","operation":{"type":"change_value","params":{},"final":{"value":2}}}
+    ]},
+    {"title":"Compare at fixed x","description":"At x=4, the old line gives y=4 and the new line y=8.","durationMs":1600,"actions":[{"target":"outcome","startMs":0,"durationMs":1000,"easing":"smooth","operation":{"type":"reveal","params":{},"final":{"visible":true,"opacity":1}}}]}
+  ],
+  "accessibility":{"summary":"Fixed graph axes compare y=x and y=2x between x=0 and x=4. Both pass through the origin.","reducedMotion":"stage-final","stageDescriptions":["The plotted line is y=x, with slope one.","The line now has slope two and reaches y=8 at x=4; the original remains faint for comparison.","The intercept stays zero; at the same x the y-value has doubled."]}
+}

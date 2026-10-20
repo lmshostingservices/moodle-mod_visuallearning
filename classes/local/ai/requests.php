@@ -299,6 +299,16 @@ class requests {
      */
     public static function picture_mode_fields(stdClass $book): array {
         $mode = \mod_visuallearning\local\picture_modes::of($book);
+        $settings = \mod_visuallearning\local\animation_settings::values($book);
+        if ($settings['animationmode'] !== 'legacy') {
+            $caps = lmslabs::capabilities('pages');
+            if (!in_array('1.0', $caps['animatedSceneVersions'] ?? [], true)) {
+                // Do not charge for generation that silently ignores the teacher's requested engine.
+                throw new \moodle_exception('animationservernotready', 'mod_visuallearning');
+            }
+            return ['pictureMode' => $mode, 'animationMode' => $settings['animationmode'],
+                'animationComplexity' => $settings['animationcomplexity'], 'animationPacing' => $settings['animationpacing']];
+        }
         if ($mode === \mod_visuallearning\local\picture_modes::SINGLE || !in_array($mode, lmslabs::draft_picture_modes(), true)) {
             return [];
         }

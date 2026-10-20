@@ -1,0 +1,34 @@
+{
+  "type":"animated_scene","version":"1.0","title":"Leaving the surface",
+  "description":"Water evaporation: some surface molecules have enough energy to escape into the gas. Not boiling; no bubbles form in the liquid. Paths and particles are schematic, not a molecular dynamics simulation.",
+  "representation":"schematic","viewBox":[0,0,800,520],"aspectRatio":"meet",
+  "style":{"reference":"Museum field notes","artDirection":"Apricot paper, petrol-blue liquid, fine dark contours and copper molecular markers. Keep the liquid surface and escaped molecules legible.","background":"#f5e9da","foreground":"#344a52","accent":"#b06339","font":"sans-serif","fontSize":18,"strokeWidth":2},
+  "layers":[{"id":"vessel","label":"Water and container"},{"id":"molecules","label":"Surface molecules"},{"id":"notes","label":"Explanations"}],
+  "paths":[{"id":"beakerPath","segments":[{"command":"M","values":[180,180]},{"command":"L","values":[180,430]},{"command":"L","values":[620,430]},{"command":"L","values":[620,180]}]}],
+  "gradients":[{"id":"waterFill","kind":"linear","stops":[{"offset":0,"colour":"#aec6c7","opacity":1},{"offset":1,"colour":"#c9dbd7","opacity":1}]}],
+  "objects":[
+    {"id":"liquidClip","kind":"rect","role":"clip","layer":"vessel","label":"","geometry":{"width":436,"height":185},"initial":{"x":12,"y":3}},
+    {"id":"water","kind":"rect","role":"draw","layer":"vessel","label":"Liquid water below the free surface","clip":"liquidClip","gradient":"waterFill","geometry":{"width":460,"height":200},"initial":{"x":170,"y":240,"strokeWidth":0}},
+    {"id":"beaker","kind":"path","role":"draw","layer":"vessel","label":"Open vessel","geometry":{"path":"beakerPath"},"initial":{"fill":"none","stroke":"#344a52","strokeWidth":4}},
+    {"id":"surface","kind":"line","role":"draw","layer":"vessel","label":"Free surface","geometry":{"x2":436,"y2":0},"initial":{"x":182,"y":243,"stroke":"#406e76","strokeWidth":3}},
+    {"id":"bulk","kind":"particles","role":"draw","layer":"molecules","label":"Molecules remaining in the liquid","geometry":{"radius":6,"points":[[220,295],[280,350],[340,290],[410,370],[470,300],[550,360],[580,275],[240,395],[370,405],[515,407]]},"initial":{"fill":"#406e76","strokeWidth":0}},
+    {"id":"escaping","kind":"particles","role":"draw","layer":"molecules","label":"Selected surface molecules escape","geometry":{"radius":7,"points":[[390,243]]},"initial":{"fill":"#b06339","strokeWidth":0,"visible":false}},
+    {"id":"heat","kind":"arrow","role":"draw","layer":"molecules","label":"Energy transferred into the water","geometry":{"x2":0,"y2":-55},"initial":{"x":400,"y":495,"stroke":"#b06339","strokeWidth":4,"visible":false}},
+    {"id":"heading","kind":"text","role":"draw","layer":"notes","label":"EVAPORATION ≠ BOILING","geometry":{},"initial":{"x":182,"y":55,"fill":"#344a52","strokeWidth":0}},
+    {"id":"gasLabel","kind":"text","role":"draw","layer":"notes","label":"Gas molecules spread above the surface","geometry":{},"initial":{"x":215,"y":175,"fill":"#b06339","strokeWidth":0,"visible":false}},
+    {"id":"liquidLabel","kind":"text","role":"draw","layer":"notes","label":"Only some surface molecules escape","geometry":{},"initial":{"x":215,"y":205,"fill":"#344a52","strokeWidth":0}}
+  ],
+  "stages":[
+    {"title":"A free surface","description":"Molecules move within the liquid. Evaporation occurs at the exposed surface.","durationMs":1600,"actions":[{"target":"surface","startMs":0,"durationMs":1600,"easing":"smooth","operation":{"type":"highlight","params":{"colour":"#b06339","width":6},"final":{"stroke":"#406e76","strokeWidth":3}}}]},
+    {"title":"Escape requires energy","description":"A subset of surface molecules escapes; there is no bubble formation.","durationMs":3600,"actions":[
+      {"target":"heat","startMs":0,"durationMs":600,"easing":"smooth","operation":{"type":"reveal","params":{},"final":{"visible":true,"opacity":1}}},
+      {"target":"escaping","startMs":0,"durationMs":400,"easing":"smooth","operation":{"type":"reveal","params":{},"final":{"visible":true,"opacity":1}}},
+      {"target":"escaping","startMs":400,"durationMs":3200,"easing":"ease-out","operation":{"type":"emit_particles","params":{"origin":[390,243],"stagger":0.65},"final":{"positions":[[265,140],[380,90],[485,130],[575,105],[320,80]]}}}
+    ]},
+    {"title":"Gas spreads out","description":"Escaped molecules disperse into the surrounding air; liquid remains below.","durationMs":2200,"actions":[
+      {"target":"gasLabel","startMs":0,"durationMs":700,"easing":"smooth","operation":{"type":"reveal","params":{},"final":{"visible":true,"opacity":1}}},
+      {"target":"heat","startMs":0,"durationMs":700,"easing":"smooth","operation":{"type":"hide","params":{},"final":{"visible":false,"opacity":0}}}
+    ]}
+  ],
+  "accessibility":{"summary":"An open vessel of water with selected molecules leaving its surface. No boiling bubbles are shown. Distances are schematic.","reducedMotion":"stage-final","stageDescriptions":["Liquid water has an exposed surface.","Some surface molecules have gained enough energy to leave the liquid.","Water vapour is dispersed above the liquid; most molecules remain in the vessel."]}
+}

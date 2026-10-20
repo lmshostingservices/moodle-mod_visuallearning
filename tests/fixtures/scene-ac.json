@@ -1,0 +1,33 @@
+{
+  "type":"animated_scene","version":"1.0","title":"Alternating is not circulating",
+  "description":"Schematic alternating current in a conductor: charge carriers oscillate rather than continuously travel around the loop. One illustrative cycle is shown; no frequency, voltage, charge speed or phase relationship to a reactive load is asserted.",
+  "representation":"schematic","viewBox":[0,0,800,520],"aspectRatio":"meet",
+  "style":{"reference":"Electrical bench diagram","artDirection":"Chalk cream, deep indigo ink and ochre current indicators. Circuit topology is a simple explanatory loop, not an installation drawing.","background":"#f1efe0","foreground":"#35415d","accent":"#ae7c28","font":"monospace","fontSize":18,"strokeWidth":2},
+  "layers":[{"id":"circuit","label":"Closed conductor and source"},{"id":"charge","label":"Carrier motion"},{"id":"legend","label":"Current explanation"}],
+  "paths":[
+    {"id":"loop","segments":[{"command":"M","values":[170,165]},{"command":"L","values":[630,165]},{"command":"L","values":[630,355]},{"command":"L","values":[170,355]},{"command":"Z","values":[]}]},
+    {"id":"sine","segments":[{"command":"M","values":[-26,0]},{"command":"C","values":[-17,-28,-9,-28,0,0]},{"command":"C","values":[9,28,17,28,26,0]}]}
+  ],"gradients":[],
+  "objects":[
+    {"id":"wire","kind":"path","role":"draw","layer":"circuit","label":"Closed conducting loop","geometry":{"path":"loop"},"initial":{"fill":"none","stroke":"#35415d","strokeWidth":5}},
+    {"id":"source","kind":"circle","role":"draw","layer":"circuit","label":"Alternating source","geometry":{"radius":43},"initial":{"x":170,"y":260,"fill":"#f1efe0","stroke":"#35415d","strokeWidth":3}},
+    {"id":"sourceWave","kind":"path","role":"draw","layer":"circuit","label":"Alternating source symbol","geometry":{"path":"sine"},"initial":{"x":170,"y":260,"fill":"none","stroke":"#35415d","strokeWidth":3}},
+    {"id":"load","kind":"rect","role":"draw","layer":"circuit","label":"Resistive load, no quantitative behaviour asserted","geometry":{"width":90,"height":34},"initial":{"x":355,"y":338,"fill":"#f1efe0","stroke":"#35415d","strokeWidth":3}},
+    {"id":"carriers","kind":"particles","role":"draw","layer":"charge","label":"Selected charge carriers along the upper wire","geometry":{"radius":7,"points":[[275,165],[350,165],[425,165],[500,165],[575,165]]},"initial":{"fill":"#ae7c28","stroke":"#f1efe0","strokeWidth":2}},
+    {"id":"flowTrace","kind":"path","role":"draw","layer":"charge","label":"Oscillating direction markers","geometry":{"path":"loop"},"initial":{"fill":"none","stroke":"#ae7c28","strokeWidth":3,"opacity":0.6}},
+    {"id":"heading","kind":"text","role":"draw","layer":"legend","label":"CHARGE MOTION REVERSES","geometry":{},"initial":{"x":200,"y":55,"fill":"#35415d","strokeWidth":0}},
+    {"id":"note","kind":"text","role":"draw","layer":"legend","label":"One cycle: right → left → starting position","geometry":{},"initial":{"x":155,"y":425,"fill":"#35415d","strokeWidth":0}},
+    {"id":"warning","kind":"text","role":"draw","layer":"legend","label":"Carrier displacement is exaggerated, not to scale","geometry":{},"initial":{"x":150,"y":470,"fill":"#ae7c28","strokeWidth":0,"visible":false}}
+  ],
+  "stages":[
+    {"title":"A closed path","description":"The source creates a changing electrical drive around the conducting path.","durationMs":1400,"actions":[{"target":"source","startMs":0,"durationMs":1400,"easing":"smooth","operation":{"type":"highlight","params":{"colour":"#ae7c28","width":6},"final":{"stroke":"#35415d","strokeWidth":3}}}]},
+    {"title":"Reverse and return","description":"Tracked carriers move first right, then left, then return; they do not drift continuously around the loop.","durationMs":4000,"actions":[
+      {"target":"carriers","startMs":0,"durationMs":1000,"easing":"ease-out","operation":{"type":"move","params":{},"final":{"x":25,"y":0}}},
+      {"target":"carriers","startMs":1000,"durationMs":2000,"easing":"smooth","operation":{"type":"move","params":{},"final":{"x":-25,"y":0}}},
+      {"target":"carriers","startMs":3000,"durationMs":1000,"easing":"ease-in","operation":{"type":"move","params":{},"final":{"x":0,"y":0}}},
+      {"target":"flowTrace","startMs":0,"durationMs":4000,"easing":"linear","operation":{"type":"flow","params":{"cycles":1,"alternate":true},"final":{"flowOffset":0}}}
+    ]},
+    {"title":"Distinguish motion from energy transfer","description":"The oscillation is not a claim that charge travels from the source to the load in one cycle.","durationMs":1800,"actions":[{"target":"warning","startMs":0,"durationMs":1000,"easing":"smooth","operation":{"type":"reveal","params":{},"final":{"visible":true,"opacity":1}}}]}
+  ],
+  "accessibility":{"summary":"A closed electrical loop with alternating source, load and five tracked charge carriers. One schematic oscillation is shown.","reducedMotion":"stage-final","stageDescriptions":["A source and load are connected by a closed conducting path.","Tracked carriers have oscillated and returned to their initial positions.","Alternating charge displacement is exaggerated and must not be read as charge circulation or a measured speed."]}
+}

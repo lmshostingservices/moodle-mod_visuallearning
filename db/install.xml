@@ -23,6 +23,9 @@
         <FIELD NAME="visualstyle" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="illustration" SEQUENCE="false" COMMENT="Visual style key (see local\visual_styles)"/>
         <FIELD NAME="picturemode" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="single" SEQUENCE="false" COMMENT="single, sequence (one picture per card) or animated (plugin-drawn diagrams)"/>
         <FIELD NAME="learnerlevel" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="adult" SEQUENCE="false" COMMENT="primary, secondary, adult or advanced: how the cards and pictures are pitched"/>
+        <FIELD NAME="animationmode" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="legacy" SEQUENCE="false"/>
+        <FIELD NAME="animationcomplexity" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="standard" SEQUENCE="false"/>
+        <FIELD NAME="animationpacing" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="normal" SEQUENCE="false"/>
         <FIELD NAME="navmode" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 linear, 1 free"/>
         <FIELD NAME="autoplay" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Start narration automatically on page turn"/>
         <FIELD NAME="imageculture" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="language" SEQUENCE="false" COMMENT="language or international"/>

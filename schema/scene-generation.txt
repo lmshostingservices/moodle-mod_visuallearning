@@ -1,0 +1,57 @@
+UNIVERSAL ANIMATED SCENES — this section governs animated_scene, not legacy diagrams.
+Teaching content determines the animation, never the reverse. Support unfamiliar subjects
+by composing universal primitives and reusable mechanisms, NOT by picking a topic template.
+Analyse first: learning objective; involved objects/systems/people; what changes; causes;
+relationships; invisible mechanisms; best explanatory representation; intended understanding.
+Then select a representation, define the minimum useful objects, define relationships and
+directions, plan purposeful changes, map those changes to the three narrated cards, check
+accuracy against the supplied teaching content, and only then output validated scene JSON.
+Do not output this private analysis separately.
+
+Automatic mode: choose animated_scene, an existing diagram or null according to instructional
+value. Animated mode: prefer a supported animation, but use a simpler diagram or null when
+accuracy cannot be established. Static mode: omit diagrams and use the existing image workflow.
+Always retain image_prompt and alt_text as the standard image fallback.
+Every movement must explain something. For abstract concepts use relationships, comparisons,
+progressive reveals or highlights instead of pretending there is literal physical movement.
+Never invent measurements, values, facts, proportions or mechanisms. Only use supplied
+information unless external knowledge was explicitly authorised. Preserve directions,
+component connections, sequence, cause and effect. Mark representations schematic,
+proportional or metaphor accurately. Visual attractiveness never overrides accuracy.
+
+Use one consistent lesson palette, typography, line weight and visual conventions informed
+by the selected visual style and Art direction. Art direction is appearance guidance: do
+not change the lesson topic to a different topic mentioned in a style example.
+Use uncluttered compositions, readable short labels and informative colour.
+Objects are compositions, not a closed list of topics. Groups, paths, curves, polygons,
+circles, lines, text, arrows, gradients, masks, clips and particles can construct scientific,
+technical, biological, environmental, business, mathematical and workplace mechanisms.
+Use the same primitives to construct an unfamiliar organ, machine, landscape or process;
+never substitute an inaccurate stock object. Fall back to an image if not representable.
+
+The scene has exactly three stages: Concept establishes the starting state; Action explains
+the mechanism or relationship; Outcome reveals the consequence. Each stage inherits the
+previous stage's final state. Actions use explicit milliseconds and declared final states.
+Timing must suit the concept, not an estimated spoken duration. Animations may finish early
+and hold. Different channels may run concurrently; writes to the same channel may not overlap.
+Rotation follows SVG coordinates (positive clockwise). Paths use SVG x-right/y-down coordinates.
+Follow-path final x/y and, when orient is true, rotation must equal the specified path endpoint.
+Morph paths must have identical segment command sequences. References must exist and resource
+graphs must be acyclic. Never use arbitrary SVG, scripts, HTML, event attributes or external URLs.
+
+All actions are supported: move, rotate, scale, fade, highlight, draw_path, follow_path,
+emit_particles, merge_particles, split_particles, morph, reveal, hide, flow, pulse, zoom, pan,
+change_colour, change_value, connect, disconnect. Their operation.params and operation.final
+must follow the schema exactly. Camera actions target @camera. Other targets are existing objects.
+Do not add unsupported fields. Identifiers must be globally unique across layers, paths,
+gradients and objects. Use useful object labels and accurate full/stage accessibility descriptions.
+Reduced motion is stage-final. Descriptions must communicate the explanation without movement.
+
+Complexity is a ceiling, not a request for decoration: simple aims for <=12 objects and <=12 actions;
+standard <=32 objects and <=32 actions; detailed <=64 objects and <=64 actions. Absolute renderer
+limits in the schema still apply. Prefer short, clear three-stage explanations, not elaborate
+animations. Pacing is a playback control, not permission to alter real scientific relationships.
+Before returning JSON check the full scene against this schema and its reference/geometry rules.
+If it cannot be made reliable, return diagram:null rather than invalid or misleading animation.
+
+The complete versioned animated_scene JSON Schema follows:

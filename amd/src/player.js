@@ -34,6 +34,7 @@ import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import * as Sounds from 'mod_visuallearning/sounds';
 import * as Diagrams from 'mod_visuallearning/diagrams';
+import * as Scenes from 'mod_visuallearning/scene';
 
 const HEARTBEAT_MS = 15000;
 const WORDS_PER_SECOND = 2.6;
@@ -1170,9 +1171,21 @@ class Player {
             box.className = 'pb-diagram';
             figure.appendChild(box);
         }
-        this.diagram = Diagrams.render(box, page.diagram, {label: this.str('diagramlabel', page.alt || page.title)});
+        const renderer = page.diagram.type === 'animated_scene' ? Scenes : Diagrams;
+        this.diagram = renderer.render(box, page.diagram, {
+            label: this.str('diagramlabel', page.alt || page.title),
+            pacing: (this.data.animationsettings || {}).animationpacing || 'normal',
+            strings: {replay: this.str('animationreplay'), stageReplay: this.str('animationstagereplay')},
+            onReplay: () => this.narrate(0),
+            onStageReplay: stage => this.narrate(0, stage - 1),
+        });
         if (this.diagram) {
             this.diagram.finish(card);
+        } else {
+            // Invalid/unsupported scene: keep the existing page picture rather than a blank figure.
+            box.remove();
+            figure.classList.remove('has-diagram');
+            return page.image ? figure.querySelector('.pb-page-image') : figure.querySelector('.pb-image-placeholder');
         }
         return box;
     }
@@ -1351,6 +1364,18 @@ class Player {
                 // Tapping a card shows its picture again.
                 el.classList.add('has-picture');
                 el.addEventListener('click', () => this.showCard(i));
+            }
+            if (page.diagram && page.diagram.type === 'animated_scene') {
+                el.setAttribute('role', 'button');
+                el.setAttribute('tabindex', '0');
+                el.setAttribute('aria-label', this.str('animationstagereplay') + ': ' + card.label);
+                el.addEventListener('click', () => this.narrate(0, i));
+                el.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        this.narrate(0, i);
+                    }
+                });
             }
             cards.appendChild(el);
         });
@@ -2118,11 +2143,11 @@ class Player {
      *
      * @param {number} [delay] Milliseconds to wait first (lets the entrance animation land).
      */
-    async narrate(delay = 150) {
+    async narrate(delay = 150, fromCard = 0) {
         this.stopAudio();
         const token = ++this.token;
         const step = this.step();
-        const clips = this.clips();
+        const clips = this.clips().slice(fromCard);
         if (!step || !clips.length) {
             return;
         }
@@ -2135,7 +2160,7 @@ class Player {
         }
         if (step.type === 'page' && this.pages[step.page].diagram && this.diagram) {
             // Read from the start: the diagram builds up again from card 1, its movement waiting for card 1's clip.
-            this.drawDiagram(this.pages[step.page], 0);
+            this.drawDiagram(this.pages[step.page], fromCard);
         }
         this.narrating = true;
         this.paused = false;
@@ -2173,7 +2198,15 @@ class Player {
         }
         if (token === this.token) {
             this.focusRecapTile(null);
-            this.onSlideNarrated();
+            if (fromCard > 0 && step.type === 'page' && !this.pages[step.page].listened) {
+                // Replaying a later stage must not falsely mark earlier narration as heard.
+                this.narrating = false;
+                this.paused = false;
+                this.setListenState('idle');
+                this.updateNext();
+            } else {
+                this.onSlideNarrated();
+            }
         }
     }
 
@@ -2240,6 +2273,9 @@ class Player {
      * The current clip ended (or failed).
      */
     finishClip() {
+        if (this.diagram && this.diagram.finishStage) {
+            this.diagram.finishStage();
+        }
         window.clearTimeout(this.fallbackTimer);
         if (this.clipResolve) {
             const resolve = this.clipResolve;

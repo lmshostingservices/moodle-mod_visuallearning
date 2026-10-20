@@ -210,6 +210,9 @@ function visuallearning_clean_instance_data(stdClass $data): void {
     $data->visualstyle = \mod_visuallearning\local\visual_styles::clean($data->visualstyle ?? null);
     $data->learnerlevel = \mod_visuallearning\local\learner_levels::clean($data->learnerlevel ?? null);
     $data->picturemode = \mod_visuallearning\local\picture_modes::clean($data->picturemode ?? null);
+    foreach (\mod_visuallearning\local\animation_settings::values($data) as $field => $value) {
+        $data->{$field} = $value;
+    }
     $data->completionlistened = empty($data->completionlistened) ? 0 : 1;
     $data->completionquiz = empty($data->completionquiz) ? 0 : 1;
     $data->autoplay = empty($data->autoplay) ? 0 : 1;

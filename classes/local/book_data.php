@@ -131,7 +131,7 @@ class book_data {
         foreach (
             ['start', 'continuefrom', 'startover', 'contents', 'close', 'previous', 'next', 'finish', 'pause',
                 'play', 'replay', 'pageof', 'listenedof', 'taptolisten', 'finishedtitle', 'finishedtext',
-                'readagain', 'backtocourse', 'nextactivity', 'coverabout', 'coveraboutauto', 'coveraboutautoone', 
+                'readagain', 'backtocourse', 'nextactivity', 'coverabout', 'coveraboutauto', 'coveraboutautoone',
                 'coverhow', 'coverlearn', 'coverpage', 'coverpages', 'coverpart', 'coverpassall', 'coverpasssome',
                 'coverquestion', 'coverquestions', 'coverrecap', 'coverthen', 'factminutes', 'factpage', 'factpages',
                 'factquestion', 'factquestions', 'stepcheck', 'stepchecktext', 'steplisten', 'steplistenfree',
@@ -146,13 +146,15 @@ class book_data {
                 'nextlocked', 'relistentitle', 'relistentext', 'backtoquestion', 'welcomeback', 'thatsit',
                 'gotfirst', 'gotnth', 'tapmatch', 'matchedof', 'tapsort', 'stilltosort', 'dropin', 'soundon',
                 'soundoff', 'yourresults', 'firsttry', 'ntries', 'rightfirst', 'answerstotal', 'timespent', 'notyet',
-                'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel', 'cardpicture', 'diagramlabel'] as $key
+                'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel', 'cardpicture', 'diagramlabel',
+                'animationreplay', 'animationstagereplay'] as $key
         ) {
             $strings[$key] = get_string('player_' . strtolower($key), 'mod_visuallearning');
         }
 
         return [
             'cmid' => (int)$cm->id,
+            'animationsettings' => animation_settings::values($book),
             'title' => format_string($book->name, true, ['context' => $context]),
             'intro' => trim(strip_tags((string)$book->intro)) !== ''
                 ? format_module_intro('visuallearning', $book, $cm->id, false) : '',

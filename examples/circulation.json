@@ -1,0 +1,481 @@
+{
+  "book_title": "One circuit, two pumps",
+  "industry": "Education",
+  "subindustry": "Demonstration",
+  "language": "en-AU",
+  "style_guide": "Restrained anatomical abstraction. Rust for oxygen-rich blood; slate blue for oxygen-poor blood; fine vessel outlines and spacious labels.",
+  "characters": [],
+  "cover_image_prompt": "Create a clear explanatory schematic of this concept: Schematic adult double circulation. Blue means lower oxygen, not literally blue blood. Lungs and tissues are exchange sites; chamber size and route length are not proportional. Use the same visual direction and semantic colour conventions as the supplied lesson. Keep this a static explanatory fallback, with readable essential labels and no decorative motion. Do not invent measurements, people or additional mechanisms.",
+  "pages": [
+    {
+      "page": 1,
+      "title": "One circuit, two pumps",
+      "concept": "Both sides of the heart form one closed route through lungs and tissues.",
+      "action": "Follow a parcel from the right heart through the lungs to the left heart.",
+      "outcome": "The left heart supplies tissues; oxygen-poor blood returns to the right heart.",
+      "summary": "The left heart supplies tissues; oxygen-poor blood returns to the right heart.",
+      "question": null,
+      "image_prompt": "Create a clear explanatory schematic of this concept: Schematic adult double circulation. Blue means lower oxygen, not literally blue blood. Lungs and tissues are exchange sites; chamber size and route length are not proportional. Use the same visual direction and semantic colour conventions as the supplied lesson. Keep this a static explanatory fallback, with readable essential labels and no decorative motion. Do not invent measurements, people or additional mechanisms.",
+      "alt_text": "A closed double circulation with right and left heart, lungs and body tissues. Blue denotes lower oxygen, not blue blood.",
+      "diagram": {
+        "type": "animated_scene",
+        "version": "1.0",
+        "title": "One circuit, two pumps",
+        "description": "Schematic adult double circulation. Blue means lower oxygen, not literally blue blood. Lungs and tissues are exchange sites; chamber size and route length are not proportional.",
+        "representation": "schematic",
+        "viewBox": [
+          0,
+          0,
+          800,
+          520
+        ],
+        "aspectRatio": "meet",
+        "style": {
+          "reference": "Medical atlas · warm paper",
+          "artDirection": "Restrained anatomical abstraction. Rust for oxygen-rich blood; slate blue for oxygen-poor blood; fine vessel outlines and spacious labels.",
+          "background": "#f6f1e8",
+          "foreground": "#263b48",
+          "accent": "#b85645",
+          "font": "serif",
+          "fontSize": 18,
+          "strokeWidth": 2
+        },
+        "layers": [
+          {
+            "id": "structure",
+            "label": "Circulatory structures"
+          },
+          {
+            "id": "transport",
+            "label": "Blood movement"
+          },
+          {
+            "id": "annotation",
+            "label": "Explanatory labels"
+          }
+        ],
+        "paths": [
+          {
+            "id": "pulmonary",
+            "segments": [
+              {
+                "command": "M",
+                "values": [
+                  310,
+                  290
+                ]
+              },
+              {
+                "command": "C",
+                "values": [
+                  250,
+                  270,
+                  220,
+                  100,
+                  340,
+                  100
+                ]
+              },
+              {
+                "command": "C",
+                "values": [
+                  470,
+                  100,
+                  520,
+                  220,
+                  470,
+                  290
+                ]
+              }
+            ]
+          },
+          {
+            "id": "systemic",
+            "segments": [
+              {
+                "command": "M",
+                "values": [
+                  470,
+                  290
+                ]
+              },
+              {
+                "command": "C",
+                "values": [
+                  650,
+                  310,
+                  680,
+                  430,
+                  400,
+                  430
+                ]
+              },
+              {
+                "command": "C",
+                "values": [
+                  130,
+                  430,
+                  170,
+                  310,
+                  310,
+                  290
+                ]
+              }
+            ]
+          }
+        ],
+        "gradients": [
+          {
+            "id": "tissueTint",
+            "kind": "radial",
+            "stops": [
+              {
+                "offset": 0,
+                "colour": "#dfd2bc",
+                "opacity": 1
+              },
+              {
+                "offset": 1,
+                "colour": "#f6f1e8",
+                "opacity": 1
+              }
+            ]
+          }
+        ],
+        "objects": [
+          {
+            "id": "rightHeart",
+            "kind": "ellipse",
+            "role": "draw",
+            "layer": "structure",
+            "label": "Right heart receives oxygen-poor blood",
+            "geometry": {
+              "rx": 58,
+              "ry": 66
+            },
+            "initial": {
+              "x": 310,
+              "y": 290,
+              "fill": "#dae2e7",
+              "stroke": "#52758a"
+            }
+          },
+          {
+            "id": "leftHeart",
+            "kind": "ellipse",
+            "role": "draw",
+            "layer": "structure",
+            "label": "Left heart supplies the systemic circulation",
+            "geometry": {
+              "rx": 58,
+              "ry": 66
+            },
+            "initial": {
+              "x": 470,
+              "y": 290,
+              "fill": "#ecd0c6",
+              "stroke": "#b85645"
+            }
+          },
+          {
+            "id": "lungs",
+            "kind": "ellipse",
+            "role": "draw",
+            "layer": "structure",
+            "label": "Lung capillaries exchange gases",
+            "geometry": {
+              "rx": 108,
+              "ry": 43
+            },
+            "initial": {
+              "x": 400,
+              "y": 100,
+              "fill": "#e8dfce"
+            }
+          },
+          {
+            "id": "tissues",
+            "kind": "ellipse",
+            "role": "draw",
+            "layer": "structure",
+            "label": "Body tissues use oxygen",
+            "gradient": "tissueTint",
+            "geometry": {
+              "rx": 170,
+              "ry": 40
+            },
+            "initial": {
+              "x": 400,
+              "y": 430
+            }
+          },
+          {
+            "id": "lungRoute",
+            "kind": "path",
+            "role": "draw",
+            "layer": "structure",
+            "label": "Right heart to lungs to left heart",
+            "geometry": {
+              "path": "pulmonary"
+            },
+            "initial": {
+              "fill": "none",
+              "stroke": "#a9b2af",
+              "strokeWidth": 9
+            }
+          },
+          {
+            "id": "bodyRoute",
+            "kind": "path",
+            "role": "draw",
+            "layer": "structure",
+            "label": "Left heart to body to right heart",
+            "geometry": {
+              "path": "systemic"
+            },
+            "initial": {
+              "fill": "none",
+              "stroke": "#a9b2af",
+              "strokeWidth": 9
+            }
+          },
+          {
+            "id": "blood",
+            "kind": "circle",
+            "role": "draw",
+            "layer": "transport",
+            "label": "A schematic blood parcel",
+            "geometry": {
+              "radius": 9
+            },
+            "initial": {
+              "x": 310,
+              "y": 290,
+              "fill": "#52758a",
+              "stroke": "#f6f1e8"
+            }
+          },
+          {
+            "id": "lungLabel",
+            "kind": "text",
+            "role": "draw",
+            "layer": "annotation",
+            "label": "LUNGS · oxygen enters",
+            "geometry": {},
+            "initial": {
+              "x": 286,
+              "y": 40,
+              "fill": "#263b48",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "rightLabel",
+            "kind": "text",
+            "role": "draw",
+            "layer": "annotation",
+            "label": "Right heart",
+            "geometry": {},
+            "initial": {
+              "x": 255,
+              "y": 285,
+              "fill": "#263b48",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "leftLabel",
+            "kind": "text",
+            "role": "draw",
+            "layer": "annotation",
+            "label": "Left heart",
+            "geometry": {},
+            "initial": {
+              "x": 425,
+              "y": 285,
+              "fill": "#263b48",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "tissueLabel",
+            "kind": "text",
+            "role": "draw",
+            "layer": "annotation",
+            "label": "BODY · oxygen leaves blood",
+            "geometry": {},
+            "initial": {
+              "x": 262,
+              "y": 486,
+              "fill": "#263b48",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "key",
+            "kind": "text",
+            "role": "draw",
+            "layer": "annotation",
+            "label": "Colour shows oxygen status, not actual blood colour",
+            "geometry": {},
+            "initial": {
+              "x": 155,
+              "y": 185,
+              "fill": "#52758a",
+              "strokeWidth": 0
+            }
+          }
+        ],
+        "stages": [
+          {
+            "title": "Two linked circuits",
+            "description": "Both sides of the heart form one closed route through lungs and tissues.",
+            "durationMs": 1400,
+            "actions": [
+              {
+                "target": "rightHeart",
+                "startMs": 0,
+                "durationMs": 1400,
+                "easing": "smooth",
+                "operation": {
+                  "type": "highlight",
+                  "params": {
+                    "colour": "#52758a",
+                    "width": 5
+                  },
+                  "final": {
+                    "stroke": "#52758a",
+                    "strokeWidth": 2
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "title": "Gas exchange in lungs",
+            "description": "Follow a parcel from the right heart through the lungs to the left heart.",
+            "durationMs": 4000,
+            "actions": [
+              {
+                "target": "blood",
+                "startMs": 0,
+                "durationMs": 4000,
+                "easing": "linear",
+                "operation": {
+                  "type": "follow_path",
+                  "params": {
+                    "path": "pulmonary",
+                    "from": 0,
+                    "to": 1,
+                    "orient": false
+                  },
+                  "final": {
+                    "x": 470,
+                    "y": 290,
+                    "rotation": 0
+                  }
+                }
+              },
+              {
+                "target": "blood",
+                "startMs": 1900,
+                "durationMs": 500,
+                "easing": "smooth",
+                "operation": {
+                  "type": "change_colour",
+                  "params": {},
+                  "final": {
+                    "fill": "#b85645"
+                  }
+                }
+              },
+              {
+                "target": "rightHeart",
+                "startMs": 0,
+                "durationMs": 1000,
+                "easing": "linear",
+                "operation": {
+                  "type": "pulse",
+                  "params": {
+                    "amplitude": 0.07,
+                    "cycles": 1
+                  },
+                  "final": {
+                    "scaleX": 1,
+                    "scaleY": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "title": "Delivery and return",
+            "description": "The left heart supplies tissues; oxygen-poor blood returns to the right heart.",
+            "durationMs": 4200,
+            "actions": [
+              {
+                "target": "blood",
+                "startMs": 0,
+                "durationMs": 4200,
+                "easing": "linear",
+                "operation": {
+                  "type": "follow_path",
+                  "params": {
+                    "path": "systemic",
+                    "from": 0,
+                    "to": 1,
+                    "orient": false
+                  },
+                  "final": {
+                    "x": 310,
+                    "y": 290,
+                    "rotation": 0
+                  }
+                }
+              },
+              {
+                "target": "blood",
+                "startMs": 2000,
+                "durationMs": 500,
+                "easing": "smooth",
+                "operation": {
+                  "type": "change_colour",
+                  "params": {},
+                  "final": {
+                    "fill": "#52758a"
+                  }
+                }
+              },
+              {
+                "target": "leftHeart",
+                "startMs": 0,
+                "durationMs": 1000,
+                "easing": "linear",
+                "operation": {
+                  "type": "pulse",
+                  "params": {
+                    "amplitude": 0.07,
+                    "cycles": 1
+                  },
+                  "final": {
+                    "scaleX": 1,
+                    "scaleY": 1
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "accessibility": {
+          "summary": "A closed double circulation with right and left heart, lungs and body tissues. Blue denotes lower oxygen, not blue blood.",
+          "reducedMotion": "stage-final",
+          "stageDescriptions": [
+            "Right and left pumps connect lung and body circuits.",
+            "The blood parcel has passed the lungs, gained oxygen and reached the left heart.",
+            "The parcel delivered oxygen to tissues and returned to the right heart."
+          ]
+        }
+      }
+    }
+  ]
+}

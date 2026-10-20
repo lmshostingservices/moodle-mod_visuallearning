@@ -64,6 +64,9 @@ class diagram {
             }
             $spec = json_decode($spec, true);
         }
+        if (is_array($spec) && ($spec['type'] ?? '') === 'animated_scene') {
+            return scene_validator::clean($spec);
+        }
         if (!is_array($spec) || !in_array($spec['type'] ?? null, self::TYPES, true)) {
             return null;
         }

@@ -2,6 +2,14 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.6.0] - 2026-10-20
+
+- Add a versioned universal animated-scene engine, strict scene validation, declarative
+  vector composition, deterministic narration stages and all 21 animation actions.
+- Add automatic/static/animated preferences, complexity and pacing, preserving existing lessons.
+- Preserve legacy diagrams and image fallback; add reduced-motion descriptions and replay controls.
+- Extend generated and downloadable lesson briefs without changing acquisition or usage pricing.
+
 ## [1.5.7] - 2026-10-20
 
 - Includes Replit's 1.5.5 and 1.5.6 billing changes (below).

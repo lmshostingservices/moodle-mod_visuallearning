@@ -316,6 +316,13 @@ TXT;
                 . 'describe changes to the picture before;', 'ten'];
         }
         if ($mode === picture_modes::ANIMATED) {
+            if (animation_settings::values($book)['animationmode'] !== 'legacy') {
+                $guide = file_get_contents(__DIR__ . '/../../schema/scene-generation.txt');
+                $schema = file_get_contents(__DIR__ . '/../../schema/animated-scene.json');
+                return ["\n" . animation_settings::brief($book) . "\n" . $guide . "\n" . $schema,
+                    "      \"diagram\": null,\n",
+                    ' diagram is a valid animated_scene, a supported existing diagram, or null with image fallback;', 'ten'];
+            }
             $max = diagram::MAX_LABEL;
             $note = diagram::MAX_NOTE;
             $step = <<<TXT

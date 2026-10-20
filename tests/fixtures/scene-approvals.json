@@ -1,0 +1,36 @@
+{
+  "type":"animated_scene","version":"1.0","title":"Approval is a decision, not a conveyor belt",
+  "description":"An illustrative purchasing request passes completeness review, approval and release. An incomplete request returns for correction. The shown branch is complete and approved; no organisation-specific policy or monetary threshold is invented.",
+  "representation":"schematic","viewBox":[0,0,800,520],"aspectRatio":"meet",
+  "style":{"reference":"Editorial operations map","artDirection":"Dusty blush paper, aubergine ink and restrained sage status indicators. Rectangles are tasks, the diamond is a decision. Label every branch.","background":"#f1e7e6","foreground":"#594450","accent":"#57796d","font":"sans-serif","fontSize":18,"strokeWidth":2},
+  "layers":[{"id":"links","label":"Decision pathways"},{"id":"nodes","label":"Process activities"},{"id":"labels","label":"Branch labels and status"}],
+  "paths":[{"id":"requestRoute","segments":[{"command":"M","values":[150,265]},{"command":"L","values":[350,265]},{"command":"L","values":[570,265]}]},{"id":"returnRoute","segments":[{"command":"M","values":[350,285]},{"command":"L","values":[350,380]},{"command":"L","values":[150,380]},{"command":"L","values":[150,285]}]}],
+  "gradients":[],
+  "objects":[
+    {"id":"submit","kind":"rect","role":"draw","layer":"nodes","label":"Submit request","geometry":{"width":150,"height":90},"initial":{"x":75,"y":200,"fill":"#dfd1d2","stroke":"#594450"}},
+    {"id":"decision","kind":"polygon","role":"draw","layer":"nodes","label":"Is the request complete?","geometry":{"points":[[-72,0],[0,-62],[72,0],[0,62]]},"initial":{"x":350,"y":245,"fill":"#e7dcd5","stroke":"#594450"}},
+    {"id":"approve","kind":"rect","role":"draw","layer":"nodes","label":"Approve and release","geometry":{"width":170,"height":90},"initial":{"x":520,"y":200,"fill":"#dfd1d2","stroke":"#594450"}},
+    {"id":"route","kind":"path","role":"draw","layer":"links","label":"Complete request moves to approval","geometry":{"path":"requestRoute"},"initial":{"fill":"none","stroke":"#57796d","strokeWidth":4}},
+    {"id":"return","kind":"path","role":"draw","layer":"links","label":"Incomplete request returns for correction","geometry":{"path":"returnRoute"},"initial":{"fill":"none","stroke":"#9a7463","strokeWidth":2}},
+    {"id":"token","kind":"circle","role":"draw","layer":"nodes","label":"The current request","geometry":{"radius":9},"initial":{"x":150,"y":265,"fill":"#57796d","stroke":"#f1e7e6","strokeWidth":3}},
+    {"id":"heading","kind":"text","role":"draw","layer":"labels","label":"REQUEST → CHECK → RELEASE","geometry":{},"initial":{"x":190,"y":65,"fill":"#594450","strokeWidth":0}},
+    {"id":"submitLabel","kind":"text","role":"draw","layer":"labels","label":"Submit","geometry":{},"initial":{"x":113,"y":235,"fill":"#594450","strokeWidth":0}},
+    {"id":"decisionLabel","kind":"text","role":"draw","layer":"labels","label":"Complete?","geometry":{},"initial":{"x":306,"y":235,"fill":"#594450","strokeWidth":0}},
+    {"id":"approveLabel","kind":"text","role":"draw","layer":"labels","label":"Approve","geometry":{},"initial":{"x":560,"y":235,"fill":"#594450","strokeWidth":0}},
+    {"id":"yes","kind":"text","role":"draw","layer":"labels","label":"YES","geometry":{},"initial":{"x":448,"y":220,"fill":"#57796d","strokeWidth":0}},
+    {"id":"no","kind":"text","role":"draw","layer":"labels","label":"NO · return for correction","geometry":{},"initial":{"x":182,"y":420,"fill":"#9a7463","strokeWidth":0}},
+    {"id":"status","kind":"text","role":"draw","layer":"labels","label":"Approved request can now be released","geometry":{},"initial":{"x":215,"y":480,"fill":"#57796d","strokeWidth":0,"visible":false}}
+  ],
+  "stages":[
+    {"title":"Make the decision explicit","description":"A completeness decision has a forward route and a correction loop.","durationMs":1800,"actions":[{"target":"decision","startMs":0,"durationMs":1800,"easing":"smooth","operation":{"type":"highlight","params":{"colour":"#57796d","width":5},"final":{"stroke":"#594450","strokeWidth":2}}}]},
+    {"title":"Follow the approved branch","description":"This example follows a complete request to approval; the correction loop stays available.","durationMs":3600,"actions":[
+      {"target":"token","startMs":0,"durationMs":3600,"easing":"smooth","operation":{"type":"follow_path","params":{"path":"requestRoute","from":0,"to":1,"orient":false},"final":{"x":570,"y":265,"rotation":0}}},
+      {"target":"return","startMs":0,"durationMs":900,"easing":"smooth","operation":{"type":"fade","params":{},"final":{"opacity":0.4}}}
+    ]},
+    {"title":"Approval enables release","description":"A visible status change explains the effect of approval.","durationMs":2000,"actions":[
+      {"target":"approve","startMs":0,"durationMs":1200,"easing":"smooth","operation":{"type":"change_colour","params":{},"final":{"fill":"#bbd1c4"}}},
+      {"target":"status","startMs":700,"durationMs":1000,"easing":"smooth","operation":{"type":"reveal","params":{},"final":{"visible":true,"opacity":1}}}
+    ]}
+  ],
+  "accessibility":{"summary":"A purchasing process has submit, completeness decision, approval and release, with a return loop for incomplete requests. The shown request is complete.","reducedMotion":"stage-final","stageDescriptions":["The completeness decision has yes and no branches.","The complete request has taken the yes branch to approval.","The approved request is ready for release; incomplete requests would return for correction."]}
+}

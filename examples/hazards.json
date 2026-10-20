@@ -1,0 +1,551 @@
+{
+  "book_title": "Control the hazard, not just the sign",
+  "industry": "Education",
+  "subindustry": "Demonstration",
+  "language": "en-AU",
+  "style_guide": "Warm pale yellow, graphite-blue equipment and muted safety red. A clean side-view walkway with one visible hazard and a clear corrective sequence.",
+  "characters": [],
+  "cover_image_prompt": "Create a clear explanatory schematic of this concept: Illustrative slip hazard: isolate access, remove a spill, then reopen only once the floor is dry and safe. A warning sign is a temporary administrative control, not a substitute for removing the hazard. Follow local procedures for actual substances. Use the same visual direction and semantic colour conventions as the supplied lesson. Keep this a static explanatory fallback, with readable essential labels and no decorative motion. Do not invent measurements, people or additional mechanisms.",
+  "pages": [
+    {
+      "page": 1,
+      "title": "Control the hazard, not just the sign",
+      "concept": "Stop access to the spill before anyone crosses it.",
+      "action": "Keep the barrier in place while cleaning the spill.",
+      "outcome": "Once dry and safe, remove cleaning tools and the temporary barrier.",
+      "summary": "Once dry and safe, remove cleaning tools and the temporary barrier.",
+      "question": null,
+      "image_prompt": "Create a clear explanatory schematic of this concept: Illustrative slip hazard: isolate access, remove a spill, then reopen only once the floor is dry and safe. A warning sign is a temporary administrative control, not a substitute for removing the hazard. Follow local procedures for actual substances. Use the same visual direction and semantic colour conventions as the supplied lesson. Keep this a static explanatory fallback, with readable essential labels and no decorative motion. Do not invent measurements, people or additional mechanisms.",
+      "alt_text": "A worker stops before an isolated spill. Cleaning removes the hazard while a barrier remains in place. Reopen only once dry and safe.",
+      "diagram": {
+        "type": "animated_scene",
+        "version": "1.0",
+        "title": "Control the hazard, not just the sign",
+        "description": "Illustrative slip hazard: isolate access, remove a spill, then reopen only once the floor is dry and safe. A warning sign is a temporary administrative control, not a substitute for removing the hazard. Follow local procedures for actual substances.",
+        "representation": "schematic",
+        "viewBox": [
+          0,
+          0,
+          800,
+          520
+        ],
+        "aspectRatio": "meet",
+        "style": {
+          "reference": "Workplace instruction plate",
+          "artDirection": "Warm pale yellow, graphite-blue equipment and muted safety red. A clean side-view walkway with one visible hazard and a clear corrective sequence.",
+          "background": "#f2edd9",
+          "foreground": "#394d55",
+          "accent": "#ae5645",
+          "font": "sans-serif",
+          "fontSize": 18,
+          "strokeWidth": 2
+        },
+        "layers": [
+          {
+            "id": "site",
+            "label": "Walkway and spill"
+          },
+          {
+            "id": "controls",
+            "label": "Isolation and cleaning"
+          },
+          {
+            "id": "notes",
+            "label": "Safe work sequence"
+          }
+        ],
+        "paths": [
+          {
+            "id": "spillShape",
+            "segments": [
+              {
+                "command": "M",
+                "values": [
+                  -65,
+                  0
+                ]
+              },
+              {
+                "command": "Q",
+                "values": [
+                  -90,
+                  -20,
+                  -20,
+                  -25
+                ]
+              },
+              {
+                "command": "Q",
+                "values": [
+                  15,
+                  -45,
+                  65,
+                  -10
+                ]
+              },
+              {
+                "command": "Q",
+                "values": [
+                  110,
+                  20,
+                  10,
+                  28
+                ]
+              },
+              {
+                "command": "Q",
+                "values": [
+                  -65,
+                  40,
+                  -65,
+                  0
+                ]
+              },
+              {
+                "command": "Z",
+                "values": []
+              }
+            ]
+          }
+        ],
+        "gradients": [],
+        "objects": [
+          {
+            "id": "floor",
+            "kind": "rect",
+            "role": "draw",
+            "layer": "site",
+            "label": "Walkway",
+            "geometry": {
+              "width": 660,
+              "height": 35
+            },
+            "initial": {
+              "x": 70,
+              "y": 365,
+              "fill": "#d2d2bd",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "spill",
+            "kind": "path",
+            "role": "draw",
+            "layer": "site",
+            "label": "Slippery liquid spill",
+            "geometry": {
+              "path": "spillShape"
+            },
+            "initial": {
+              "x": 425,
+              "y": 350,
+              "fill": "#91b7ba",
+              "stroke": "#577c81"
+            }
+          },
+          {
+            "id": "worker",
+            "kind": "group",
+            "role": "draw",
+            "layer": "site",
+            "label": "Person approaches but stops before the isolated spill",
+            "geometry": {},
+            "initial": {
+              "x": 170,
+              "y": 270
+            }
+          },
+          {
+            "id": "head",
+            "kind": "circle",
+            "role": "draw",
+            "layer": "site",
+            "parent": "worker",
+            "label": "",
+            "geometry": {
+              "radius": 20
+            },
+            "initial": {
+              "y": -55,
+              "fill": "#d2b08e",
+              "stroke": "#394d55"
+            }
+          },
+          {
+            "id": "torso",
+            "kind": "line",
+            "role": "draw",
+            "layer": "site",
+            "parent": "worker",
+            "label": "",
+            "geometry": {
+              "x2": 0,
+              "y2": 45
+            },
+            "initial": {
+              "y": -33,
+              "stroke": "#394d55",
+              "strokeWidth": 15
+            }
+          },
+          {
+            "id": "legLeft",
+            "kind": "line",
+            "role": "draw",
+            "layer": "site",
+            "parent": "worker",
+            "label": "",
+            "geometry": {
+              "x2": -20,
+              "y2": 75
+            },
+            "initial": {
+              "stroke": "#394d55",
+              "strokeWidth": 8
+            }
+          },
+          {
+            "id": "legRight",
+            "kind": "line",
+            "role": "draw",
+            "layer": "site",
+            "parent": "worker",
+            "label": "",
+            "geometry": {
+              "x2": 20,
+              "y2": 75
+            },
+            "initial": {
+              "stroke": "#394d55",
+              "strokeWidth": 8
+            }
+          },
+          {
+            "id": "barrier",
+            "kind": "group",
+            "role": "draw",
+            "layer": "controls",
+            "label": "Temporary isolation barrier",
+            "geometry": {},
+            "initial": {
+              "x": 290,
+              "y": 280,
+              "visible": false
+            }
+          },
+          {
+            "id": "post",
+            "kind": "line",
+            "role": "draw",
+            "layer": "controls",
+            "parent": "barrier",
+            "label": "",
+            "geometry": {
+              "x2": 0,
+              "y2": 80
+            },
+            "initial": {
+              "stroke": "#ae5645",
+              "strokeWidth": 7
+            }
+          },
+          {
+            "id": "rail",
+            "kind": "line",
+            "role": "draw",
+            "layer": "controls",
+            "parent": "barrier",
+            "label": "",
+            "geometry": {
+              "x2": 230,
+              "y2": 0
+            },
+            "initial": {
+              "stroke": "#ae5645",
+              "strokeWidth": 9
+            }
+          },
+          {
+            "id": "sign",
+            "kind": "polygon",
+            "role": "draw",
+            "layer": "controls",
+            "parent": "barrier",
+            "label": "Warning: slippery floor",
+            "geometry": {
+              "points": [
+                [
+                  95,
+                  -55
+                ],
+                [
+                  65,
+                  -5
+                ],
+                [
+                  125,
+                  -5
+                ]
+              ]
+            },
+            "initial": {
+              "fill": "#d3ad55",
+              "stroke": "#394d55"
+            }
+          },
+          {
+            "id": "mop",
+            "kind": "group",
+            "role": "draw",
+            "layer": "controls",
+            "label": "Remove the spill using an appropriate cleaning method",
+            "geometry": {},
+            "initial": {
+              "x": 500,
+              "y": 250,
+              "visible": false
+            }
+          },
+          {
+            "id": "handle",
+            "kind": "line",
+            "role": "draw",
+            "layer": "controls",
+            "parent": "mop",
+            "label": "",
+            "geometry": {
+              "x2": -40,
+              "y2": 95
+            },
+            "initial": {
+              "stroke": "#577c81",
+              "strokeWidth": 7
+            }
+          },
+          {
+            "id": "mopHead",
+            "kind": "rect",
+            "role": "draw",
+            "layer": "controls",
+            "parent": "mop",
+            "label": "",
+            "geometry": {
+              "width": 80,
+              "height": 18
+            },
+            "initial": {
+              "x": -80,
+              "y": 95,
+              "fill": "#c7bba1",
+              "stroke": "#577c81"
+            }
+          },
+          {
+            "id": "heading",
+            "kind": "text",
+            "role": "draw",
+            "layer": "notes",
+            "label": "ISOLATE → REMOVE → VERIFY",
+            "geometry": {},
+            "initial": {
+              "x": 180,
+              "y": 60,
+              "fill": "#394d55",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "warningNote",
+            "kind": "text",
+            "role": "draw",
+            "layer": "notes",
+            "label": "A sign warns. It does not remove the spill.",
+            "geometry": {},
+            "initial": {
+              "x": 190,
+              "y": 125,
+              "fill": "#ae5645",
+              "strokeWidth": 0
+            }
+          },
+          {
+            "id": "safeNote",
+            "kind": "text",
+            "role": "draw",
+            "layer": "notes",
+            "label": "Reopen only after the floor is dry and safe",
+            "geometry": {},
+            "initial": {
+              "x": 188,
+              "y": 465,
+              "fill": "#394d55",
+              "strokeWidth": 0,
+              "visible": false
+            }
+          }
+        ],
+        "stages": [
+          {
+            "title": "Identify and isolate",
+            "description": "Stop access to the spill before anyone crosses it.",
+            "durationMs": 1800,
+            "actions": [
+              {
+                "target": "spill",
+                "startMs": 0,
+                "durationMs": 1800,
+                "easing": "smooth",
+                "operation": {
+                  "type": "highlight",
+                  "params": {
+                    "colour": "#ae5645",
+                    "width": 5
+                  },
+                  "final": {
+                    "stroke": "#577c81",
+                    "strokeWidth": 2
+                  }
+                }
+              },
+              {
+                "target": "barrier",
+                "startMs": 500,
+                "durationMs": 800,
+                "easing": "smooth",
+                "operation": {
+                  "type": "reveal",
+                  "params": {},
+                  "final": {
+                    "visible": true,
+                    "opacity": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "title": "Remove the hazard",
+            "description": "Keep the barrier in place while cleaning the spill.",
+            "durationMs": 3600,
+            "actions": [
+              {
+                "target": "mop",
+                "startMs": 0,
+                "durationMs": 500,
+                "easing": "smooth",
+                "operation": {
+                  "type": "reveal",
+                  "params": {},
+                  "final": {
+                    "visible": true,
+                    "opacity": 1
+                  }
+                }
+              },
+              {
+                "target": "mop",
+                "startMs": 500,
+                "durationMs": 2400,
+                "easing": "smooth",
+                "operation": {
+                  "type": "move",
+                  "params": {},
+                  "final": {
+                    "x": 370,
+                    "y": 250
+                  }
+                }
+              },
+              {
+                "target": "spill",
+                "startMs": 500,
+                "durationMs": 2400,
+                "easing": "smooth",
+                "operation": {
+                  "type": "scale",
+                  "params": {},
+                  "final": {
+                    "scaleX": 0.1,
+                    "scaleY": 0.1
+                  }
+                }
+              },
+              {
+                "target": "spill",
+                "startMs": 2900,
+                "durationMs": 700,
+                "easing": "smooth",
+                "operation": {
+                  "type": "hide",
+                  "params": {},
+                  "final": {
+                    "visible": false,
+                    "opacity": 0
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "title": "Verify before reopening",
+            "description": "Once dry and safe, remove cleaning tools and the temporary barrier.",
+            "durationMs": 2400,
+            "actions": [
+              {
+                "target": "mop",
+                "startMs": 0,
+                "durationMs": 600,
+                "easing": "smooth",
+                "operation": {
+                  "type": "hide",
+                  "params": {},
+                  "final": {
+                    "visible": false,
+                    "opacity": 0
+                  }
+                }
+              },
+              {
+                "target": "safeNote",
+                "startMs": 0,
+                "durationMs": 900,
+                "easing": "smooth",
+                "operation": {
+                  "type": "reveal",
+                  "params": {},
+                  "final": {
+                    "visible": true,
+                    "opacity": 1
+                  }
+                }
+              },
+              {
+                "target": "barrier",
+                "startMs": 1200,
+                "durationMs": 800,
+                "easing": "smooth",
+                "operation": {
+                  "type": "hide",
+                  "params": {},
+                  "final": {
+                    "visible": false,
+                    "opacity": 0
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "accessibility": {
+          "summary": "A worker stops before an isolated spill. Cleaning removes the hazard while a barrier remains in place. Reopen only once dry and safe.",
+          "reducedMotion": "stage-final",
+          "stageDescriptions": [
+            "Access is isolated around the slippery spill.",
+            "The spill has been removed while the isolation barrier remains.",
+            "After verifying a dry safe floor, tools and barrier are removed."
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -170,6 +170,18 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->addHelpButton('picturemode', 'picturemode', 'mod_visuallearning');
         // Animated diagrams replace the pictures, so the picture mode does not apply.
         $mform->hideIf('picturemode', 'visualstyle', 'eq', \mod_visuallearning\local\visual_styles::ANIMATED);
+        foreach (\mod_visuallearning\local\animation_settings::OPTIONS as $field => $values) {
+            $options = [];
+            foreach ($values as $value) {
+                $options[$value] = get_string($field . '_' . $value, 'mod_visuallearning');
+            }
+            $mform->addElement('select', $field, get_string($field, 'mod_visuallearning'), $options);
+            $mform->setDefault($field, $field === 'animationmode' ? 'automatic' : $values[0]);
+            if ($field !== 'animationmode') {
+                $mform->hideIf($field, 'animationmode', 'eq', 'static');
+                $mform->hideIf($field, 'animationmode', 'eq', 'legacy');
+            }
+        }
 
         $mform->addElement(
             'textarea',
