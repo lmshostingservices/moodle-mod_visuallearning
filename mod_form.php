@@ -176,7 +176,9 @@ class mod_visuallearning_mod_form extends moodleform_mod {
                 $options[$value] = get_string($field . '_' . $value, 'mod_visuallearning');
             }
             $mform->addElement('select', $field, get_string($field, 'mod_visuallearning'), $options);
-            $mform->setDefault($field, $field === 'animationmode' ? 'automatic' : $values[0]);
+            $mform->setDefault($field, $values[0]);
+            // The animation engine only applies to animated-diagram lessons.
+            $mform->hideIf($field, 'visualstyle', 'neq', \mod_visuallearning\local\visual_styles::ANIMATED);
             if ($field !== 'animationmode') {
                 $mform->hideIf($field, 'animationmode', 'eq', 'static');
                 $mform->hideIf($field, 'animationmode', 'eq', 'legacy');

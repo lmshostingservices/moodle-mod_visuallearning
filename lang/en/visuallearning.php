@@ -406,6 +406,7 @@ $string['picturemode_help'] = 'For illustrated styles, how many pictures each pa
 
 * **One picture per page**: one picture for the whole page.
 * **One picture per card (builds the scene)**: three pictures per page, one per card, shown as each card is read. Card 2\'s picture is made by editing card 1\'s, and card 3\'s by editing card 2\'s, so the scene builds up step by step. Each card picture costs LMS Labs credits; the price is shown before anything is made.
+* **Animated scene per page**: an animated diagram drawn by AI for each page, with a part for each card. It plays slowly while each card is read, in time with the voiceover, and learners can replay it at normal speed once the page has been heard. It is drawn for the lesson\'s learner level and language. Each scene costs LMS Labs credits; the price is shown before anything is made. You can also paste a scene made with your own AI assistant on the page\'s edit form.
 
 Not shown when the visual style is Animated diagrams.';
 $string['picturemode_sequence'] = 'One picture per card (builds the scene, extra credits)';
@@ -786,3 +787,24 @@ $string['animationpacing_fast'] = 'Fast';
 $string['animationreplay'] = 'Replay complete animation';
 $string['animationstagereplay'] = 'Replay selected stage';
 $string['writewithai_replace'] = 'The new pages will replace the existing pages, their illustrations, voiceovers and learner progress once LMS Labs delivers them. Continue to the price?';
+
+$string['aierr_unusable_animation'] = 'what arrived was not a usable animated SVG scene';
+$string['aireq_op_animation'] = 'Animated scene';
+$string['animsvg'] = 'Animated scene (SVG)';
+$string['animsvg_download'] = 'Download the prompt for this page';
+$string['animsvg_help'] = 'To use your own AI assistant instead of LMS Labs: download the prompt for this page, give it to your AI assistant (for example Claude), and paste the SVG it writes here. It is checked and cleaned when you save, and replaces the page\'s current scene. Leave empty to keep the current scene.';
+$string['animsvg_invalid'] = 'This is not a usable animated SVG scene. Paste the whole SVG, from <svg to </svg>, with its viewBox.';
+$string['animsvg_prompt'] = 'Prompt for your own AI assistant';
+$string['hold_noanimation'] = 'Waiting for LMS Labs: it does not draw animated scenes yet, so each page shows its picture until it does. You can paste a scene from your own AI assistant on each page\'s edit form meanwhile.';
+$string['holdop_animation'] = 'animated scenes';
+$string['media_animation'] = 'Animated scene';
+$string['picturemode_svg'] = 'Animated scene per page (drawn by AI, timed to the voiceover, extra credits)';
+$string['picturemode_svg_short'] = 'Animated scene per page';
+$string['player_animationnormal'] = 'Play animation at normal speed';
+$string['quote_droppedanimations'] = '{$a->count} animated scene(s) are left out: {$a->why}';
+$string['quote_line_animation'] = '{$a->count} animated scenes × {$a->price} credits';
+$string['quote_what_animation'] = 'animated scenes';
+$string['regenanimation'] = 'New animated scene';
+$string['svgmode_intro'] = 'This lesson uses an animated scene on each page, drawn by AI with a part for each card ({$a} credits per scene). Until a page\'s scene is ready, learners see its picture.';
+$string['player_animationreplay'] = 'Replay complete animation';
+$string['player_animationstagereplay'] = 'Replay this card\'s part of the animation';

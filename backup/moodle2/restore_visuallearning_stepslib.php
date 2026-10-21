@@ -107,5 +107,6 @@ class restore_visuallearning_activity_structure_step extends restore_activity_st
         $this->add_related_files('mod_visuallearning', 'audio', 'visuallearning_page');
         $this->add_related_files('mod_visuallearning', 'option', 'visuallearning_page');
         $this->add_related_files('mod_visuallearning', 'card', 'visuallearning_page');
+        $this->add_related_files('mod_visuallearning', 'svg', 'visuallearning_page');
     }
 }

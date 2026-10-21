@@ -196,7 +196,7 @@ class importer {
         $DB->delete_records('visuallearning_progress', ['visuallearningid' => $book->id]);
         $DB->delete_records('visuallearning_pages', ['visuallearningid' => $book->id]);
         $fs = get_file_storage();
-        foreach (['image', 'audio', 'cover', media::AREA_OPTION, media::AREA_CARD] as $area) {
+        foreach (['image', 'audio', 'cover', media::AREA_OPTION, media::AREA_CARD, media::AREA_SVG] as $area) {
             $fs->delete_area_files($context->id, 'mod_visuallearning', $area);
         }
 

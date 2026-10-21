@@ -2,6 +2,38 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.7.1] - 2026-10-21
+
+- Release-pipeline compliance: place the existing SVG sanitisation annotation beside the raw SVG input declaration.
+- Correct anonymous-function spacing in the SVG sanitiser; animation behaviour and pricing are unchanged.
+- Includes all animated-scene features and fixes documented in 1.7.0 below.
+
+## [1.7.0] - 2026-10-21
+
+- **New picture mode: Animated scene per page.** Claude draws one animated SVG scene for each page, through LMS
+  Labs, with a stage for each card.
+  - While a card is read aloud, its stage plays at a slow teaching pace (half speed by default; the lesson's
+    animation pacing sets slow, normal or fast). Scenes that teach a real rhythm, such as CPR at 100 to 120 a
+    minute, mark themselves to always play at real speed.
+  - Once the last card has been read, a "Play animation at normal speed" button appears under the scene and plays
+    the whole animation at full speed. Tapping a card shows its stage at normal speed.
+  - Scenes are drawn for the lesson's learner level, language, teaching approach and art direction.
+  - Price: 2 credits per scene, quoted and confirmed first, like every other paid request. Pages keep their picture
+    for the cover, recap and questions, and show it until their scene is ready.
+  - Teachers can also make a scene with their own AI assistant: download the prompt from the page's edit form and
+    paste the SVG back (free).
+- **Safety:** every scene is cleaned before it is saved: no scripts, event handlers, links, images, foreign content
+  or external references. Its ids, styles and keyframes are scoped, so it cannot change the rest of the Moodle page.
+- **Fixes to 1.6.0:**
+  - New lessons defaulted to the "Automatic" animation engine. That turned picture lessons into animated ones and
+    blocked AI page writing ("The AI server has not enabled the universal animation engine yet") until LMS Labs
+    shipped the engine. The engine settings now apply only to animated-diagram lessons. New lessons default to
+    "Keep existing visual mode", and the upgrade moves lessons created under 1.6.0 back to their own picture mode.
+  - While the scene engine is not live on LMS Labs, animated-diagram lessons ask for the classic animated
+    diagrams instead of being blocked.
+  - The player asked for two missing strings (player_animationreplay, player_animationstagereplay).
+- Backup, restore, page deletion and full re-imports include the scenes.
+
 ## [1.6.0] - 2026-10-20
 
 - Add a versioned universal animated-scene engine, strict scene validation, declarative

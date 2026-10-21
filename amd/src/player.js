@@ -35,6 +35,7 @@ import Notification from 'core/notification';
 import * as Sounds from 'mod_visuallearning/sounds';
 import * as Diagrams from 'mod_visuallearning/diagrams';
 import * as Scenes from 'mod_visuallearning/scene';
+import * as SvgScenes from 'mod_visuallearning/svgscene';
 
 const HEARTBEAT_MS = 15000;
 const WORDS_PER_SECOND = 2.6;
@@ -1171,11 +1172,13 @@ class Player {
             box.className = 'pb-diagram';
             figure.appendChild(box);
         }
-        const renderer = page.diagram.type === 'animated_scene' ? Scenes : Diagrams;
+        const renderer = page.diagram.type === 'animated_scene' ? Scenes
+            : (page.diagram.type === 'svg_scene' ? SvgScenes : Diagrams);
         this.diagram = renderer.render(box, page.diagram, {
             label: this.str('diagramlabel', page.alt || page.title),
             pacing: (this.data.animationsettings || {}).animationpacing || 'normal',
-            strings: {replay: this.str('animationreplay'), stageReplay: this.str('animationstagereplay')},
+            strings: {replay: this.str('animationreplay'), stageReplay: this.str('animationstagereplay'),
+                normal: this.str('animationnormal')},
             onReplay: () => this.narrate(0),
             onStageReplay: stage => this.narrate(0, stage - 1),
         });
@@ -1364,6 +1367,19 @@ class Player {
                 // Tapping a card shows its picture again.
                 el.classList.add('has-picture');
                 el.addEventListener('click', () => this.showCard(i));
+            }
+            if (page.diagram && page.diagram.type === 'svg_scene') {
+                // Tapping a card shows its part of the scene at normal speed.
+                el.classList.add('has-picture');
+                el.setAttribute('role', 'button');
+                el.setAttribute('tabindex', '0');
+                el.addEventListener('click', () => this.showCard(i));
+                el.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        this.showCard(i);
+                    }
+                });
             }
             if (page.diagram && page.diagram.type === 'animated_scene') {
                 el.setAttribute('role', 'button');
@@ -2294,6 +2310,10 @@ class Player {
         const step = this.step();
         if (step.type === 'page') {
             const page = this.pages[step.page];
+            if (this.diagram && this.diagram.narrated) {
+                // Heard in full: the whole animation can now be replayed at normal speed.
+                this.diagram.narrated();
+            }
             if (this.returnTo !== null) {
                 // Heard again in full: its question is unlocked (on the server too).
                 this.revisitHeard = true;

@@ -65,7 +65,7 @@ final class picture_modes_test extends \advanced_testcase {
         $this->assertSame('single', picture_modes::clean('slideshow'));
         $this->assertSame('sequence', picture_modes::clean('sequence'));
         $this->assertSame('animated', picture_modes::clean('animated'));
-        $this->assertSame(['single', 'sequence', 'animated'], array_keys(picture_modes::options()));
+        $this->assertSame(['single', 'sequence', 'animated', 'svg'], array_keys(picture_modes::options()));
     }
 
     public function test_every_sample_diagram_is_accepted_and_bad_ones_are_refused(): void {
@@ -280,7 +280,7 @@ final class picture_modes_test extends \advanced_testcase {
         global $DB;
         $this->resetAfterTest();
         $this->assertArrayHasKey('animated', \mod_visuallearning\local\visual_styles::form_options());
-        $this->assertSame(['single', 'sequence'], array_keys(picture_modes::form_options()));
+        $this->assertSame(['single', 'sequence', 'svg'], array_keys(picture_modes::form_options()));
         [$book] = $this->lesson(['visualstyle' => 'animated', 'picturemode' => 'sequence']);
         $this->assertSame('diagram', $book->visualstyle);
         $this->assertSame('animated', $book->picturemode);

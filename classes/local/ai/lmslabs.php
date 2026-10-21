@@ -80,6 +80,12 @@ class lmslabs {
     /** @var int Proposed price of one extra card picture (one picture per card); needs owner approval. */
     public const CARD_CREDITS = 2;
 
+    /** @var int Approved price of one animated SVG scene (one per page, drawn by Claude through LMS Labs). */
+    public const ANIMATION_CREDITS = 2;
+
+    /** @var string The animated SVG contract the plugin's player and sanitiser understand. */
+    public const ANIMATION_CONTRACT = 'svg-1';
+
     /** @var int Longest picture prompt, in Unicode code points. */
     public const MAX_PROMPT = 2000;
 
@@ -152,7 +158,7 @@ class lmslabs {
         global $CFG;
         $routes = [self::DRAFT_ROUTE, self::IMPORT_ROUTE, self::IMAGE_ROUTE, self::VOICE_ROUTE, self::VOICE_QUOTE_ROUTE];
         if (!in_array($route, $routes, true) && !preg_match(
-            '~^/api/moodle/ai-visuallearning/v2/(bundles(?:/[a-f0-9-]{36}(?:/(?:draft|import|manual)|/slides/[a-f0-9-]{36}/slots/[a-z0-9:]+/lost)?)?|images|speech/(?:tts|quote))$~',
+            '~^/api/moodle/ai-visuallearning/v2/(bundles(?:/[a-f0-9-]{36}(?:/(?:draft|import|manual)|/slides/[a-f0-9-]{36}/slots/[a-z0-9:]+/lost)?)?|images|animations|speech/(?:tts|quote))$~',
             $route
         )) {
             throw new \coding_exception('Unknown LMS Labs route');
@@ -261,6 +267,7 @@ class lmslabs {
                 'page' => $data['bundle']['slideCredits'] ?? null,
                 'image' => $data['remakes']['pictureCredits'] ?? null,
                 'card' => $data['cardPictures']['credits'] ?? null,
+                'animation' => $data['animations']['credits'] ?? null,
                 'tts' => $data['remakes']['voice']['credits'] ?? null,
                 'clipRefSupported' => true,
                 'maxCreditsRequired' => true,
@@ -287,7 +294,8 @@ class lmslabs {
      */
     public static function published_price(string $operation): ?int {
         $map = ['page' => ['pages', 'page'], 'import' => ['pages', 'page'], 'image' => ['images', 'image'],
-            'option' => ['images', 'image'], 'voice' => ['speech', 'tts'], 'card' => ['images', 'card']];
+            'option' => ['images', 'image'], 'voice' => ['speech', 'tts'], 'card' => ['images', 'card'],
+            'animation' => ['images', 'animation']];
         [$kind, $field] = $map[$operation];
         $price = self::capabilities($kind)['tariff'][$field] ?? null;
         return is_int($price) && $price >= 0 ? $price : null;
@@ -301,7 +309,8 @@ class lmslabs {
      */
     public static function approved_price(string $operation): int {
         $prices = ['page' => self::PAGE_CREDITS, 'import' => self::PAGE_CREDITS, 'image' => self::IMAGE_CREDITS,
-            'option' => self::IMAGE_CREDITS, 'voice' => self::VOICE_CREDITS, 'card' => self::CARD_CREDITS];
+            'option' => self::IMAGE_CREDITS, 'voice' => self::VOICE_CREDITS, 'card' => self::CARD_CREDITS,
+            'animation' => self::ANIMATION_CREDITS];
         return $prices[$operation];
     }
 
@@ -323,13 +332,18 @@ class lmslabs {
             return 'notactivated';
         }
         $setting = ['page' => 'aiwrite', 'image' => 'aiimages', 'option' => 'aiimages', 'voice' => 'aivoice',
-            'import' => '', 'card' => 'aiimages'][$operation];
+            'import' => '', 'card' => 'aiimages', 'animation' => 'aiimages'][$operation];
         if ($setting !== '' && !get_config('mod_visuallearning', $setting)) {
             return 'off';
         }
         if ($operation === 'card' && !in_array('sequence', self::picture_modes(), true)) {
             // Card pictures are made only once LMS Labs says it makes them (they edit the picture before).
             return 'nosequence';
+        }
+        if ($operation === 'animation' && !in_array(self::ANIMATION_CONTRACT,
+                (array)(self::capabilities('images')['animations']['contracts'] ?? []), true)) {
+            // Animated SVG scenes are made only once LMS Labs says it draws them to this contract.
+            return 'noanimation';
         }
         if ($operation === 'option' && !in_array(\mod_visuallearning\local\media::OPTION_ASPECT, self::aspect_ratios(), true)) {
             // Square option pictures are made only once LMS Labs says it makes them.

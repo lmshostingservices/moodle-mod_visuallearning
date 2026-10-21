@@ -50,6 +50,9 @@ class media {
     /** @var string File area of the per-card pictures (item: page id; files card1-…, card2-…, card3-…). */
     public const AREA_CARD = 'card';
 
+    /** @var string File area of the AI-drawn animated SVG scenes (item: page id; one file, anim-<hash of its brief>.svg). */
+    public const AREA_SVG = 'svg';
+
     /** @var string Aspect ratio of page and cover illustrations. */
     public const ASPECT = '4:3';
 
@@ -524,6 +527,82 @@ class media {
     }
 
     /**
+     * The brief of a page's animated SVG scene, or '' when the lesson does not use animated SVG scenes.
+     *
+     * @param stdClass $book
+     * @param stdClass $page
+     * @return string
+     */
+    public static function svg_prompt(stdClass $book, stdClass $page): string {
+        if (picture_modes::of($book) !== picture_modes::SVG) {
+            return '';
+        }
+        return prompt_builder::svg_prompt($book, $page);
+    }
+
+    /**
+     * The id an animated SVG scene of a page is scoped to.
+     *
+     * @param int $pageid
+     * @return string
+     */
+    public static function svg_scope(int $pageid): string {
+        return 'vls' . $pageid;
+    }
+
+    /**
+     * The animated SVG scene learners see: the latest one saved for the page, or null.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @return \stored_file|null
+     */
+    public static function svg_file(\context $context, int $pageid): ?\stored_file {
+        return self::image_file($context, self::AREA_SVG, $pageid);
+    }
+
+    /**
+     * Whether the page's animated SVG scene was made from this brief.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param string $prompt
+     * @return bool
+     */
+    public static function svg_current(\context $context, int $pageid, string $prompt): bool {
+        if ($prompt === '') {
+            return false;
+        }
+        return (bool)get_file_storage()->get_file($context->id, 'mod_visuallearning', self::AREA_SVG, $pageid, '/',
+            'anim-' . sha1($prompt) . '.svg');
+    }
+
+    /**
+     * Cleans and saves an animated SVG scene for a page (older ones are removed).
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param string $prompt the brief it was made from
+     * @param string $svg the SVG as delivered or pasted
+     * @return bool false when it is not a usable SVG (nothing is saved)
+     */
+    public static function save_svg(\context $context, int $pageid, string $prompt, string $svg): bool {
+        $clean = svg_sanitiser::clean($svg, self::svg_scope($pageid));
+        if ($clean === null) {
+            return false;
+        }
+        $name = 'anim-' . sha1($prompt) . '.svg';
+        self::save($context, self::AREA_SVG, $pageid, $name, $clean, 'image/svg+xml');
+        foreach (get_file_storage()->get_area_files($context->id, 'mod_visuallearning', self::AREA_SVG, $pageid, 'id',
+                false) as $file) {
+            if ($file->get_filename() !== $name) {
+                $file->delete();
+            }
+        }
+        return true;
+    }
+
+    /**
      * The file name stem of an illustration: a hash of its full prompt.
      *
      * @param string $prompt
@@ -700,6 +779,12 @@ class media {
                     }
                 }
             }
+            if (in_array('animation', $kinds, true) && ($svgprompt = self::svg_prompt($book, $page)) !== '') {
+                if ($scope === 'all' || !self::svg_current($context, (int)$page->id, $svgprompt)) {
+                    $out[] = ['operation' => 'animation', 'targetid' => (int)$page->id, 'part' => '',
+                        'prompt' => $svgprompt];
+                }
+            }
             if (in_array('voice', $kinds, true)) {
                 foreach (self::clips($book, $page, $index, count($pages)) as $part => $text) {
                     if (!self::part_available($part)) {
@@ -731,7 +816,8 @@ class media {
         $open = [];
         $failed = [];
         foreach ($DB->get_records('visuallearning_aireq', ['visuallearningid' => $book->id], 'id ASC') as $row) {
-            $kind = ['voice' => 'audio', 'option' => 'image', 'card' => 'image'][$row->operation] ?? $row->operation;
+            $kind = ['voice' => 'audio', 'option' => 'image', 'card' => 'image', 'animation' => 'image'][$row->operation]
+                ?? $row->operation;
             $key = $kind . ':' . $row->targetid;
             if (in_array($row->status, ['pending', 'uncertain'], true)) {
                 $open[$key] = true;
@@ -760,6 +846,9 @@ class media {
                 foreach (self::card_chain($context, $book, $page) as $link) {
                     $pictures = $pictures && $link['file'] !== null;
                 }
+            }
+            if (($svgprompt = self::svg_prompt($book, $page)) !== '') {
+                $pictures = $pictures && self::svg_current($context, (int)$page->id, $svgprompt);
             }
             $image = $state($pictures, 'image:' . $page->id);
             $allclips = true;

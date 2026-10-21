@@ -43,12 +43,14 @@ final class animated_scene_test extends \advanced_testcase {
             $this->assertSame($mode, picture_modes::of($book));
             $this->assertSame('legacy', animation_settings::values($book)['animationmode']);
         }
-        $this->assertSame('animated', picture_modes::of((object)['animationmode' => 'automatic']));
+        // The engine setting refines animated-diagram lessons only; it never turns a picture lesson into an animated one.
+        $this->assertSame('animated', picture_modes::of((object)['animationmode' => 'automatic', 'picturemode' => 'animated']));
+        $this->assertSame('single', picture_modes::of((object)['animationmode' => 'automatic']));
         $this->assertSame('single', picture_modes::of((object)['animationmode' => 'static', 'picturemode' => 'animated']));
     }
 
     public function test_scene_brief_is_shared_and_never_requires_a_particular_topic(): void {
-        $book = (object)['animationmode' => 'automatic'];
+        $book = (object)['animationmode' => 'automatic', 'picturemode' => 'animated'];
         [$brief, $field] = prompt_builder::picture_mode_brief($book, 'English');
         $this->assertStringContainsString('"animated_scene"', $brief);
         $this->assertStringContainsString('Teaching content determines the animation', $brief);

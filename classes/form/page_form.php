@@ -198,6 +198,22 @@ class page_form extends \moodleform {
             $mform->addHelpButton('diagram', 'diagramspec', 'mod_visuallearning');
         }
 
+        // Animated SVG scene: made through LMS Labs (step 3), or pasted here from the teacher's own AI assistant.
+        if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
+            if (!empty($this->_customdata['svgprompturl'])) {
+                $mform->addElement('static', 'svgprompt', get_string('animsvg_prompt', 'mod_visuallearning'),
+                    \html_writer::link($this->_customdata['svgprompturl'], get_string('animsvg_download', 'mod_visuallearning')));
+            }
+            $mform->addElement(
+                'textarea',
+                'animsvg',
+                get_string('animsvg', 'mod_visuallearning'),
+                ['rows' => 6, 'cols' => 70, 'style' => 'width:100%;font-family:monospace', 'placeholder' => '<svg ...>']
+            );
+            $mform->setType('animsvg', PARAM_RAW); // pipeline-ignore: PARAM_RAW — SVG allowlist validation runs before saving.
+            $mform->addHelpButton('animsvg', 'animsvg', 'mod_visuallearning');
+        }
+
         $this->add_action_buttons(true, get_string('savechanges'));
     }
 
@@ -215,6 +231,10 @@ class page_form extends \moodleform {
         }
         if (trim((string)($data['diagram'] ?? '')) !== '' && \mod_visuallearning\local\diagram::clean($data['diagram']) === null) {
             $errors['diagram'] = get_string('diagramspec_invalid', 'mod_visuallearning');
+        }
+        if (trim((string)($data['animsvg'] ?? '')) !== ''
+                && \mod_visuallearning\local\svg_sanitiser::clean((string)$data['animsvg'], 'vlcheck') === null) {
+            $errors['animsvg'] = get_string('animsvg_invalid', 'mod_visuallearning');
         }
         if (array_key_exists('cardprompt1', $data)) {
             $filled = array_filter([$data['cardprompt1'] ?? '', $data['cardprompt2'] ?? '', $data['cardprompt3'] ?? ''],

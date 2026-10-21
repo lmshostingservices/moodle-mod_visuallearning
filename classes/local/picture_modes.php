@@ -22,7 +22,10 @@ namespace mod_visuallearning\local;
  * - sequence: one picture per card, made in a chain so each one builds on the one before (card 2 edits card 1's
  *   picture, card 3 edits card 2's); the page picture stays the cover, recap and question picture;
  * - animated: an animated diagram the plugin draws itself (SVG) from a small specification the AI writes, building
- *   up card by card; pages whose concept fits no diagram keep their picture.
+ *   up card by card; pages whose concept fits no diagram keep their picture;
+ * - svg: one animated scene per page, drawn as SVG by Claude through LMS Labs (or pasted from the teacher's own AI);
+ *   it holds a stage for each card, plays at a slow teaching pace timed to each card's voiceover, and can be replayed
+ *   at normal speed once the page has been heard. The page picture stays the cover, recap and question picture.
  *
  * @package    mod_visuallearning
  * @copyright  2026 LMS Hosting Services
@@ -38,8 +41,11 @@ class picture_modes {
     /** @var string Animated diagrams drawn by the plugin. */
     public const ANIMATED = 'animated';
 
+    /** @var string One AI-drawn animated SVG scene per page, staged card by card. */
+    public const SVG = 'svg';
+
     /** @var string[] Every mode, in the order teachers see them. */
-    public const MODES = [self::SINGLE, self::SEQUENCE, self::ANIMATED];
+    public const MODES = [self::SINGLE, self::SEQUENCE, self::ANIMATED, self::SVG];
 
     /** @var int Pictures in a sequence: one per card. */
     public const CARDS = 3;
@@ -61,14 +67,13 @@ class picture_modes {
      * @return string
      */
     public static function of(\stdClass $book): string {
-        $animation = animation_settings::values($book)['animationmode'];
-        if ($animation === 'automatic' || $animation === 'animated') {
-            return self::ANIMATED;
-        }
-        if ($animation === 'static') {
+        // The lesson's own choice decides. The animation engine settings only refine animated-diagram lessons
+        // ("Static image" turns their diagrams off); they never turn a picture lesson into an animated one.
+        $chosen = self::clean($book->picturemode ?? null);
+        if ($chosen === self::ANIMATED && animation_settings::values($book)['animationmode'] === 'static') {
             return self::SINGLE;
         }
-        return self::clean($book->picturemode ?? null);
+        return $chosen;
     }
 
     /**
@@ -90,7 +95,7 @@ class picture_modes {
      * @return array
      */
     public static function form_options(): array {
-        return array_intersect_key(self::options(), [self::SINGLE => 1, self::SEQUENCE => 1]);
+        return array_intersect_key(self::options(), [self::SINGLE => 1, self::SEQUENCE => 1, self::SVG => 1]);
     }
 
     /**

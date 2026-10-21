@@ -71,6 +71,9 @@ class requests {
     /** @var string One card picture (part: the card, 1 to 3); cards 2 and 3 edit the card picture before. */
     public const CARD = 'card';
 
+    /** @var string An animated SVG scene for one page (drawn by Claude through LMS Labs). */
+    public const ANIMATION = 'animation';
+
     /** @var int Seconds a card picture waits for the picture it edits before it is cancelled. */
     public const CARD_WAIT = 3600;
 
@@ -108,7 +111,8 @@ class requests {
      */
     public static function price_operation(string $operation): string {
         return [self::WRITE => 'page', self::IMPORT => 'import', self::IMAGE => 'image', self::COVER => 'image',
-            self::OPTION => 'option', self::VOICE => 'voice', self::CARD => 'card'][$operation];
+            self::OPTION => 'option', self::VOICE => 'voice', self::CARD => 'card',
+            self::ANIMATION => 'animation'][$operation];
     }
 
     /**
@@ -172,6 +176,21 @@ class requests {
     ): array {
         return ['prompt' => $prompt, 'style' => $style, 'aspectRatio' => $aspect, 'purpose' => $purpose,
             'maxCredits' => $maxcredits];
+    }
+
+    /**
+     * The exact body of an animated SVG scene. LMS Labs sends "prompt" to Claude together with the plugin's SVG system
+     * prompt (contract svg-1, schema/svg-animation-system.md) and answers with the SVG.
+     *
+     * @param stdClass $book
+     * @param string $prompt the page's brief
+     * @param int $maxcredits
+     * @return array
+     */
+    public static function animation_body(stdClass $book, string $prompt, int $maxcredits): array {
+        return ['prompt' => $prompt, 'contract' => lmslabs::ANIMATION_CONTRACT, 'language' => (string)$book->language,
+            'learnerLevel' => \mod_visuallearning\local\learner_levels::of($book),
+            'teachingApproach' => approaches::of($book)->key(), 'purpose' => 'animation', 'maxCredits' => $maxcredits];
     }
 
     /**
@@ -300,16 +319,19 @@ class requests {
     public static function picture_mode_fields(stdClass $book): array {
         $mode = \mod_visuallearning\local\picture_modes::of($book);
         $settings = \mod_visuallearning\local\animation_settings::values($book);
-        if ($settings['animationmode'] !== 'legacy') {
+        $engine = in_array($settings['animationmode'], ['automatic', 'animated'], true);
+        if ($engine && $mode === \mod_visuallearning\local\picture_modes::ANIMATED) {
             $caps = lmslabs::capabilities('pages');
-            if (!in_array('1.0', $caps['animatedSceneVersions'] ?? [], true)) {
-                // Do not charge for generation that silently ignores the teacher's requested engine.
-                throw new \moodle_exception('animationservernotready', 'mod_visuallearning');
+            if (in_array('1.0', $caps['animatedSceneVersions'] ?? [], true)) {
+                return ['pictureMode' => $mode, 'animationMode' => $settings['animationmode'],
+                    'animationComplexity' => $settings['animationcomplexity'],
+                    'animationPacing' => $settings['animationpacing']];
             }
-            return ['pictureMode' => $mode, 'animationMode' => $settings['animationmode'],
-                'animationComplexity' => $settings['animationcomplexity'], 'animationPacing' => $settings['animationpacing']];
+            // The scene engine is not live on LMS Labs yet: ask for the classic animated diagrams instead (below)
+            // rather than blocking the lesson.
         }
-        if ($mode === \mod_visuallearning\local\picture_modes::SINGLE || !in_array($mode, lmslabs::draft_picture_modes(), true)) {
+        if (in_array($mode, [\mod_visuallearning\local\picture_modes::SINGLE, \mod_visuallearning\local\picture_modes::SVG], true)
+                || !in_array($mode, lmslabs::draft_picture_modes(), true)) {
             return [];
         }
         return ['pictureMode' => $mode];
@@ -334,7 +356,8 @@ class requests {
         $batch = \core\uuid::generate();
         $summary = ['batch' => $batch, 'items' => [], 'credits' => 0, 'free' => 0, 'included' => [], 'hold' => null,
             'skipped' => 0,
-            'dropped' => 0, 'droppedhold' => null, 'droppedcards' => 0, 'droppedcardshold' => null];
+            'dropped' => 0, 'droppedhold' => null, 'droppedcards' => 0, 'droppedcardshold' => null,
+            'droppedanimations' => 0, 'droppedanimationshold' => null];
         $options = array_filter($plans, fn($p) => $p['operation'] === self::OPTION);
         if ($options && count($options) < count($plans) && ($hold = lmslabs::hold('option')) !== null) {
             // Option pictures cannot be made yet: everything else still can (options show as text cards meanwhile).
@@ -348,6 +371,13 @@ class requests {
             $plans = array_values(array_filter($plans, fn($p) => $p['operation'] !== self::CARD));
             $summary['droppedcards'] = count($cards);
             $summary['droppedcardshold'] = $hold;
+        }
+        $animations = array_filter($plans, fn($p) => $p['operation'] === self::ANIMATION);
+        if ($animations && count($animations) < count($plans) && ($hold = lmslabs::hold('animation')) !== null) {
+            // Animated scenes cannot be made yet: everything else still can (each page shows its picture meanwhile).
+            $plans = array_values(array_filter($plans, fn($p) => $p['operation'] !== self::ANIMATION));
+            $summary['droppedanimations'] = count($animations);
+            $summary['droppedanimationshold'] = $hold;
         }
         if (!$plans) {
             return $summary;
@@ -393,6 +423,9 @@ class requests {
                     // Edits the picture of the card before; which picture is fixed just before it is first sent.
                     $body['_referenceFrom'] = (int)$part - 1;
                 }
+            } else if ($operation === self::ANIMATION) {
+                $price = lmslabs::approved_price('animation');
+                $body = self::animation_body($book, (string)$plan['prompt'], $price);
             } else if ($operation === self::WRITE) {
                 $body = self::write_body($book);
                 $price = (int)$body['maxCredits'];
@@ -404,7 +437,8 @@ class requests {
                 $body += self::image_hints($book);
             }
             $included = false;
-            if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD], true)) {
+            if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD, self::ANIMATION],
+                    true)) {
                 $listprice = $price;
                 [$body, $price] = bundles::media_quote((int)$book->id, $operation, $targetid, $part, $body);
                 // Covered by the slide price the teacher already paid (not a free remake).
@@ -488,7 +522,7 @@ class requests {
             $row->userid = $userid;
             $row->timemodified = $now;
             $DB->update_record('visuallearning_aireq', $row);
-            $perpage = in_array($row->operation, [self::VOICE, self::IMAGE, self::OPTION], true);
+            $perpage = in_array($row->operation, [self::VOICE, self::IMAGE, self::OPTION, self::ANIMATION], true);
             $tasks[$perpage ? 'page' . $row->targetid : $row->operation][] = (int)$row->id;
         }
         if (count($rows) === 1 && $rows[0]->operation === self::IMPORT) {
@@ -773,18 +807,21 @@ class requests {
 
             $routes = [self::WRITE => lmslabs::DRAFT_ROUTE, self::IMPORT => lmslabs::IMPORT_ROUTE,
                 self::IMAGE => lmslabs::IMAGE_ROUTE, self::COVER => lmslabs::IMAGE_ROUTE, self::OPTION => lmslabs::IMAGE_ROUTE,
-                self::VOICE => lmslabs::VOICE_ROUTE, self::CARD => lmslabs::IMAGE_ROUTE];
+                self::VOICE => lmslabs::VOICE_ROUTE, self::CARD => lmslabs::IMAGE_ROUTE,
+                self::ANIMATION => bundles::PREFIX . '/animations'];
             $image = in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION, self::CARD], true);
+            $animation = $row->operation === self::ANIMATION;
             $accept = $image ? 'image/png, image/webp, image/jpeg, application/json'
-                : ($row->operation === self::VOICE ? 'audio/mpeg, application/json' : 'application/json');
-            $timeout = $image ? lmslabs::IMAGE_TIMEOUT : ($row->operation === self::WRITE ? lmslabs::DRAFT_TIMEOUT : 100);
+                : ($row->operation === self::VOICE ? 'audio/mpeg, application/json'
+                : ($animation ? 'image/svg+xml, application/json' : 'application/json'));
+            $timeout = $image || $animation ? lmslabs::IMAGE_TIMEOUT : ($row->operation === self::WRITE ? lmslabs::DRAFT_TIMEOUT : 100);
             \core_php_time_limit::raise($timeout + 60);
             try {
                 $sent = json_decode($row->body, true);
                 if (($sent['_contract'] ?? '') === 'bundle-1') {
                     [$status, $headers, $body] = bundles::text($row, $book);
                 } else {
-                    $route = empty($sent['bundleId']) ? $routes[$row->operation] :
+                    $route = empty($sent['bundleId']) || $animation ? $routes[$row->operation] :
                         bundles::PREFIX . ($row->operation === self::VOICE ? '/speech/tts' : '/images');
                     [$status, $headers, $body] = lmslabs::post(
                     $route,
@@ -909,10 +946,17 @@ class requests {
                 $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]) >= 20) {
             return 'maxpagesreached';
         }
-        if (in_array($row->operation, [self::IMAGE, self::OPTION, self::VOICE, self::CARD], true)) {
+        if (in_array($row->operation, [self::IMAGE, self::OPTION, self::VOICE, self::CARD, self::ANIMATION], true)) {
             $page = $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]);
             if (!$page) {
                 return 'pagedeleted';
+            }
+            if ($row->operation === self::ANIMATION) {
+                $prompt = media::svg_prompt($book, $page);
+                if ($prompt === '' || $prompt !== ($sent['prompt'] ?? null)) {
+                    return 'changed';
+                }
+                return media::svg_current($context, (int)$page->id, $prompt) ? 'alreadymade' : '';
             }
             if ($row->operation === self::CARD) {
                 $link = media::card_chain($context, $book, $page)[(int)$row->part] ?? null;
@@ -1006,6 +1050,24 @@ class requests {
             return;
         }
         $sent = json_decode((string)$row->body, true) ?: [];
+        if ($row->operation === self::ANIMATION) {
+            $row->charged = self::reported($headers['x-credits-charged'] ?? null);
+            $row->balance = isset($headers['x-credits-balance']) && is_numeric($headers['x-credits-balance'])
+                ? (int)$headers['x-credits-balance'] : null;
+            $type = strtolower(trim(explode(';', (string)($headers['content-type'] ?? ''))[0]));
+            $page = $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]);
+            $svg = self::svg_text($type, $body);
+            if (!$page || $svg === null || !media::save_svg($context, (int)$page->id, (string)$sent['prompt'], $svg)) {
+                // Delivered (and possibly charged) but not usable here.
+                $row->status = 'lost';
+                $row->errorcode = $page ? 'unusable_animation' : 'pagedeleted';
+                $row->result = json_encode(['contenttype' => substr($type, 0, 100), 'bytes' => strlen($body)]);
+                return;
+            }
+            $row->status = 'completed';
+            $row->errorcode = null;
+            return;
+        }
         if (in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION, self::VOICE, self::CARD], true)) {
             $row->charged = self::reported($headers['x-credits-charged'] ?? null);
             $row->balance = isset($headers['x-credits-balance']) && is_numeric($headers['x-credits-balance'])
@@ -1132,6 +1194,25 @@ class requests {
             // A free clip has become a paid one: refused before anything was made. The teacher asks again.
             $row->status = 'failed';
         }
+    }
+
+    /**
+     * The SVG in a delivered animated scene: the SVG itself, or a JSON answer carrying it as "svg".
+     *
+     * @param string $type lower-case content type
+     * @param string $body
+     * @return string|null
+     */
+    public static function svg_text(string $type, string $body): ?string {
+        if (strlen($body) > \mod_visuallearning\local\svg_sanitiser::MAX_BYTES * 2) {
+            return null;
+        }
+        if ($type === 'application/json' || str_ends_with($type, '+json')) {
+            $data = json_decode($body, true);
+            $svg = is_array($data) ? ($data['svg'] ?? null) : null;
+            return is_string($svg) && $svg !== '' ? $svg : null;
+        }
+        return stripos($body, '<svg') !== false ? $body : null;
     }
 
     /**

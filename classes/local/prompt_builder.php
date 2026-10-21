@@ -603,4 +603,92 @@ SHAPE;
         }
         return implode('; ', $out);
     }
+
+    /** @var int Longest animated SVG brief sent to LMS Labs (characters). */
+    public const MAX_SVG_PROMPT = 12000;
+
+    /**
+     * Who an animated SVG scene is for, in drawing terms (on top of the level's picture brief).
+     *
+     * @var array
+     */
+    public const SVG_LEVELS = [
+        'primary' => 'Draw for young children: big friendly rounded shapes, at most three main parts, bright colours, '
+            . 'labels of one or two everyday words in large text (at least 16px), and gentle, simple motion.',
+        'secondary' => 'Draw for teenagers: a clear diagram with the correct part names, up to five labels, and the main '
+            . 'steps of the mechanism shown.',
+        'adult' => 'Draw for adult and vocational learners: a practical, clear diagram with the correct terms and the '
+            . 'parts that matter at work.',
+        'advanced' => 'Draw for university students and professionals: textbook detail, correct technical terms and '
+            . 'symbols, more labelled parts, and the real mechanism shown precisely.',
+    ];
+
+    /**
+     * The brief for one page's animated SVG scene. LMS Labs sends it to Claude with the plugin's SVG system prompt
+     * (schema/svg-animation-system.md); teachers can also give both to their own AI assistant.
+     *
+     * @param \stdClass $book
+     * @param \stdClass $page
+     * @return string
+     */
+    public static function svg_prompt(\stdClass $book, \stdClass $page): string {
+        $approach = approaches::of($book);
+        $lines = [];
+        $lines[] = 'Draw the animated SVG scene for one page of a narrated lesson.';
+        $lines[] = '';
+        $lines[] = 'LESSON: ' . trim((string)$book->name);
+        $lines[] = 'PAGE TITLE: ' . trim((string)$page->title);
+        $lines[] = 'LANGUAGE OF EVERY LABEL AND CAPTION: ' . voices::language_name((string)$book->language);
+        $lines[] = '';
+        $lines[] = 'THE THREE CARDS (read aloud one after the other; stage N of the SVG plays while card N is read):';
+        $n = 0;
+        foreach (VISUALLEARNING_CARDS as $card) {
+            $n++;
+            $text = trim(preg_replace('/\s+/u', ' ', (string)$page->{$card . 'text'}));
+            $lines[] = 'CARD ' . $n . ' (' . approaches::card_label($book, $card) . '): ' . ($text !== '' ? $text : '(empty)');
+        }
+        $summary = trim((string)$page->summarytext);
+        if ($summary !== '') {
+            $lines[] = 'ONE-SENTENCE RECAP: ' . $summary;
+        }
+        $scene = trim((string)$page->imageprompt);
+        if ($scene !== '') {
+            $lines[] = '';
+            $lines[] = 'THE PAGE PICTURE SHOWS (for context and a matching look): ' . $scene;
+        }
+        $lines[] = '';
+        if ($approach->image_master() !== '') {
+            $lines[] = 'TEACHING APPROACH: explain the real mechanism - what happens, why and what changes. Show the '
+                . 'mechanism, not just the object.';
+        } else {
+            $lines[] = 'TEACHING APPROACH: a workplace story. Show the situation and what the worker does, as a clear '
+                . 'diagram-style scene with simple pictogram people.';
+        }
+        $level = learner_levels::of($book);
+        $lines[] = 'AUDIENCE: ' . self::SVG_LEVELS[$level];
+        $picture = learner_levels::brief($book, 'picture');
+        if ($picture !== '') {
+            $lines[] = $picture;
+        }
+        $style = visual_styles::direction($book);
+        $direction = trim((string)($book->styleguide ?? ''));
+        if ($style !== '' || $direction !== '') {
+            $lines[] = 'ART DIRECTION (keep the house style below, and use these colours and mood where they fit): '
+                . trim($style . ' ' . $direction);
+        }
+        $lines[] = 'CULTURAL SETTING: ' . self::culture_people($book);
+        $lines[] = '';
+        $lines[] = 'Use only facts the cards give; never invent numbers. Answer with the SVG only.';
+        $out = implode("\n", $lines);
+        return \core_text::strlen($out) > self::MAX_SVG_PROMPT ? \core_text::substr($out, 0, self::MAX_SVG_PROMPT) : $out;
+    }
+
+    /**
+     * The system prompt for animated SVG scenes (the contract, with a worked example).
+     *
+     * @return string
+     */
+    public static function svg_system(): string {
+        return (string)file_get_contents(__DIR__ . '/../../schema/svg-animation-system.md');
+    }
 }

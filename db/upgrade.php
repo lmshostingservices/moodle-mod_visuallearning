@@ -187,5 +187,13 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026102010, 'visuallearning');
     }
+    if ($oldversion < 2026102100) {
+        // 1.6.0 gave every new lesson the "Automatic" animation engine, which turned picture lessons into animated
+        // ones and blocked page writing until LMS Labs shipped the engine. The engine now applies only to
+        // animated-diagram lessons; picture lessons go back to their own picture mode.
+        $DB->execute("UPDATE {visuallearning} SET animationmode = 'legacy'
+                       WHERE animationmode = 'automatic' AND picturemode <> 'animated'");
+        upgrade_mod_savepoint(true, 2026102100, 'visuallearning');
+    }
     return true;
 }

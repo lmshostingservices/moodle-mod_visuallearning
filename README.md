@@ -55,6 +55,7 @@ confirmed first.
 | Initial slide and cover pictures, question option pictures and narration | purchased slide | Included, no extra charge |
 | Optional new picture after successful delivery | picture | 2 credits |
 | Voice remake after successful delivery | clip | 2 credits for every deliberate remake |
+| Animated scene (picture mode "Animated scene per page") | page | 2 credits per scene, including every remake |
 | Pictures and voice for legacy v1.0 slides | picture or clip | 2 credits per generation, including every deliberate remake |
 
 The slide charge settles when its text is delivered. Included media remains owed if delivery fails; do not buy another

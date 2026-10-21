@@ -70,6 +70,16 @@ if ($action === 'downloadprompt') {
     die;
 }
 
+// The animated SVG prompt of one page, for the teacher's own AI assistant (free).
+if ($action === 'svgprompt') {
+    $page = $DB->get_record('visuallearning_pages', ['id' => $pageid, 'visuallearningid' => $book->id], '*', MUST_EXIST);
+    $text = prompt_builder::svg_system() . "\n\n==========\nTHE PAGE TO DRAW\n==========\n\n"
+        . prompt_builder::svg_prompt($book, $page);
+    $filename = 'visuallearning-svg-page-' . (int)$page->pagenum . '.txt';
+    send_file($text, $filename, 0, 0, true, true, 'text/plain; charset=utf-8');
+    die;
+}
+
 // Paid actions: price first (free), then the teacher confirms.
 if (in_array($action, ['quote', 'writequote', 'confirm', 'cancelquote', 'check', 'dismiss'], true)) {
     require_sesskey();
@@ -77,7 +87,7 @@ if (in_array($action, ['quote', 'writequote', 'confirm', 'cancelquote', 'check',
     if ($action === 'quote') {
         $what = optional_param('what', 'missing', PARAM_ALPHA);
         $kinds = array_intersect(
-            explode(',', optional_param('kinds', 'image,option,cover,voice,card', PARAM_TEXT)),
+            explode(',', optional_param('kinds', 'image,option,cover,voice,card,animation', PARAM_TEXT)),
             ['image', 'option', 'cover', 'voice', 'card']
         );
         $plans = media::plan($book, $context, $what === 'all' ? 'all' : 'missing', $pageid, array_values($kinds));
@@ -135,6 +145,7 @@ if (in_array($action, ['delete', 'moveup', 'movedown'], true)) {
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'audio', $page->id);
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'option', $page->id);
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'card', $page->id);
+        $fs->delete_area_files($context->id, 'mod_visuallearning', 'svg', $page->id);
         $DB->delete_records('visuallearning_progress', ['pageid' => $page->id]);
         $DB->delete_records('visuallearning_pages', ['id' => $page->id]);
         visuallearning_renumber_pages($book->id);
@@ -176,7 +187,8 @@ if ($action === 'edit' || $action === 'add') {
     }
     $form = new \mod_visuallearning\form\page_form(
         new moodle_url($baseurl, ['action' => $action, 'pageid' => $pageid]),
-        ['cmid' => $cm->id, 'approach' => $book->teachingapproach ?? null, 'picturemode' => $book->picturemode ?? null]
+        ['cmid' => $cm->id, 'approach' => $book->teachingapproach ?? null, 'picturemode' => $book->picturemode ?? null,
+            'svgprompturl' => $page ? new moodle_url($baseurl, ['action' => 'svgprompt', 'pageid' => $page->id]) : null]
     );
     if ($form->is_cancelled()) {
         redirect(new moodle_url($baseurl, ['step' => 2]));
@@ -210,6 +222,11 @@ if ($action === 'edit' || $action === 'add') {
             }
             $record->id = $page->id;
             $DB->update_record('visuallearning_pages', $record);
+            if (trim((string)($data->animsvg ?? '')) !== '') {
+                // An animated scene from the teacher's own AI assistant: saved as made from this page's brief (free).
+                $saved = $DB->get_record('visuallearning_pages', ['id' => $page->id], '*', MUST_EXIST);
+                media::save_svg($context, (int)$page->id, media::svg_prompt($book, $saved), (string)$data->animsvg);
+            }
         } else {
             require_capability('mod/visuallearning:useai', $context);
             $parsed = ['pages' => [[
@@ -601,8 +618,13 @@ foreach ($pages as $p) {
     $optioncount += count(media::option_prompts($book, $p));
 }
 $sequence = \mod_visuallearning\local\picture_modes::of($book) === \mod_visuallearning\local\picture_modes::SEQUENCE;
+$svgmode = \mod_visuallearning\local\picture_modes::of($book) === \mod_visuallearning\local\picture_modes::SVG;
 echo $holdnotice(['image' => 'image'] + ($optioncount ? ['option' => 'option'] : []) + ($sequence ? ['card' => 'card'] : [])
-    + ['voice' => 'voice']);
+    + ($svgmode ? ['animation' => 'animation'] : []) + ['voice' => 'voice']);
+if ($svgmode) {
+    echo html_writer::tag('p', get_string('svgmode_intro', 'mod_visuallearning', lmslabs::ANIMATION_CREDITS),
+        ['class' => 'small text-muted']);
+}
 
 // Open requests, by page: what is being made, and what needs the teacher.
 $pendingby = [];
@@ -610,12 +632,13 @@ $problems = [];
 $pendingrows = [];
 foreach ($open as $row) {
     if ($row->status === 'pending') {
-        if (!in_array($row->operation, [requests::IMAGE, requests::COVER, requests::OPTION, requests::VOICE, requests::CARD],
-                true)) {
+        if (!in_array($row->operation, [requests::IMAGE, requests::COVER, requests::OPTION, requests::VOICE, requests::CARD,
+                requests::ANIMATION], true)) {
             $pendingrows[] = $row;
             continue;
         }
-        $kind = [requests::VOICE => 'audio', requests::CARD => 'card'][$row->operation] ?? 'image';
+        $kind = [requests::VOICE => 'audio', requests::CARD => 'card', requests::ANIMATION => 'animation'][$row->operation]
+            ?? 'image';
         $pendingby[(int)$row->targetid][$kind] = ($pendingby[(int)$row->targetid][$kind] ?? 0) + 1;
         $pendingrows[] = $row;
     } else {
@@ -784,6 +807,15 @@ if ($total) {
             $cardchip = $chip(get_string('media_cards', 'mod_visuallearning', $made),
                 $made === \mod_visuallearning\local\picture_modes::CARDS ? VISUALLEARNING_MEDIA_READY : VISUALLEARNING_MEDIA_PENDING,
                 $pend['card'] ?? 0);
+        }
+        if ($svgmode && ($svgprompt = media::svg_prompt($book, $page)) !== '') {
+            $svgready = media::svg_current($context, (int)$page->id, $svgprompt);
+            $buttons[] = visuallearning_button($quoteurl('animation', (int)$page->id),
+                get_string('regenanimation', 'mod_visuallearning'), 'post');
+            $cardchip .= $chip(get_string('media_animation', 'mod_visuallearning'),
+                $svgready ? VISUALLEARNING_MEDIA_READY
+                    : VISUALLEARNING_MEDIA_PENDING,
+                $pend['animation'] ?? 0);
         }
         $buttons[] = visuallearning_button($quoteurl('voice', (int)$page->id), get_string('regenaudio', 'mod_visuallearning'),
             'post');

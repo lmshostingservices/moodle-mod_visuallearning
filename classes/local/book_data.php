@@ -68,6 +68,10 @@ class book_data {
             }
             $diagram = $mode === picture_modes::ANIMATED
                 ? diagram::clean(json_decode((string)($page->diagram ?? ''), true)) : null;
+            if ($mode === picture_modes::SVG && ($svgfile = media::svg_file($context, (int)$page->id))) {
+                // Cleaned and scoped when it was saved; shown inline so the player can stage and time it.
+                $diagram = ['type' => 'svg_scene', 'svg' => $svgfile->get_content()];
+            }
             $cards = [];
             foreach (VISUALLEARNING_CARDS as $card) {
                 $text = trim((string)$page->{$card . 'text'});
@@ -147,7 +151,7 @@ class book_data {
                 'gotfirst', 'gotnth', 'tapmatch', 'matchedof', 'tapsort', 'stilltosort', 'dropin', 'soundon',
                 'soundoff', 'yourresults', 'firsttry', 'ntries', 'rightfirst', 'answerstotal', 'timespent', 'notyet',
                 'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel', 'cardpicture', 'diagramlabel',
-                'animationreplay', 'animationstagereplay'] as $key
+                'animationreplay', 'animationstagereplay', 'animationnormal'] as $key
         ) {
             $strings[$key] = get_string('player_' . strtolower($key), 'mod_visuallearning');
         }

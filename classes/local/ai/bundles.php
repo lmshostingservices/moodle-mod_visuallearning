@@ -79,6 +79,13 @@ class bundles {
         if ($page->bundlesite !== requests::sitehash()) {
             throw new \moodle_exception('lmslabscredentialsmissing', 'mod_visuallearning');
         }
+        if ($operation === requests::ANIMATION) {
+            // An animated scene is an extra of a purchased slide, paid at the published animation price.
+            $bound = ['bundleId' => $page->bundleid, 'slideId' => $page->slideid, 'slot' => 'animation',
+                'remake' => false, 'maxCredits' => (int)$body['maxCredits']];
+            unset($body['maxCredits']);
+            return [$body + $bound, $bound['maxCredits']];
+        }
         if ($operation === requests::CARD) {
             // Card pictures are extra pictures of a purchased slide, each paid at the published card price; there is
             // no included slot to check first.
