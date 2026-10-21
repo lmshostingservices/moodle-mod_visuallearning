@@ -180,10 +180,10 @@ final class svg_animation_test extends \advanced_testcase {
         $this->assertStringContainsString('CARD 1', $brief);
         $this->assertStringContainsString('CARD 3', $brief);
         $this->assertStringContainsString(trim($page->concepttext), $brief);
-        $this->assertStringContainsString('young children', $brief);
+        $this->assertStringContainsString(prompt_builder::SVG_LEVELS['primary'], $brief);
         $this->assertStringContainsString('LANGUAGE OF EVERY LABEL', $brief);
         [$book, , $page] = $this->book(picture_modes::SVG, ['learnerlevel' => 'advanced']);
-        $this->assertStringContainsString('textbook detail', prompt_builder::svg_prompt($book, $page));
+        $this->assertStringContainsString(prompt_builder::SVG_LEVELS['advanced'], prompt_builder::svg_prompt($book, $page));
     }
 
     public function test_animated_scene_is_quoted_sent_and_saved(): void {

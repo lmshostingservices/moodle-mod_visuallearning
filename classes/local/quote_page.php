@@ -56,6 +56,7 @@ class quote_page {
             );
         }
         echo $OUTPUT->header();
+        echo html_writer::start_div('vl-quote-page');
         echo $OUTPUT->heading(get_string('quote_heading', 'mod_visuallearning'));
         echo $intro;
         $lines = [];
@@ -74,10 +75,10 @@ class quote_page {
                     'what' => get_string('quote_what_' . $operation, 'mod_visuallearning')]);
             }
             foreach ($parts as $part) {
-                $lines[] = html_writer::tag('li', $part);
+                $lines[] = html_writer::tag('li', $part, ['class' => 'vl-quote-line']);
             }
         }
-        echo html_writer::tag('ul', implode('', $lines));
+        echo html_writer::tag('ul', implode('', $lines), ['class' => 'vl-quote-lines']);
         if (!empty($summary['dropped'])) {
             $dropped = get_string('quote_dropped', 'mod_visuallearning', (object)['count' => $summary['dropped'],
                 'why' => get_string('hold_' . $summary['droppedhold'], 'mod_visuallearning')]);
@@ -104,7 +105,11 @@ class quote_page {
             'balance' => $balance === null ? get_string('balance_unknown', 'mod_visuallearning')
                 : ($balance['unlimited'] ? get_string('balance_unlimited', 'mod_visuallearning') : $balance['credits']),
         ];
-        echo html_writer::tag('p', html_writer::tag('strong', get_string('quote_total', 'mod_visuallearning', $a)));
+        echo html_writer::tag(
+            'p',
+            html_writer::tag('strong', get_string('quote_total', 'mod_visuallearning', $a)),
+            ['class' => 'vl-quote-total']
+        );
         if ((int)$summary['credits'] === 0) {
             echo html_writer::tag('p', get_string('quote_nocharge', 'mod_visuallearning'));
         }
@@ -112,7 +117,7 @@ class quote_page {
             $low = get_string('quote_lowbalance', 'mod_visuallearning', $a);
             echo $OUTPUT->notification($low, \core\output\notification::NOTIFY_WARNING);
         }
-        echo html_writer::tag('p', get_string('quote_rules', 'mod_visuallearning'), ['class' => 'text-muted small']);
+        echo html_writer::tag('p', get_string('quote_rules', 'mod_visuallearning'), ['class' => 'text-muted small vl-quote-rules']);
         $confirm = new moodle_url(
             $baseurl,
             ['action' => 'confirm', 'batch' => $summary['batch'], 'credits' => $summary['credits'], 'sesskey' => sesskey()]
@@ -130,6 +135,7 @@ class quote_page {
             ),
             new single_button($cancel, get_string('cancel'), 'post')
         );
+        echo html_writer::end_div();
         echo $OUTPUT->footer();
         exit;
     }

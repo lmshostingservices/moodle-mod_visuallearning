@@ -54,6 +54,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
                 'pagenum', 'title', 'concepttext', 'actiontext', 'outcometext', 'imageprompt', 'alttext',
                 'summarytext', 'tfstatement', 'tfanswer', 'qtype', 'qdata', 'feedback', 'imagestatus', 'audiostatus', 'lasterror',
                 'bundleid', 'slideid', 'bundlesite', 'bundledeliveries', 'cardprompts', 'diagram',
+                'sceneplan',
                 'timemodified',
             ],
         );

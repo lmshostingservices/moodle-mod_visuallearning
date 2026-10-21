@@ -122,7 +122,8 @@ final class picture_modes_test extends \advanced_testcase {
         [$data] = importer::parse(json_encode(['pages' => [$page]]), 10);
         $this->assertSame([], $data['pages'][0]['card_image_prompts']);
         $this->assertNull($data['pages'][0]['diagram']);
-        $this->assertSame(['cardprompts' => null, 'diagram' => null], importer::picture_fields($data['pages'][0]));
+        $this->assertSame(['cardprompts' => null, 'diagram' => null, 'sceneplan' => null],
+            importer::picture_fields($data['pages'][0]));
     }
 
     public function test_prompt_file_asks_for_the_mode_only_when_chosen(): void {

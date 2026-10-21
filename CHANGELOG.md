@@ -2,6 +2,16 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.7.2] - 2026-10-21
+
+- Animated SVG lessons use the supplied three-stage scene-plan brief and exact house-style art direction.
+- Import, validate, store and edit each page's scene plan; pass it to Claude after the three cards.
+- Include scene plans in Moodle backups and restore older lessons without requiring a plan.
+- Request scene plans from the LMS Labs page writer once its SVG draft capability is available.
+- Clarify that AI-drawn scenes cost 2 credits per generation or deliberate remake; playback is free.
+- Redesign the media workspace with larger previews, at most four cards across, clearer remake controls and a spacious price-confirmation screen.
+- Preserve other picture modes, existing narration playback, the svg-1 system prompt and delivery retry protection.
+
 ## [1.7.1] - 2026-10-21
 
 - Release-pipeline compliance: place the existing SVG sanitisation annotation beside the raw SVG input declaration.

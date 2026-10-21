@@ -195,5 +195,13 @@ function xmldb_visuallearning_upgrade($oldversion) {
                        WHERE animationmode = 'automatic' AND picturemode <> 'animated'");
         upgrade_mod_savepoint(true, 2026102100, 'visuallearning');
     }
+    if ($oldversion < 2026102102) {
+        $table = new xmldb_table('visuallearning_pages');
+        $field = new xmldb_field('sceneplan', XMLDB_TYPE_TEXT, null, null, null, null, null, 'diagram');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026102102, 'visuallearning');
+    }
     return true;
 }

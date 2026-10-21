@@ -19,6 +19,24 @@ After every four concepts the lesson adds:
 
 Every page view, every listen, the time spent on each page and every answer is tracked. The finish screen gives each learner a green tick, confetti and their own results; little interface sounds (with a mute switch) make answering satisfying.
 
+## Animated SVG scenes and scene plans (1.7.2)
+
+Choose **AI-drawn SVG animation** for one illustrated animated scene per page, with three stages matching the
+three narrated cards. Each delivered scene or deliberate remake costs **2 additional credits**; playback is free.
+The 10-credit slide and its included pictures and narration remain unchanged.
+
+The ChatGPT prompt for this mode asks for a `scene_plan`: layout, exactly three stages (`shows`, `moves`, up to
+four short labels), the complete replay, colours, real-time timing flag, accuracy and exclusions. Plans are
+validated, saved with pages, editable under the cards and included in Moodle backups. Existing pages without a
+plan still generate scenes from their cards. Other picture modes retain their existing prompts.
+
+LMS Labs page writing produces these plans when its `draftPictureModes` capability includes `svg`. Until that
+server update is published, teachers can import a plan using the downloaded ChatGPT prompt or add one in the
+page editor. The supplied `svg-1` drawing system prompt is unchanged.
+
+The Pictures & voice workspace now uses larger media cards, no more than four per row, with responsive layouts,
+clearer remake controls and a redesigned price confirmation. Remakes are quoted before confirmation.
+
 ## Requirements
 
 - Moodle 4.4, 4.5, 5.0, 5.1, 5.2 or 5.3 (one code base; tested on 4.4, 4.5, 5.1 and 5.3).

@@ -1,0 +1,4 @@
+In a workplace story lesson the cards follow a named person, but the animation shows the SKILL or PROCESS
+the story is about, not the people. For example, Maya calling back an order becomes an order moving from
+the customer to the head chef and back as a confirmation, with each card's stage showing one step of that
+loop. Use simple figure icons only where a role must be shown.

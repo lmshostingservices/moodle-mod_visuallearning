@@ -70,6 +70,7 @@ class restore_visuallearning_activity_structure_step extends restore_activity_st
     protected function process_visuallearning_page($data) {
         global $DB;
         $data = (object)$data;
+        $data->sceneplan = \mod_visuallearning\local\scene_plan::json($data->sceneplan ?? null);
         $oldid = $data->id;
         $data->visuallearningid = $this->get_new_parentid('visuallearning');
         foreach (['imagestatus', 'audiostatus'] as $field) {

@@ -212,6 +212,9 @@ if ($action === 'edit' || $action === 'add') {
         if (property_exists($data, 'diagram')) {
             $record->diagram = \mod_visuallearning\local\diagram::json($data->diagram);
         }
+        if (property_exists($data, 'sceneplan')) {
+            $record->sceneplan = \mod_visuallearning\local\scene_plan::json($data->sceneplan);
+        }
         $fields = \mod_visuallearning\local\question::to_fields(\mod_visuallearning\local\question::from_form($data));
         foreach ($fields as $field => $value) {
             $record->$field = $value;
@@ -236,6 +239,7 @@ if ($action === 'edit' || $action === 'add') {
                 'question' => \mod_visuallearning\local\question::from_form($data),
                 'card_image_prompts' => json_decode((string)($record->cardprompts ?? ''), true) ?: [],
                 'diagram' => \mod_visuallearning\local\diagram::clean($record->diagram ?? null),
+                'scene_plan' => \mod_visuallearning\local\scene_plan::clean($record->sceneplan ?? null),
             ]]];
             $summary = requests::quote($book, (int)$USER->id, [[
                 'operation' => requests::IMPORT,
@@ -268,6 +272,7 @@ if ($action === 'edit' || $action === 'add') {
                 'cardprompt3' => \mod_visuallearning\local\picture_modes::card_prompts($page)[2],
                 'diagram' => (string)($page->diagram ?? '') !== ''
                     ? json_encode(json_decode($page->diagram), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '',
+                'sceneplan' => \mod_visuallearning\local\scene_plan::json($page->sceneplan ?? null) ?? '',
             ] + \mod_visuallearning\local\question::to_form($page),
         );
     }
@@ -839,7 +844,7 @@ if ($total) {
             'vl-media-card'
         );
     }
-    echo html_writer::div($cards, 'vl-media-grid');
+    echo html_writer::div($cards, 'vl-media-grid vl-media-grid-production');
     if ($canai) {
         echo html_writer::div(
             visuallearning_button(

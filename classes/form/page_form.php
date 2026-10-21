@@ -200,6 +200,10 @@ class page_form extends \moodleform {
 
         // Animated SVG scene: made through LMS Labs (step 3), or pasted here from the teacher's own AI assistant.
         if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
+            $mform->addElement('textarea', 'sceneplan', get_string('sceneplan', 'mod_visuallearning'),
+                ['rows' => 10, 'cols' => 70, 'style' => 'width:100%;font-family:monospace']);
+            $mform->setType('sceneplan', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON allowlisted by scene_plan::clean() during validation and save.
+            $mform->addHelpButton('sceneplan', 'sceneplan', 'mod_visuallearning');
             if (!empty($this->_customdata['svgprompturl'])) {
                 $mform->addElement('static', 'svgprompt', get_string('animsvg_prompt', 'mod_visuallearning'),
                     \html_writer::link($this->_customdata['svgprompturl'], get_string('animsvg_download', 'mod_visuallearning')));
@@ -235,6 +239,10 @@ class page_form extends \moodleform {
         if (trim((string)($data['animsvg'] ?? '')) !== ''
                 && \mod_visuallearning\local\svg_sanitiser::clean((string)$data['animsvg'], 'vlcheck') === null) {
             $errors['animsvg'] = get_string('animsvg_invalid', 'mod_visuallearning');
+        }
+        if (trim((string)($data['sceneplan'] ?? '')) !== ''
+                && \mod_visuallearning\local\scene_plan::clean($data['sceneplan']) === null) {
+            $errors['sceneplan'] = get_string('sceneplan_invalid', 'mod_visuallearning');
         }
         if (array_key_exists('cardprompt1', $data)) {
             $filled = array_filter([$data['cardprompt1'] ?? '', $data['cardprompt2'] ?? '', $data['cardprompt3'] ?? ''],

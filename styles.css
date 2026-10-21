@@ -4699,3 +4699,475 @@
         animation: none;
     }
 }
+
+/* ---------- Production media workflow: spacious editorial cards ---------- */
+.path-mod-visuallearning {
+    --vl-work-ink: #243b3b;
+    --vl-work-muted: #607575;
+    --vl-work-paper: #f5f7f3;
+    --vl-work-card: #fffefa;
+    --vl-work-line: #dce5df;
+    --vl-work-accent: #176b62;
+    --vl-work-accent-soft: #e5f2ed;
+    --vl-work-warm: #f5eee2;
+}
+
+.path-mod-visuallearning .vl-media-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 1.25rem;
+}
+
+.path-mod-visuallearning .vl-media-card {
+    min-width: 0;
+    border: 1px solid var(--vl-work-line);
+    border-radius: 20px;
+    background: var(--vl-work-card);
+    box-shadow: 0 4px 12px rgba(31, 59, 52, .045), 0 18px 34px -26px rgba(31, 59, 52, .3);
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+.path-mod-visuallearning .vl-media-card:hover {
+    transform: translateY(-3px);
+    border-color: #bbd3c8;
+    box-shadow: 0 12px 28px -18px rgba(31, 59, 52, .32);
+}
+
+.path-mod-visuallearning .vl-media-card.is-cover {
+    border-color: #dfd3bd;
+}
+
+.path-mod-visuallearning .vl-media-thumb {
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+    background: var(--vl-work-warm);
+}
+
+.path-mod-visuallearning .vl-media-thumb img {
+    object-fit: cover;
+}
+
+.path-mod-visuallearning .vl-media-thumb .vl-empty {
+    background:
+        linear-gradient(135deg, rgba(23, 107, 98, .07), transparent 60%),
+        repeating-linear-gradient(135deg, transparent 0 14px, rgba(31, 59, 52, .035) 14px 15px),
+        #f0f2ec;
+}
+
+.path-mod-visuallearning .vl-media-thumb .vl-shimmer {
+    background: linear-gradient(100deg, #e9eee8 25%, #f8f8f2 50%, #e9eee8 75%);
+    background-size: 240% 100%;
+}
+
+.path-mod-visuallearning .vl-media-num {
+    top: 12px;
+    left: 12px;
+    min-width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, .8);
+    border-radius: 12px;
+    color: var(--vl-work-ink);
+    background: rgba(255, 254, 250, .95);
+    font-size: .9rem;
+    box-shadow: 0 3px 10px rgba(25, 48, 40, .12);
+}
+
+.path-mod-visuallearning .vl-media-body {
+    gap: .75rem;
+    padding: 1rem 1rem 1.1rem;
+}
+
+.path-mod-visuallearning .vl-media-title {
+    color: var(--vl-work-ink);
+    font-size: 1.05rem;
+    line-height: 1.35;
+    min-height: 2.7em;
+    overflow-wrap: anywhere;
+}
+
+.path-mod-visuallearning .vl-chips {
+    gap: .4rem;
+}
+
+.path-mod-visuallearning .vl-chip {
+    padding: .27rem .58rem .27rem .48rem;
+    border: 1px solid rgba(36, 59, 59, .055);
+    border-radius: 9px;
+    color: var(--vl-work-muted);
+    background: #f1f4ef;
+    font-size: .76rem;
+    line-height: 1.3;
+}
+
+.path-mod-visuallearning .vl-chip-label {
+    color: inherit;
+    font-weight: 700;
+}
+
+.path-mod-visuallearning .vl-chip.is-ready {
+    color: #236548;
+    background: #e7f3e9;
+}
+
+.path-mod-visuallearning .vl-chip.is-making {
+    color: #875c20;
+    background: #f8f0dc;
+}
+
+.path-mod-visuallearning .vl-chip.is-failed {
+    color: #9c4035;
+    background: #f9e9e5;
+}
+
+.path-mod-visuallearning .vl-remake {
+    margin-top: auto;
+    padding-top: .8rem;
+    border-top: 1px solid #edf0eb;
+    font-size: .9rem;
+}
+
+.path-mod-visuallearning .vl-remake summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 42px;
+    padding: .55rem .8rem;
+    border: 1px solid #cbded5;
+    border-radius: 11px;
+    color: var(--vl-work-accent);
+    background: var(--vl-work-accent-soft);
+    font-size: .9rem;
+    font-weight: 750;
+    list-style: none;
+    transition: background .18s ease, border-color .18s ease;
+}
+
+.path-mod-visuallearning .vl-remake summary::-webkit-details-marker {
+    display: none;
+}
+
+.path-mod-visuallearning .vl-remake summary::after {
+    content: "+";
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    color: var(--vl-work-accent);
+    background: rgba(255, 255, 255, .72);
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.path-mod-visuallearning .vl-remake[open] summary::after {
+    content: "−";
+}
+
+.path-mod-visuallearning .vl-remake summary:hover,
+.path-mod-visuallearning .vl-remake summary:focus-visible {
+    border-color: #91b9a8;
+    background: #dceee6;
+}
+
+.path-mod-visuallearning .vl-remake summary:focus-visible {
+    outline: 3px solid rgba(23, 107, 98, .3);
+    outline-offset: 2px;
+}
+
+.path-mod-visuallearning .vl-remake-buttons {
+    gap: .5rem;
+    margin-top: .65rem;
+}
+
+.path-mod-visuallearning .vl-remake-buttons .singlebutton {
+    width: 100%;
+}
+
+.path-mod-visuallearning .vl-remake-buttons .singlebutton form {
+    margin: 0;
+}
+
+.path-mod-visuallearning .vl-remake-buttons .btn {
+    min-height: 42px;
+    padding: .5rem .7rem;
+    border-radius: 10px;
+    color: #31534b;
+    background: #fff;
+    border-color: #d7e2dc;
+    font-size: .84rem;
+    font-weight: 650;
+    white-space: normal;
+    line-height: 1.3;
+}
+
+.path-mod-visuallearning .vl-remake-buttons .btn:hover,
+.path-mod-visuallearning .vl-remake-buttons .btn:focus-visible {
+    color: #124f47;
+    border-color: #9fc2b3;
+    background: #f2f8f4;
+}
+
+@media (max-width: 1100px) {
+    .path-mod-visuallearning .vl-media-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 800px) {
+    .path-mod-visuallearning .vl-media-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .path-mod-visuallearning .vl-media-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: .85rem;
+    }
+
+    .path-mod-visuallearning .vl-media-card {
+        display: grid;
+        grid-template-columns: minmax(110px, 38%) minmax(0, 1fr);
+        align-items: stretch;
+    }
+
+    .path-mod-visuallearning .vl-media-thumb {
+        height: 100%;
+        min-height: 155px;
+        aspect-ratio: auto;
+    }
+
+    .path-mod-visuallearning .vl-media-body {
+        padding: .85rem;
+    }
+
+    .path-mod-visuallearning .vl-media-title {
+        min-height: 0;
+        font-size: .98rem;
+    }
+
+    .path-mod-visuallearning .vl-media-num {
+        top: 8px;
+        left: 8px;
+        min-width: 30px;
+        height: 30px;
+    }
+}
+
+/* ---------- Credit confirmation: a clear estimate, then a deliberate choice ---------- */
+.path-mod-visuallearning .vl-quote-page {
+    --quote-ink: #253d3b;
+    --quote-muted: #637976;
+    --quote-line: #dbe5df;
+    --quote-paper: #f5f8f4;
+    --quote-accent: #176b62;
+    max-width: 1040px;
+    margin: 1.5rem auto 3rem;
+    padding: clamp(1rem, 3vw, 2.4rem);
+    border: 1px solid var(--quote-line);
+    border-radius: 24px;
+    color: var(--quote-ink);
+    background:
+        radial-gradient(ellipse at 92% 0%, rgba(217, 235, 224, .42), transparent 34%),
+        #fffefa;
+    box-shadow: 0 16px 48px -38px rgba(31, 59, 52, .42);
+}
+
+.path-mod-visuallearning .vl-quote-page > h1,
+.path-mod-visuallearning .vl-quote-page > h2 {
+    max-width: 720px;
+    margin: 0 auto 1.35rem;
+    color: var(--quote-ink);
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+    font-weight: 760;
+    letter-spacing: -.035em;
+    line-height: 1.15;
+}
+
+.path-mod-visuallearning .vl-quote-page > p,
+.path-mod-visuallearning .vl-quote-page > ul,
+.path-mod-visuallearning .vl-quote-page > ol,
+.path-mod-visuallearning .vl-quote-page > .notification {
+    max-width: 720px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.path-mod-visuallearning .vl-quote-lines {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .7rem;
+    margin-top: 1.2rem;
+    margin-bottom: 1.2rem;
+    padding: 0;
+    list-style: none;
+}
+
+.path-mod-visuallearning .vl-quote-line {
+    position: relative;
+    min-width: 0;
+    padding: 1rem 1.1rem 1rem 2.8rem;
+    border: 1px solid var(--quote-line);
+    border-radius: 14px;
+    color: var(--quote-ink);
+    background: var(--quote-paper);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.path-mod-visuallearning .vl-quote-line::before {
+    content: "";
+    position: absolute;
+    top: 1.15rem;
+    left: 1.05rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: #78a995;
+    transform: rotate(45deg);
+}
+
+.path-mod-visuallearning .vl-quote-total {
+    margin-top: 1.2rem !important;
+    padding: 1.15rem 1.3rem;
+    border: 1px solid #c9dfd3;
+    border-radius: 16px;
+    color: #174f45;
+    background: #eaf4ee;
+    font-size: 1.2rem;
+    line-height: 1.45;
+}
+
+.path-mod-visuallearning .vl-quote-total strong {
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+
+.path-mod-visuallearning .vl-quote-rules {
+    padding: .85rem 1rem;
+    border-left: 3px solid #c6d7cd;
+    color: var(--quote-muted) !important;
+    background: #f7f8f3;
+    line-height: 1.55;
+}
+
+.path-mod-visuallearning .vl-quote-page #notice,
+.path-mod-visuallearning .vl-quote-page .confirmation,
+.path-mod-visuallearning .vl-quote-page .box.confirmation,
+.path-mod-visuallearning .vl-quote-page .continuebutton {
+    max-width: 720px;
+    margin: 1.5rem auto 0;
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    border: 1px solid #d9e4dd;
+    border-radius: 18px;
+    background: #f7f9f5;
+    box-shadow: none;
+}
+
+.path-mod-visuallearning .vl-quote-page .confirmation p {
+    color: var(--quote-ink);
+    font-size: 1.04rem;
+    line-height: 1.55;
+}
+
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    justify-content: flex-start;
+    margin-top: 1.2rem;
+}
+
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons .singlebutton,
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons form {
+    margin: 0;
+}
+
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons .btn {
+    min-height: 46px;
+    padding: .65rem 1.2rem;
+    border-radius: 11px;
+    font-size: .96rem;
+    font-weight: 700;
+    white-space: normal;
+}
+
+.path-mod-visuallearning .vl-quote-page .continuebutton .singlebutton,
+.path-mod-visuallearning .vl-quote-page .continuebutton form {
+    display: inline-block;
+    margin: .35rem .55rem .15rem 0;
+}
+
+.path-mod-visuallearning .vl-quote-page .continuebutton .btn {
+    min-height: 46px;
+    padding: .65rem 1.2rem;
+    border-radius: 11px;
+    font-size: .96rem;
+    font-weight: 700;
+    white-space: normal;
+}
+
+.path-mod-visuallearning .vl-quote-page .continuebutton .btn-primary {
+    border-color: var(--quote-accent);
+    color: #fff;
+    background: var(--quote-accent);
+}
+
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons .btn-primary {
+    border-color: var(--quote-accent);
+    color: #fff;
+    background: var(--quote-accent);
+}
+
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons .btn-primary:hover,
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons .btn-primary:focus-visible {
+    border-color: #10544d;
+    background: #10544d;
+}
+
+.path-mod-visuallearning .vl-quote-page .confirmation-buttons .btn:focus-visible {
+    outline: 3px solid rgba(23, 107, 98, .3);
+    outline-offset: 2px;
+}
+
+.path-mod-visuallearning .vl-quote-page .continuebutton .btn:focus-visible {
+    outline: 3px solid rgba(23, 107, 98, .3);
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .path-mod-visuallearning .vl-quote-page {
+        margin: .75rem -.5rem 1.5rem;
+        padding: 1rem;
+        border-radius: 16px;
+    }
+
+    .path-mod-visuallearning .vl-quote-lines {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .path-mod-visuallearning .vl-quote-page .confirmation-buttons {
+        flex-direction: column;
+    }
+
+    .path-mod-visuallearning .vl-quote-page .confirmation-buttons .singlebutton,
+    .path-mod-visuallearning .vl-quote-page .confirmation-buttons form,
+    .path-mod-visuallearning .vl-quote-page .confirmation-buttons .btn {
+        width: 100%;
+    }
+
+    .path-mod-visuallearning .vl-quote-page .continuebutton .singlebutton,
+    .path-mod-visuallearning .vl-quote-page .continuebutton form,
+    .path-mod-visuallearning .vl-quote-page .continuebutton .btn {
+        display: block;
+        width: 100%;
+        margin-right: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .path-mod-visuallearning .vl-media-card,
+    .path-mod-visuallearning .vl-remake summary {
+        transition: none;
+    }
+}

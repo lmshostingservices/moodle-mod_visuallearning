@@ -179,6 +179,14 @@ CULTURE;
         $culturestep = $approach->culture_brief($place) ?? $culturestep;
         [$modestep, $modekey, $modecheck, $keycount] = self::picture_mode_brief($book, $language);
         $imagesbrief .= $modestep;
+        $imageheading = "------------------------------------------------\nSTEP 5 - DESIGN THE ILLUSTRATIONS\n"
+            . "------------------------------------------------";
+        if (picture_modes::of($book) === picture_modes::SVG) {
+            // The supplied animated-scene brief replaces STEP 5, never appends a conflicting picture brief.
+            $imageheading = '';
+            $imagesbrief = $modestep . "\nDefine a shared style_guide and lesson-wide colour code, characters, and "
+                . "cover_image_prompt. Keep the existing question and cover picture requirements.";
+        }
 
         return <<<PROMPT
 VISUAL LEARNING LESSON - CONTENT GENERATION BRIEF
@@ -242,9 +250,7 @@ STEP 4 - RECAP SENTENCE AND CHECK QUESTION
   Written in {$language}, to be read aloud.
 {$questionstep}
 
-------------------------------------------------
-STEP 5 - DESIGN THE ILLUSTRATIONS
-------------------------------------------------
+{$imageheading}
 {$imagesbrief}
 
 ------------------------------------------------
@@ -295,6 +301,12 @@ PROMPT;
      */
     public static function picture_mode_brief(\stdClass $book, string $language): array {
         $mode = picture_modes::of($book);
+        if ($mode === picture_modes::SVG) {
+            $key = file_get_contents(__DIR__ . '/../../schema/scene-plan-output.txt');
+            $check = file_get_contents(__DIR__ . '/../../schema/scene-plan-checks.txt');
+            return [scene_plan::brief($language, approaches::of($book)->key() === 'story'),
+                '      ' . trim($key) . ",\n", ' ' . trim($check) . ' ', 'ten'];
+        }
         if ($mode === picture_modes::SEQUENCE) {
             $step = <<<TXT
 
@@ -613,14 +625,14 @@ SHAPE;
      * @var array
      */
     public const SVG_LEVELS = [
-        'primary' => 'Draw for young children: big friendly rounded shapes, at most three main parts, bright colours, '
-            . 'labels of one or two everyday words in large text (at least 16px), and gentle, simple motion.',
-        'secondary' => 'Draw for teenagers: a clear diagram with the correct part names, up to five labels, and the main '
-            . 'steps of the mechanism shown.',
-        'adult' => 'Draw for adult and vocational learners: a practical, clear diagram with the correct terms and the '
-            . 'parts that matter at work.',
-        'advanced' => 'Draw for university students and professionals: textbook detail, correct technical terms and '
-            . 'symbols, more labelled parts, and the real mechanism shown precisely.',
+        'primary' => 'Very simple: one big subject, at most three main parts, big friendly shapes and bright colours, '
+            . 'labels of one or two everyday words, slow and obvious motion, a familiar comparison where it helps.',
+        'secondary' => 'Clear and engaging: the main parts and how they connect, correct technical terms in a few labels, '
+            . 'lively but calm motion.',
+        'adult' => 'Real equipment and real workplace context where it helps; practical labels; motion that shows '
+            . 'what the learner will see on the job.',
+        'advanced' => 'Textbook detail: every relevant part, correct terminology and symbols, variables and units '
+            . 'the content gives, precise relationships in the motion.',
     ];
 
     /**
@@ -647,6 +659,11 @@ SHAPE;
             $text = trim(preg_replace('/\s+/u', ' ', (string)$page->{$card . 'text'}));
             $lines[] = 'CARD ' . $n . ' (' . approaches::card_label($book, $card) . '): ' . ($text !== '' ? $text : '(empty)');
         }
+        $plan = scene_plan::drawing_brief($page->sceneplan ?? null);
+        if ($plan !== '') {
+            $lines[] = '';
+            $lines[] = $plan;
+        }
         $summary = trim((string)$page->summarytext);
         if ($summary !== '') {
             $lines[] = 'ONE-SENTENCE RECAP: ' . $summary;
@@ -661,8 +678,8 @@ SHAPE;
             $lines[] = 'TEACHING APPROACH: explain the real mechanism - what happens, why and what changes. Show the '
                 . 'mechanism, not just the object.';
         } else {
-            $lines[] = 'TEACHING APPROACH: a workplace story. Show the situation and what the worker does, as a clear '
-                . 'diagram-style scene with simple pictogram people.';
+            $lines[] = 'TEACHING APPROACH: a workplace story. Animate the SKILL or PROCESS the story teaches, '
+                . 'not the people. Use simple figure icons only where a role must be shown.';
         }
         $level = learner_levels::of($book);
         $lines[] = 'AUDIENCE: ' . self::SVG_LEVELS[$level];

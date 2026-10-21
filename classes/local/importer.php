@@ -59,6 +59,7 @@ class importer {
         return [
             'cardprompts' => count($cards) === picture_modes::CARDS ? json_encode($cards, JSON_UNESCAPED_UNICODE) : null,
             'diagram' => is_array($diagram) ? diagram::json($diagram) : null,
+            'sceneplan' => scene_plan::json($page['scene_plan'] ?? null),
         ];
     }
 
@@ -126,7 +127,12 @@ class importer {
                 'question' => question::from_ai($p),
                 'card_image_prompts' => self::card_prompts($p['card_image_prompts'] ?? null),
                 'diagram' => diagram::clean($p['diagram'] ?? null),
+                'scene_plan' => scene_plan::clean($p['scene_plan'] ?? null),
             ];
+            if (isset($p['scene_plan']) && $page['scene_plan'] === null) {
+                $errors[] = get_string('import_missingfield', 'mod_visuallearning',
+                    (object)['page' => $n, 'field' => 'scene_plan (invalid)']);
+            }
             foreach (['title', 'concept', 'action', 'outcome', 'image_prompt'] as $key) {
                 if ($page[$key] === '') {
                     $errors[] = get_string('import_missingfield', 'mod_visuallearning', (object)['page' => $n, 'field' => $key]);

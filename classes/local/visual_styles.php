@@ -102,7 +102,10 @@ class visual_styles {
      * @return array
      */
     public static function form_options(): array {
-        return self::options() + [self::ANIMATED => get_string('visualstyle_animated', 'mod_visuallearning')];
+        return self::options() + [
+            picture_modes::SVG => get_string('visualstyle_svg', 'mod_visuallearning'),
+            self::ANIMATED => get_string('visualstyle_animated', 'mod_visuallearning'),
+        ];
     }
 
     /**
@@ -111,6 +114,11 @@ class visual_styles {
      * @param \stdClass $data form or instance data (visualstyle, picturemode); changed in place
      */
     public static function apply_choice(\stdClass $data): void {
+        if (($data->visualstyle ?? '') === picture_modes::SVG) {
+            $data->visualstyle = 'diagram';
+            $data->picturemode = picture_modes::SVG;
+            return;
+        }
         if (($data->visualstyle ?? '') === self::ANIMATED) {
             $data->visualstyle = 'diagram';
             $data->picturemode = picture_modes::ANIMATED;
@@ -137,6 +145,10 @@ class visual_styles {
      */
     public static function direction(\stdClass $book): string {
         $text = trim((string)($book->imagestyle ?? ''));
+        if (picture_modes::of($book) === picture_modes::SVG
+                && ($text === '' || self::is_default_text($text))) {
+            return get_string('svg_art_direction', 'mod_visuallearning');
+        }
         $key = self::of($book);
         if ($key === self::DEFAULT) {
             // Exactly as before styles existed (an empty field stays empty in the picture prompts).

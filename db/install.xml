@@ -78,6 +78,7 @@
         <FIELD NAME="lasterror" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="cardprompts" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: three picture prompts, one per card; 2 and 3 edit the picture before them"/>
         <FIELD NAME="diagram" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: animated diagram specification drawn by the plugin"/>
+        <FIELD NAME="sceneplan" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: validated three-card drawing plan for svg-1"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

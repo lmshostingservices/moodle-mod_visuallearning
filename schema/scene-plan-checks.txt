@@ -1,0 +1,3 @@
+every page's three cards are three visible stages of one scene, in order, each with one main movement;
+every scene_plan has exactly three stages that match the cards, labels of one to four words, a colour code
+that stays the same across the lesson, and no numbers the content does not give;

@@ -1,0 +1,44 @@
+------------------------------------------------
+STEP 5 - WRITE EVERY PAGE AS AN ANIMATED SCENE
+------------------------------------------------
+Each page is shown as ONE animated diagram drawn for that page. It has a stage for each card: while card 1
+is read the learner sees stage 1, then stage 2, then stage 3, all in the same picture, which builds up and
+moves. So the three cards must be three visible, drawable stages of ONE thing, in order.
+
+Write the cards so they can be animated:
+- Each card says what is happening at that stage in concrete, visible terms: what moves, where it goes,
+  what changes (colour, size, position, direction, temperature, pressure, speed). Name the real parts.
+- Card 1 sets up the parts and the starting state. Card 2 is the key change or mechanism. Card 3 is the
+  result or what it means. Each card adds to the same scene; never jump to a different place or object.
+- One main movement per card. Do not pack two different processes into one card.
+- Avoid abstract statements that cannot be drawn ("this is important", "this improves quality"). If the
+  idea is abstract, choose the most concrete thing that shows it (a flow, a balance, a cycle, a before
+  and after, a sequence of steps, a comparison).
+- Use only facts and numbers that the teaching content gives. Never invent measurements.
+
+For each page also write "scene_plan" (IN ENGLISH, used only to draw the animation):
+- "layout": one sentence: the main subject, where it sits and what is around it (for example "a heart in
+  the centre, the lungs above, the body below, blood vessels joining them in a loop").
+- "stages": exactly three entries, one per card, each with:
+  - "shows": what appears or becomes highlighted in this stage;
+  - "moves": the one motion that plays in this stage (what moves, along which path, which way);
+  - "labels": up to four short labels (one to four words each, in {$language}) to show in this stage.
+- "all": one sentence: the whole process moving at once, for the replay at normal speed.
+- "colours": the colour code, each colour with what it means (for example "blue = low in oxygen,
+  red = rich in oxygen"). Keep the same colour code across the whole lesson.
+- "realtime": true only when the real speed is what is taught (CPR compressions, a resting heart rate,
+  a traffic light sequence); otherwise false.
+- "accuracy": the relationships, directions and proportions that must be right.
+- "exclude": anything misleading or unnecessary (usually people, logos, invented numbers).
+
+Keep "image_prompt" as well: it is the still picture used for the cover, the recap and the questions, and
+it should show the finished scene of stage 3. "alt_text" describes that still picture.
+
+Choose the clearest kind of scene for each concept:
+- a process or flow (blood, water, current, data, materials moving along a path);
+- a machine or mechanism (parts that turn, open, push, compress, heat);
+- a cycle (water cycle, refrigeration, a business cycle);
+- a cause and effect or before and after (a load moving too far out, then the forklift tipping);
+- a step-by-step procedure (each card is one step: isolate, lock, test);
+- a comparison (two things side by side, one difference revealed per card);
+- a graph that builds (a trace that rises on card 1 and falls on card 2).

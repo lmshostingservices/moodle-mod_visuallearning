@@ -170,6 +170,7 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->addHelpButton('picturemode', 'picturemode', 'mod_visuallearning');
         // Animated diagrams replace the pictures, so the picture mode does not apply.
         $mform->hideIf('picturemode', 'visualstyle', 'eq', \mod_visuallearning\local\visual_styles::ANIMATED);
+        $mform->hideIf('picturemode', 'visualstyle', 'eq', \mod_visuallearning\local\picture_modes::SVG);
         foreach (\mod_visuallearning\local\animation_settings::OPTIONS as $field => $values) {
             $options = [];
             foreach ($values as $value) {
@@ -193,6 +194,9 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         );
         $mform->setType('imagestyle', PARAM_TEXT);
         $mform->setDefault('imagestyle', $config->defaultimagestyle ?? get_string('defaultimagestyle', 'mod_visuallearning'));
+        if ($defaultmode === \mod_visuallearning\local\picture_modes::SVG) {
+            $mform->setDefault('imagestyle', get_string('svg_art_direction', 'mod_visuallearning'));
+        }
         $mform->addHelpButton('imagestyle', 'imagestyle', 'mod_visuallearning');
 
         // Recap and checks.
@@ -264,6 +268,11 @@ class mod_visuallearning_mod_form extends moodleform_mod {
      * @param array $defaultvalues
      */
     public function data_preprocessing(&$defaultvalues) {
+        if (($defaultvalues['picturemode'] ?? '') === \mod_visuallearning\local\picture_modes::SVG) {
+            $defaultvalues['imagestyle'] = \mod_visuallearning\local\visual_styles::direction((object)$defaultvalues);
+            $defaultvalues['visualstyle'] = \mod_visuallearning\local\picture_modes::SVG;
+            $defaultvalues['picturemode'] = \mod_visuallearning\local\picture_modes::SINGLE;
+        }
         if (isset($defaultvalues['questiontypes'])) {
             $chosen = explode(',', (string)$defaultvalues['questiontypes']);
             foreach (\mod_visuallearning\local\question::TYPES as $type) {

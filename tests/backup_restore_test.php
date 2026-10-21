@@ -44,8 +44,15 @@ final class backup_restore_test extends \advanced_testcase {
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_visuallearning');
         $context = \context_module::instance($book->cmid);
         $fs = get_file_storage();
+        $stage = ['shows' => 'A basin', 'moves' => 'Water enters a pipe', 'labels' => ['Water']];
+        $plan = \mod_visuallearning\local\scene_plan::json([
+            'layout' => 'A basin above a pipe', 'stages' => [$stage, $stage, $stage],
+            'all' => 'Water flows through the pipe', 'colours' => 'blue = water',
+            'realtime' => false, 'accuracy' => 'Flow follows the pipe', 'exclude' => '',
+        ]);
         foreach ([1, 2] as $n) {
             $page = $generator->create_page($book->id);
+            $DB->set_field('visuallearning_pages', 'sceneplan', $n === 1 ? $plan : null, ['id' => $page->id]);
             $fs->create_file_from_string(
                 ['contextid' => $context->id, 'component' => 'mod_visuallearning',
                     'filearea' => 'image', 'itemid' => $page->id, 'filepath' => '/', 'filename' => "image_$n.png"],
@@ -87,6 +94,9 @@ final class backup_restore_test extends \advanced_testcase {
         $newcm = get_coursemodule_from_instance('visuallearning', $newbook->id);
         $newpages = $DB->get_records('visuallearning_pages', ['visuallearningid' => $newbook->id]);
         $this->assertCount(2, $newpages);
+        $restored = array_values($newpages);
+        $this->assertSame($plan, $restored[0]->sceneplan);
+        $this->assertNull($restored[1]->sceneplan);
 
         $newcontext = \context_module::instance($newcm->id);
         foreach (['image', 'audio'] as $area) {

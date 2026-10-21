@@ -330,7 +330,11 @@ class requests {
             // The scene engine is not live on LMS Labs yet: ask for the classic animated diagrams instead (below)
             // rather than blocking the lesson.
         }
-        if (in_array($mode, [\mod_visuallearning\local\picture_modes::SINGLE, \mod_visuallearning\local\picture_modes::SVG], true)
+        if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
+            // Older servers can still write cards; send svg only after explicit draft capability discovery.
+            return in_array($mode, lmslabs::draft_picture_modes(), true) ? ['pictureMode' => $mode] : [];
+        }
+        if ($mode === \mod_visuallearning\local\picture_modes::SINGLE
                 || !in_array($mode, lmslabs::draft_picture_modes(), true)) {
             return [];
         }
