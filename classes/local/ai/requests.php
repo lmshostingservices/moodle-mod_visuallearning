@@ -23,6 +23,7 @@ use mod_visuallearning\local\media;
 use mod_visuallearning\local\prompt_builder;
 use mod_visuallearning\local\question;
 use mod_visuallearning\local\visual_styles;
+use mod_visuallearning\local\voices;
 use moodle_exception;
 use stdClass;
 
@@ -159,6 +160,36 @@ class requests {
     }
 
     /**
+     * What is kept about a delivered picture, so image models can be compared: the model, its token use and cost when
+     * LMS Labs reports them (X-Model, X-Usage-Input-Tokens, X-Usage-Output-Tokens, X-Provider-Cost-Usd), the size in
+     * pixels, the file type and the number of bytes.
+     *
+     * @param array $headers response headers (lower-case names)
+     * @param string $bytes the picture
+     * @param string $ext its file type
+     * @return array
+     */
+    public static function image_receipt(array $headers, string $bytes, string $ext): array {
+        $out = ['type' => $ext, 'bytes' => strlen($bytes)];
+        $model = preg_replace('/[^A-Za-z0-9._:-]/', '', (string)($headers['x-model'] ?? ''));
+        if ($model !== '') {
+            $out['model'] = substr($model, 0, 80);
+        }
+        foreach (['input' => 'x-usage-input-tokens', 'output' => 'x-usage-output-tokens'] as $key => $name) {
+            if (isset($headers[$name]) && ctype_digit((string)$headers[$name])) {
+                $out['tokens'][$key] = (int)$headers[$name];
+            }
+        }
+        if (isset($headers['x-provider-cost-usd']) && is_numeric($headers['x-provider-cost-usd'])) {
+            $out['costusd'] = round((float)$headers['x-provider-cost-usd'], 5);
+        }
+        if (in_array($ext, ['png', 'jpg', 'webp'], true) && ($size = getimagesizefromstring($bytes))) {
+            $out['size'] = $size[0] . 'x' . $size[1];
+        }
+        return $out;
+    }
+
+    /**
      * The exact body of an illustration.
      *
      * @param string $prompt
@@ -283,6 +314,12 @@ class requests {
         if (\core_text::strlen($content) > lmslabs::MAX_CONTENT) {
             throw new moodle_exception('write_toolong', 'mod_visuallearning', '', lmslabs::MAX_CONTENT);
         }
+        // Objectives, prior knowledge, the unit code and the teacher's extra instructions travel with the content, so
+        // LMS Labs needs no new fields.
+        $content = prompt_builder::lesson_extras($book) . $content . prompt_builder::material_block($book);
+        if (\core_text::strlen($content) > lmslabs::MAX_CONTENT) {
+            throw new moodle_exception('write_toolong', 'mod_visuallearning', '', lmslabs::MAX_CONTENT);
+        }
         $max = (int)$book->maxpages;
         $body = array_merge([
             'title' => (string)$book->name,
@@ -290,7 +327,7 @@ class requests {
             'subindustry' => trim((string)$book->subindustry),
             'language' => (string)$book->language,
             'culture' => prompt_builder::culture($book),
-            'imageStyle' => trim((string)$book->imagestyle),
+            'imageStyle' => visual_styles::direction($book),
         ], self::approach_fields($book), [
             'maxPages' => $max,
             'recap' => (bool)$book->enablerecap,
@@ -305,6 +342,13 @@ class requests {
             // Until LMS Labs takes the level as a field, its brief travels with the art direction.
             $body['imageStyle'] = trim($body['imageStyle'] . ' ' . $level);
         }
+        if (!empty(lmslabs::capabilities('pages')['writerBrief'])) {
+            // The plugin's own brief, so Claude at LMS Labs writes exactly what this version of the plugin expects.
+            $body['writerBrief'] = prompt_builder::writer_prompt($book);
+        }
+        // What may be written in the pictures (callouts, part labels or nothing) travels the same way.
+        $body['imageStyle'] = trim($body['imageStyle'] . ' '
+            . ltrim(prompt_builder::picture_words_brief($book, voices::language_name((string)$book->language)), "\n- "));
         return $body;
     }
 
@@ -430,9 +474,16 @@ class requests {
             } else if ($operation === self::ANIMATION) {
                 $price = lmslabs::approved_price('animation');
                 $body = self::animation_body($book, (string)$plan['prompt'], $price);
+                // What it is made from, so the delivered scene is saved as current for exactly these inputs.
+                $body['_svgkey'] = (string)($plan['key'] ?? '');
             } else if ($operation === self::WRITE) {
                 $body = self::write_body($book);
                 $price = (int)$body['maxCredits'];
+                // The pictures, animated diagrams and narration follow automatically once the pages are written: the
+                // teacher approves here, once, the most they can cost beyond what each page's price includes.
+                $body['_autobuild'] = true;
+                $body['_autobudget'] = self::autobuild_budget($book);
+                $summary['autobudget'] = $body['_autobudget'];
             } else {
                 $body = $plan['body'];
                 $price = (int)$body['maxCredits'];
@@ -815,7 +866,7 @@ class requests {
                 self::ANIMATION => bundles::PREFIX . '/animations'];
             $image = in_array($row->operation, [self::IMAGE, self::COVER, self::OPTION, self::CARD], true);
             $animation = $row->operation === self::ANIMATION;
-            $accept = $image ? 'image/png, image/webp, image/jpeg, application/json'
+            $accept = $image ? 'image/png, image/webp, image/jpeg, image/svg+xml, application/json'
                 : ($row->operation === self::VOICE ? 'audio/mpeg, application/json'
                 : ($animation ? 'image/svg+xml, application/json' : 'application/json'));
             $timeout = $image || $animation ? lmslabs::IMAGE_TIMEOUT : ($row->operation === self::WRITE ? lmslabs::DRAFT_TIMEOUT : 100);
@@ -960,7 +1011,7 @@ class requests {
                 if ($prompt === '' || $prompt !== ($sent['prompt'] ?? null)) {
                     return 'changed';
                 }
-                return media::svg_current($context, (int)$page->id, $prompt) ? 'alreadymade' : '';
+                return media::svg_current($context, (int)$page->id, media::svg_key($book, $page)) ? 'alreadymade' : '';
             }
             if ($row->operation === self::CARD) {
                 $link = media::card_chain($context, $book, $page)[(int)$row->part] ?? null;
@@ -1061,7 +1112,8 @@ class requests {
             $type = strtolower(trim(explode(';', (string)($headers['content-type'] ?? ''))[0]));
             $page = $DB->get_record('visuallearning_pages', ['id' => $row->targetid, 'visuallearningid' => $book->id]);
             $svg = self::svg_text($type, $body);
-            if (!$page || $svg === null || !media::save_svg($context, (int)$page->id, (string)$sent['prompt'], $svg)) {
+            $key = (string)($sent['_svgkey'] ?? '') ?: ($page ? media::svg_key($book, $page) : '');
+            if (!$page || $svg === null || !media::save_svg($context, (int)$page->id, $key, $svg)) {
                 // Delivered (and possibly charged) but not usable here.
                 $row->status = 'lost';
                 $row->errorcode = $page ? 'unusable_animation' : 'pagedeleted';
@@ -1119,6 +1171,7 @@ class requests {
             }
             $row->status = 'completed';
             $row->errorcode = null;
+            $row->result = json_encode(self::image_receipt($headers, $bytes, $ext));
             return;
         }
 
@@ -1167,6 +1220,85 @@ class requests {
         rebuild_course_cache((int)$book->course, true);
         // New or replaced pages change what a full grade needs.
         visuallearning_update_grades($DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST));
+        if ($row->operation === self::WRITE && !empty($sent['_autobuild'])) {
+            self::autobuild($DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST), $context,
+                (int)$row->userid, (int)($sent['_autobudget'] ?? 0));
+        }
+    }
+
+    /**
+     * The most creating a whole lesson can cost with the teacher's choices: its pages (each with its first picture and
+     * narration) plus the animated diagrams or card pictures it asks for.
+     *
+     * @param stdClass $book
+     * @return int credits
+     */
+    public static function lesson_price(stdClass $book): int {
+        return (int)$book->maxpages * lmslabs::approved_price('page') + self::autobuild_budget($book);
+    }
+
+    /**
+     * The most a lesson's pictures, animated diagrams and narration can cost beyond what each page's price includes:
+     * an animated diagram for every page, or the extra card pictures, at their approved prices.
+     *
+     * @param stdClass $book
+     * @return int credits
+     */
+    public static function autobuild_budget(stdClass $book): int {
+        $pages = (int)$book->maxpages;
+        $mode = \mod_visuallearning\local\picture_modes::of($book);
+        if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
+            return $pages * lmslabs::approved_price('animation');
+        }
+        if ($mode === \mod_visuallearning\local\picture_modes::SEQUENCE) {
+            return $pages * \mod_visuallearning\local\picture_modes::CARDS * lmslabs::approved_price('card');
+        }
+        return 0;
+    }
+
+    /**
+     * Makes everything the new pages need (pictures, option pictures, cover, narration, and animated diagrams or card
+     * pictures), as approved with the pages. Nothing is made when it would cost more than approved or cannot be made
+     * now; the teacher then sees it in step 3 as usual.
+     *
+     * @param stdClass $book
+     * @param \context_module $context
+     * @param int $userid who confirmed the pages
+     * @param int $budget credits approved beyond the pages' included media
+     */
+    protected static function autobuild(stdClass $book, \context_module $context, int $userid, int $budget): void {
+        global $DB;
+        $kinds = ['image', 'option', 'cover', 'voice'];
+        $mode = \mod_visuallearning\local\picture_modes::of($book);
+        if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
+            $kinds[] = 'animation';
+        } else if ($mode === \mod_visuallearning\local\picture_modes::SEQUENCE) {
+            $kinds[] = 'card';
+        }
+        // Each kind is priced and confirmed on its own, so one that cannot be made now never stops the others.
+        foreach ($kinds as $kind) {
+            $before = $DB->get_fieldset_select('visuallearning_aireq', 'id', 'visuallearningid = ? AND status = ?',
+                [(int)$book->id, 'quoted']);
+            try {
+                $plans = media::plan($book, $context, 'missing', 0, [$kind]);
+                if (!$plans) {
+                    continue;
+                }
+                $summary = self::quote($book, $userid, $plans);
+                if (!$summary['items'] || $summary['hold'] !== null || (int)$summary['credits'] > $budget) {
+                    self::cancel_quote((int)$book->id, $summary['batch']);
+                    continue;
+                }
+                self::confirm($book, $summary['batch'], $userid, (int)$summary['credits']);
+                $budget -= (int)$summary['credits'];
+            } catch (\Throwable $e) {
+                // This kind waits for the teacher in step 3; quotes left half made are removed.
+                [$notin, $params] = $before ? $DB->get_in_or_equal($before, SQL_PARAMS_QM, 'p', false) : ['<> 0', []];
+                $DB->delete_records_select('visuallearning_aireq', "visuallearningid = ? AND status = ? AND id $notin",
+                    array_merge([(int)$book->id, 'quoted'], $params));
+                debugging('Automatic build of ' . $kind . ' stopped: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
     }
 
     /**
@@ -1229,6 +1361,10 @@ class requests {
     public static function image_bytes(string $type, string $body): ?string {
         if (strlen($body) > lmslabs::MAX_IMAGE_BYTES * 2) {
             return null;
+        }
+        // A still drawn as SVG (for example a technical or 3D diagram drawn by Claude): cleaned before it is kept.
+        if ($type === 'image/svg+xml' || ($type !== 'application/json' && stripos(ltrim(substr($body, 0, 300)), '<svg') === 0)) {
+            return \mod_visuallearning\local\svg_sanitiser::clean($body, 'vlpic');
         }
         if (media::image_type($body) !== '') {
             return strlen($body) <= lmslabs::MAX_IMAGE_BYTES ? $body : null;

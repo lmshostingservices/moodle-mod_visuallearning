@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Download all of a lesson's content in one ZIP, or add its questions to the course question bank (both free).
+ * Download all of a lesson's content in one ZIP (free).
  *
  * @package    mod_visuallearning
  * @copyright  2026 LMS Hosting Services
@@ -53,37 +53,6 @@ if ($action === 'download') {
     $name = exporter::slug(format_string($book->name, true, ['context' => $context])) . '.zip';
     send_file($zip, $name, 0, 0, false, true, 'application/zip');
     die;
-}
-
-if ($action === 'qbank') {
-    $target = \mod_visuallearning\local\qbank::target($course);
-    if ($target === null) {
-        throw new moodle_exception('qbank_unavailable', 'mod_visuallearning');
-    }
-    require_capability('moodle/question:add', $target['context']);
-    if (optional_param('confirm', 0, PARAM_BOOL) && confirm_sesskey()) {
-        $count = \mod_visuallearning\local\qbank::import($exporter, $course, $target);
-        redirect(
-            $target['url'],
-            get_string('qbank_done', 'mod_visuallearning', (object)['count' => $count, 'category' => $target['name']]),
-            null,
-            \core\output\notification::NOTIFY_SUCCESS
-        );
-    }
-    echo $OUTPUT->header();
-    echo $OUTPUT->confirm(
-        get_string('qbank_confirm', 'mod_visuallearning', (object)['count' => count($exporter->questions()),
-            'where' => $target['where']]),
-        new single_button(
-            new moodle_url($url, ['action' => 'qbank', 'confirm' => 1, 'sesskey' => sesskey()]),
-            get_string('qbank_button', 'mod_visuallearning'),
-            'post',
-            single_button::BUTTON_PRIMARY
-        ),
-        $url
-    );
-    echo $OUTPUT->footer();
-    exit;
 }
 
 $questions = count($exporter->questions());
@@ -139,14 +108,6 @@ $buttons = html_writer::link(
     get_string('export_download', 'mod_visuallearning'),
     ['class' => 'btn btn-primary']
 );
-$target = $questions ? \mod_visuallearning\local\qbank::target($course) : null;
-if ($target && has_capability('moodle/question:add', $target['context'])) {
-    $buttons .= html_writer::link(
-        new moodle_url($url, ['action' => 'qbank']),
-        get_string('qbank_button', 'mod_visuallearning'),
-        ['class' => 'btn btn-secondary']
-    );
-}
 $buttons .= html_writer::link(
     new moodle_url('/mod/visuallearning/manage.php', ['id' => $cm->id, 'step' => 4]),
     get_string('back'),

@@ -1,4 +1,25 @@
 <?xml version="1.0"?>
-<!-- mod_visuallearning bundles no third-party libraries. -->
 <libraries>
+  <library>
+    <location>fonts/caveat.woff2</location>
+    <name>Caveat (handwriting font, latin, weight 600)</name>
+    <version>5.3.0 (@fontsource/caveat)</version>
+    <license>OFL</license>
+    <licenseversion>1.1</licenseversion>
+    <repository>https://github.com/googlefonts/caveat</repository>
+    <copyrights>
+      <copyright>2014 The Caveat Project Authors</copyright>
+    </copyrights>
+  </library>
+  <library>
+    <location>fonts/jakarta.woff2</location>
+    <name>Plus Jakarta Sans (label font for animated scenes and technical models, latin, variable weight)</name>
+    <version>5.2.5 (@fontsource-variable/plus-jakarta-sans)</version>
+    <license>OFL</license>
+    <licenseversion>1.1</licenseversion>
+    <repository>https://github.com/tokotype/PlusJakartaSans</repository>
+    <copyrights>
+      <copyright>2020 The Plus Jakarta Sans Project Authors</copyright>
+    </copyrights>
+  </library>
 </libraries>

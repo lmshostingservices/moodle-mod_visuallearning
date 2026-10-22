@@ -67,70 +67,95 @@ final class approaches_test extends \advanced_testcase {
     }
 
     /**
-     * Lessons made before approaches existed (and workplace stories in the illustration style) make exactly the
-     * same prompts, so none of their pictures needs making again.
+     * Lessons made before approaches existed are workplace stories in the illustration style: same cards, and a
+     * picture prompt with no words in the picture.
      */
     public function test_existing_lessons_unchanged(): void {
         $old = $this->book(null, null);
         $new = $this->book('story', 'illustration');
-        $this->assertSame(prompt_builder::IMAGE_GUARDRAILS, prompt_builder::image_rules($old));
         $scene = 'Maya tests a motor at a switchboard.';
         $this->assertSame(prompt_builder::image_prompt($old, $scene, 2000), prompt_builder::image_prompt($new, $scene, 2000));
-        $this->assertStringContainsString('Illustration style chosen by the teacher:', prompt_builder::chatgpt_prompt($new));
-        $this->assertStringNotContainsString('Teaching approach:', prompt_builder::chatgpt_prompt($new));
+        $prompt = prompt_builder::image_prompt($old, $scene, 2000);
+        $this->assertStringStartsWith('Create a hand-illustrated teaching picture', $prompt);
+        $this->assertStringContainsString('WORDS IN THE PICTURE: None', $prompt);
+        $this->assertStringContainsString('any text, letters, numbers, logos or watermarks', $prompt);
+        $this->assertStringContainsString('Picture style chosen by the teacher: Illustration', prompt_builder::writer_prompt($new));
+        $this->assertStringNotContainsString('Teaching approach:', prompt_builder::writer_prompt($new));
         $this->assertSame('The idea', approaches::card_label($old, 'concept'));
         $this->assertSame('Put it into action', approaches::card_label($old, 'action'));
         $this->assertSame([], requests::approach_fields($old));
     }
 
     /**
-     * The scientific approach explains the mechanism: its own cards, master prompt and rules, no whole cast.
+     * The scientific approach explains the mechanism: its own cards, opener and rules, no whole cast.
      */
     public function test_scientific_explanation(): void {
+        $this->resetAfterTest();
         $book = $this->book('science', 'diagram');
         $this->assertSame('Key point 1', approaches::card_label($book, 'concept'));
         $this->assertSame('Key point 2', approaches::card_label($book, 'action'));
         $this->assertSame('Key point 3', approaches::card_label($book, 'outcome'));
 
-        $file = prompt_builder::chatgpt_prompt($book);
-        $this->assertStringContainsString('Teaching approach: Scientific and technical explanation', $file);
-        $this->assertStringContainsString('Visual style chosen by the teacher: Technical diagram', $file);
+        $file = prompt_builder::writer_prompt($book);
+        $this->assertStringContainsString('Teaching approach: Explain how it works', $file);
+        $this->assertStringContainsString('Picture style chosen by the teacher: Technical model', $file);
         $this->assertStringContainsString('KEY POINT 2 - how it works', $file);
         $this->assertStringContainsString('No invented people', $file);
         $this->assertStringContainsString('Accuracy:', $file);
         $this->assertStringContainsString('SQUARE explanatory picture', $file);
+        $this->assertStringContainsString('PICTURE WORDS: none', $file);
         $this->assertStringNotContainsString('Use a named character', $file);
 
-        $scene = 'Two-panel diagram: a coil with field lines; voltage and current sine waves, current a quarter '
-            . 'cycle behind. Accuracy: 90 degree lag. Exclude: people.';
+        // A technical model goes to the image model (GPT Image) as a clean schematic.
+        $scene = 'A coil with field lines; voltage and current sine waves, current a quarter cycle behind. '
+            . 'Not shown: people.';
         $prompt = prompt_builder::image_prompt($book, $scene, 2000);
-        $this->assertStringContainsString('VISUAL EXPLANATION:', $prompt);
-        $this->assertStringContainsString('EXPLAIN: Two-panel', $prompt);
-        $this->assertStringContainsString('TECHNICAL DIAGRAM', $prompt);
-        $this->assertStringContainsString('ART STYLE: Modern professional educational diagram', $prompt);
+        $this->assertStringStartsWith('Create a clean technical diagram', $prompt);
+        $this->assertStringContainsString('EXPLAIN: A coil with field lines', $prompt);
+        $this->assertStringContainsString('LOOK: Precise flat-vector educational schematic', $prompt);
+        $this->assertStringContainsString('RULES: Accuracy first', $prompt);
+        $this->assertStringContainsString("Show only this page's step", $prompt);
+        $this->assertStringContainsString('Every arrow points the real way', $prompt);
         $this->assertStringNotContainsString('Maya', $prompt);
-        $this->assertStringNotContainsString('Do NOT include any text', $prompt);
         $this->assertLessThanOrEqual(2000, \core_text::strlen($prompt));
         // Someone the scene names is still drawn as described.
         $this->assertStringContainsString('Maya - electrician', prompt_builder::image_prompt($book, 'Maya reads a meter.', 2000));
+        // The writer is asked for the lesson's fixed layout and for where each pathway stops.
+        $writer = prompt_builder::writer_prompt($book);
+        $this->assertStringContainsString('"scene_style"', $writer);
+        $this->assertStringContainsString("'Not shown:'", $writer);
     }
 
     /**
-     * Any approach works with any style: a scientific explanation in the illustration style.
+     * Any approach works with any style, and callouts are the teacher's choice.
      */
     public function test_independent_choices(): void {
         $book = $this->book('science', 'illustration');
         $prompt = prompt_builder::image_prompt($book, 'A coil and its field.', 2000);
-        $this->assertStringContainsString('VISUAL EXPLANATION:', $prompt);
-        $this->assertStringContainsString('This must be an ILLUSTRATION', $prompt);
+        $this->assertStringContainsString('Explain the concept at a glance', $prompt);
+        $this->assertStringContainsString('AVOID: photographic skin', $prompt);
         $this->assertStringContainsString('gouache', $prompt);
+        $this->assertStringContainsString('WORDS IN THE PICTURE: None', $prompt);
 
-        $story = $this->book('story', 'diagram');
+        $book->callouts = 1;
+        $prompt = prompt_builder::image_prompt($book, 'A coil and its field. Callouts: "Coil", "Field".', 2000);
+        $this->assertStringContainsString('WORDS IN THE PICTURE: Exactly the words in quotes in the scene, in English '
+            . '(Australia), spelled exactly, and nothing else', $prompt);
+        $this->assertStringContainsString('logos, watermarks or misspelled words', $prompt);
+        $this->assertStringContainsString("'Callouts:'", prompt_builder::writer_prompt($book));
+        // Answer options never carry words.
+        $square = prompt_builder::image_prompt($book, 'A coil.', 2000, \mod_visuallearning\local\media::OPTION_ASPECT);
+        $this->assertStringContainsString('WORDS IN THE PICTURE: None', $square);
+        $this->assertStringContainsString('A square tile', $square);
+
+        $story = $this->book('story', 'realistic');
         $prompt = prompt_builder::image_prompt($story, 'Maya tests a motor.', 2000);
-        $this->assertStringContainsString('TECHNICAL DIAGRAM', $prompt);
+        $this->assertStringStartsWith('Create a realistic documentary photograph', $prompt);
         $this->assertStringContainsString('Maya - electrician', $prompt);
-        $this->assertStringNotContainsString('VISUAL EXPLANATION:', $prompt);
-        // The illustration default text is not used as the art direction of a diagram.
+        $this->assertStringContainsString('following safe work practice', $prompt);
+        $this->assertStringContainsString('hands outside any machine or danger zone', $prompt);
+        $this->assertStringNotContainsString('Explain the concept', $prompt);
+        // The illustration default text is not used as the look of a photograph.
         $this->assertStringNotContainsString('gouache', $prompt);
     }
 
@@ -149,8 +174,7 @@ final class approaches_test extends \advanced_testcase {
     }
 
     /**
-     * The whiteboard sketch style: its own look in every picture prompt, for either approach, and sent to LMS Labs
-     * only once it lists it.
+     * The hand-drawn sketch style: the image model gets the sketchnote look.
      */
     public function test_whiteboard_sketch(): void {
         $this->resetAfterTest();
@@ -158,15 +182,12 @@ final class approaches_test extends \advanced_testcase {
         $this->assertArrayHasKey('whiteboard', visual_styles::options());
         $book = $this->book('science', 'whiteboard');
         $prompt = prompt_builder::image_prompt($book, 'A capillary between two tubes, small fragments moving fastest.', 2000);
-        $this->assertStringContainsString('WHITEBOARD SKETCH', $prompt);
-        $this->assertStringContainsString('marker outlines', $prompt);
-        $this->assertStringContainsString('VISUAL EXPLANATION:', $prompt);
+        $this->assertStringStartsWith('Create a hand-drawn sketchnote', $prompt);
+        $this->assertStringContainsString('graph paper', $prompt);
         $this->assertLessThanOrEqual(2000, \core_text::strlen($prompt));
         $story = $this->book('story', 'whiteboard');
-        $prompt = prompt_builder::image_prompt($story, 'Maya tests a motor.', 2000);
-        $this->assertStringContainsString('WHITEBOARD SKETCH', $prompt);
-        $this->assertStringNotContainsString('gouache', $prompt);
-        $this->assertStringContainsString('Whiteboard sketch', prompt_builder::chatgpt_prompt($story));
+        $this->assertStringNotContainsString('gouache', prompt_builder::image_prompt($story, 'Maya tests a motor.', 2000));
+        $this->assertStringContainsString('Hand-drawn sketch', prompt_builder::writer_prompt($story));
         $this->assertSame('illustration', requests::image_style($book));
     }
 
@@ -175,11 +196,11 @@ final class approaches_test extends \advanced_testcase {
      */
     public function test_prompt_file_asks_for_striking_pictures(): void {
         $this->resetAfterTest();
-        $story = prompt_builder::chatgpt_prompt($this->book('story', 'illustration'));
+        $story = prompt_builder::writer_prompt($this->book('story', 'illustration'));
         foreach (['HERO:', 'CAMERA:', 'LIGHT:', 'MOMENT:', 'REVEAL'] as $part) {
             $this->assertStringContainsString($part, $story);
         }
-        $science = prompt_builder::chatgpt_prompt($this->book('science', 'diagram'));
+        $science = prompt_builder::writer_prompt($this->book('science', 'diagram'));
         foreach (['HERO:', 'REVEAL:', 'LIGHT AND COLOUR AS INFORMATION:', 'MOTION CUES:', 'CAMERA:'] as $part) {
             $this->assertStringContainsString($part, $science);
         }

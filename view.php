@@ -47,6 +47,11 @@ $PAGE->activityheader->set_attrs(['title' => '', 'description' => '', 'hidecompl
 $canmanage = has_capability('mod/visuallearning:manage', $context);
 $data = \mod_visuallearning\local\book_data::player($book, $cm, $context, (int)$USER->id);
 
+// A new lesson goes straight to where the teacher creates it.
+if (empty($data['pages']) && $canmanage) {
+    redirect(new moodle_url('/mod/visuallearning/manage.php', ['id' => $cm->id]));
+}
+
 echo $OUTPUT->header();
 
 if (empty($data['pages'])) {

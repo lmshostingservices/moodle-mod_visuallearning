@@ -17,7 +17,6 @@
 namespace mod_visuallearning;
 
 use mod_visuallearning\local\exporter;
-use mod_visuallearning\local\qbank;
 
 /**
  * Tests for downloading all content and adding the questions to the question bank.
@@ -28,7 +27,6 @@ use mod_visuallearning\local\qbank;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 #[\PHPUnit\Framework\Attributes\CoversClass(exporter::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(qbank::class)]
 final class exporter_test extends \advanced_testcase {
     /**
      * A lesson with one question of each type.
@@ -86,29 +84,4 @@ final class exporter_test extends \advanced_testcase {
         $this->assertContains('word/document.xml', $parts);
     }
 
-    /**
-     * The questions go into the course question bank, in a category named after the lesson.
-     */
-    public function test_question_bank_import(): void {
-        global $DB;
-        $this->resetAfterTest();
-        $this->setAdminUser();
-        [$course, $book, $context] = $this->book();
-        $target = qbank::target($course, true);
-        $this->assertNotNull($target);
-        $count = qbank::import(new exporter($book, $context), $course, $target);
-        $this->assertSame(4, $count);
-        $category = $DB->get_record('question_categories', ['name' => 'Kitchen teamwork'], '*', MUST_EXIST);
-        $this->assertEquals($target['context']->id, $category->contextid);
-        $sql = "SELECT q.qtype
-                  FROM {question} q
-                  JOIN {question_versions} qv ON qv.questionid = q.id
-                  JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
-                 WHERE qbe.questioncategoryid = :cat
-              ORDER BY q.id";
-        $this->assertSame(
-            ['truefalse', 'multichoice', 'match', 'match'],
-            array_values($DB->get_fieldset_sql($sql, ['cat' => $category->id]))
-        );
-    }
 }

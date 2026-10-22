@@ -198,24 +198,17 @@ class page_form extends \moodleform {
             $mform->addHelpButton('diagram', 'diagramspec', 'mod_visuallearning');
         }
 
-        // Animated SVG scene: made through LMS Labs (step 3), or pasted here from the teacher's own AI assistant.
+        // Animated diagram: drawn by Claude through LMS Labs (step 3) from the cards and this optional plan.
         if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
+            $mform->addElement('advcheckbox', 'noscene', get_string('noscene', 'mod_visuallearning'),
+                get_string('noscene_label', 'mod_visuallearning'));
+            $mform->addHelpButton('noscene', 'noscene', 'mod_visuallearning');
             $mform->addElement('textarea', 'sceneplan', get_string('sceneplan', 'mod_visuallearning'),
                 ['rows' => 10, 'cols' => 70, 'style' => 'width:100%;font-family:monospace']);
             $mform->setType('sceneplan', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON allowlisted by scene_plan::clean() during validation and save.
             $mform->addHelpButton('sceneplan', 'sceneplan', 'mod_visuallearning');
-            if (!empty($this->_customdata['svgprompturl'])) {
-                $mform->addElement('static', 'svgprompt', get_string('animsvg_prompt', 'mod_visuallearning'),
-                    \html_writer::link($this->_customdata['svgprompturl'], get_string('animsvg_download', 'mod_visuallearning')));
-            }
-            $mform->addElement(
-                'textarea',
-                'animsvg',
-                get_string('animsvg', 'mod_visuallearning'),
-                ['rows' => 6, 'cols' => 70, 'style' => 'width:100%;font-family:monospace', 'placeholder' => '<svg ...>']
-            );
-            $mform->setType('animsvg', PARAM_RAW); // pipeline-ignore: PARAM_RAW — SVG allowlist validation runs before saving.
-            $mform->addHelpButton('animsvg', 'animsvg', 'mod_visuallearning');
+            $mform->hideIf('sceneplan', 'noscene', 'checked');
+            $mform->setAdvanced('sceneplan');
         }
 
         $this->add_action_buttons(true, get_string('savechanges'));
@@ -236,11 +229,7 @@ class page_form extends \moodleform {
         if (trim((string)($data['diagram'] ?? '')) !== '' && \mod_visuallearning\local\diagram::clean($data['diagram']) === null) {
             $errors['diagram'] = get_string('diagramspec_invalid', 'mod_visuallearning');
         }
-        if (trim((string)($data['animsvg'] ?? '')) !== ''
-                && \mod_visuallearning\local\svg_sanitiser::clean((string)$data['animsvg'], 'vlcheck') === null) {
-            $errors['animsvg'] = get_string('animsvg_invalid', 'mod_visuallearning');
-        }
-        if (trim((string)($data['sceneplan'] ?? '')) !== ''
+        if (empty($data['noscene']) && trim((string)($data['sceneplan'] ?? '')) !== ''
                 && \mod_visuallearning\local\scene_plan::clean($data['sceneplan']) === null) {
             $errors['sceneplan'] = get_string('sceneplan_invalid', 'mod_visuallearning');
         }

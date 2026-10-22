@@ -28,7 +28,7 @@ use mod_visuallearning\local\credentials;
  *   POST /api/moodle/ai-visuallearning/pages/draft           pages written by LMS Labs AI, charged per page delivered
  *   POST /api/moodle/ai-visuallearning/pages/import          pages written with the teacher's own AI assistant, same price
  *   GET  /api/moodle/ai-visuallearning/images/capabilities   free: {tariff: {image}, model, aspectRatios}
- *   POST /api/moodle/ai-visuallearning/images                one Nano Banana picture (4:3 page or 1:1 option), raw bytes
+ *   POST /api/moodle/ai-visuallearning/images                one GPT Image picture (4:3 page or 1:1 option), raw bytes
  *   GET  /api/moodle/ai-visuallearning/speech/capabilities   free: Chirp 3 HD voice catalogue and tariff
  *   POST /api/moodle/ai-visuallearning/speech/quote          free: the price of one clip (free remakes)
  *   POST /api/moodle/ai-visuallearning/speech/tts            one MP3 clip
@@ -68,10 +68,31 @@ class lmslabs {
         'speech' => self::PREFIX . '/speech/capabilities',
     ];
 
+    // Prices. Teachers buy credits at US$0.10 each, and every price is at least twice what the work costs LMS Labs
+    // (provider charges, including an allowance for a retry). At about US$0.10 a credit:
+    // - a still picture (OpenAI gpt-image-2.5-flare, medium quality: about 2 to 3 US cents; high about 6 to 9) sells
+    //   for 2 credits;
+    // - a voice clip (Chirp 3 HD, about 2 US cents) for 2 credits;
+    // - an animated scene (Claude, about 5 to 12 US cents, up to about 24 with one retry) for 6 credits.
+    // A price change here must match the tariff LMS Labs publishes, or nothing of that kind can be bought.
+
+    /** @var float What one credit costs a teacher, in US dollars. */
+    public const CREDIT_USD = 0.10;
+
+    /**
+     * A credit amount in US dollars, for showing next to it ("US$12.80").
+     *
+     * @param int $credits
+     * @return string
+     */
+    public static function usd(int $credits): string {
+        return 'US$' . number_format($credits * self::CREDIT_USD, 2);
+    }
+
     /** @var int Proposed credits per page (written by LMS Labs AI or imported); needs owner approval. */
     public const PAGE_CREDITS = 10;
 
-    /** @var int Proposed credits per illustration (Nano Banana through LMS Labs); needs owner approval. */
+    /** @var int Credits per picture (OpenAI GPT Image 2.5 Flare through LMS Labs). */
     public const IMAGE_CREDITS = 2;
 
     /** @var int Credits per voiceover clip, as AI Soft Skills; needs owner approval for this product. */
@@ -81,13 +102,28 @@ class lmslabs {
     public const CARD_CREDITS = 2;
 
     /** @var int Approved price of one animated SVG scene (one per page, drawn by Claude through LMS Labs). */
-    public const ANIMATION_CREDITS = 2;
+    public const ANIMATION_CREDITS = 6;
 
     /** @var string The animated SVG contract the plugin's player and sanitiser understand. */
     public const ANIMATION_CONTRACT = 'svg-1';
 
-    /** @var int Longest picture prompt, in Unicode code points. */
+
+    /** @var int Longest picture prompt, in Unicode code points, until LMS Labs publishes a longer one. */
     public const MAX_PROMPT = 2000;
+
+    /** @var int Longest picture prompt the plugin ever sends (GPT Image takes far more; this keeps requests small). */
+    public const MAX_PROMPT_CEILING = 6000;
+
+    /**
+     * The longest picture prompt LMS Labs accepts: its images capabilities "maxPromptChars", within 2,000 to 6,000;
+     * 2,000 while it publishes none.
+     *
+     * @return int
+     */
+    public static function max_prompt(): int {
+        $max = self::capabilities('images')['maxPromptChars'] ?? null;
+        return is_int($max) ? max(self::MAX_PROMPT, min(self::MAX_PROMPT_CEILING, $max)) : self::MAX_PROMPT;
+    }
 
     /** @var int Longest clip, in characters (a card is 1-2 short sentences). */
     public const MAX_CLIP = 300;

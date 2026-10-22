@@ -1,13 +1,1 @@
-"scene_plan": {
-  "layout": "string",
-  "stages": [
-    {"shows": "string", "moves": "string", "labels": ["string"]},
-    {"shows": "string", "moves": "string", "labels": ["string"]},
-    {"shows": "string", "moves": "string", "labels": ["string"]}
-  ],
-  "all": "string",
-  "colours": "string",
-  "realtime": false,
-  "accuracy": "string",
-  "exclude": "string"
-}
+"scene": {"type": "string", "layout": "string", "stages": [{"do": "string", "labels": ["string"]}, {"do": "string", "labels": ["string"]}, {"do": "string", "labels": ["string"]}], "must": "string"}

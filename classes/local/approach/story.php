@@ -63,7 +63,7 @@ class story extends base {
         return <<<'TXT'
 You are an expert instructional designer, workplace trainer and illustrated-story author.
 Your job is to turn the teaching content below into an illustrated VISUAL LEARNING LESSON for adult learners.
-Every page teaches exactly ONE concept, shown as one illustration on the left and three short
+Every page teaches exactly ONE concept, shown as one picture on the left and three short
 narrated cards on the right.
 TXT;
     }
@@ -81,7 +81,7 @@ Every page has:
 - "concept": Card 1 - THE IDEA. 1-2 sentences stating the concept and why it matters.
 - "action": Card 2 - THE ACTION. 1-2 sentences describing ONE specific, concrete thing a person
   does in a real {$where} workplace to apply the concept. Use a named character
-  from the cast (see Step 5) doing the action. This is exactly what the illustration will show.
+  from the cast (see Step 5) doing the action. This is exactly what the picture will show.
 - "outcome": Card 3 - THE OUTCOME. 1-2 sentences describing the consequence or positive result of
   that action (or, where it teaches better, the negative consequence of NOT doing it).
 
@@ -125,13 +125,13 @@ TXT;
      */
     public function images_brief(string $where, string $cultureline, string $language): string {
         return <<<TXT
-- First define a "style_guide": 2-4 sentences of art direction that every illustration will share
+- First define a "style_guide": 2-4 sentences of art direction that every picture will share
   (based on the teacher's chosen style above: medium, line quality, colour palette, lighting, mood).
 - Then define a small recurring "characters" cast (2-5 people) who appear across the lesson, each with
   a name and a precise visual description (age range, hair, skin tone, build, clothing / uniform that
   suits a {$where} workplace in {$cultureline}). Re-use these exact characters in the image prompts so
   the lesson feels like one consistent story.
-- For each page write "image_prompt" IN ENGLISH, 50-100 words, describing ONE scene that shows the
+- For each page write "image_prompt" IN ENGLISH, 50-80 words, describing ONE scene that shows the
   ACTION card exactly as described - the same people, place and activity, with the cultural setting
   from Step 2 (local setting, food, objects and customs). Describe: who is in the scene (use cast names
   AND a short reminder of their look), what they are doing, the setting, facial expressions / body
@@ -151,10 +151,10 @@ TXT;
   (close-up, wide shot, outdoors, on the job). Never fall back on a generic person at a laptop or a
   meeting room unless the concept is really about that. Show only the people the scene needs, avoid
   complicated hand actions, and show the real equipment and objects of a {$where} workplace.
-- Image rules: illustrations only (never photographs or photorealism), NO text, words, letters, numbers,
-  signs, logos or speech bubbles in the image, safe and respectful workplace imagery, one clear focal point.
+- Image rules: the picture style chosen above, no speech bubbles, logos or brand names, words only as
+  PICTURE WORDS below says, safe work practice and respectful workplace imagery, one clear focal point.
 - "alt_text": one sentence in {$language} describing the image for screen-reader users.
-- Also write a "cover_image_prompt" (English, 40-90 words) for a welcoming cover illustration
+- Also write a "cover_image_prompt" (English, 40-90 words) for a welcoming cover picture
   showing the cast in their workplace, representing the overall topic. No text on the cover image.
 TXT;
     }
@@ -178,8 +178,8 @@ TXT;
      */
     public function option_brief(): string {
         return <<<'TXT'
-  Each option also has an "image_prompt" IN ENGLISH (20-50 words) for a SQUARE illustration of that
-  option alone, in the lesson's style, with the same recurring characters and culture, and NO text in the
+  Each option also has an "image_prompt" IN ENGLISH (20-50 words) for a SQUARE picture of that
+  option alone, in the lesson's style, with the same recurring characters and culture, and no words in the
   image; plus "alt_text" in the lesson's language.
 TXT;
     }
@@ -190,10 +190,9 @@ TXT;
      * @return string
      */
     public function image_rules(): string {
-        return 'Do NOT include any text, words, letters, numbers, captions, speech bubbles, '
-            . 'labels, logos, brand names or readable signage anywhere in the image. Adults in a professional, '
-            . 'workplace-appropriate setting with respectful representation. One clear scene, main subject '
-            . 'centred with comfortable margins, uncluttered background, warm and friendly mood. Only the people the '
-            . 'scene needs, natural proportions, simple relaxed hands, meaningful objects that show the idea.';
+        return 'Adults in a professional, workplace-appropriate setting with respectful representation, following safe '
+            . 'work practice: the right protective gear for the task, and hands outside any machine or danger zone '
+            . 'unless the scene says it is isolated. Only the people the scene needs, natural proportions, simple relaxed '
+            . 'hands, a warm and friendly mood, and meaningful objects that show the idea.';
     }
 }

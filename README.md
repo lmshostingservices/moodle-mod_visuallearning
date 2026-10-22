@@ -19,23 +19,33 @@ After every four concepts the lesson adds:
 
 Every page view, every listen, the time spent on each page and every answer is tracked. The finish screen gives each learner a green tick, confetti and their own results; little interface sounds (with a mute switch) make answering satisfying.
 
-## Animated SVG scenes and scene plans (1.7.2)
+## Picture styles, callouts and animated diagrams (1.8.0)
 
-Choose **AI-drawn SVG animation** for one illustrated animated scene per page, with three stages matching the
-three narrated cards. Each delivered scene or deliberate remake costs **2 additional credits**; playback is free.
-The 10-credit slide and its included pictures and narration remain unchanged.
+The lesson settings are short and visual: **Your lesson** (title, what to teach, extra instructions and material,
+who it is for and teaching style as cards, number of pages), **Pictures** (picture style, animation and callouts as
+cards with examples), **Voice**, and everything else under **More options**. Saving a new lesson opens the
+"Create my lesson" step: one confirmation and Claude writes the pages, then the pictures, animated diagrams and
+narration are made automatically.
 
-The ChatGPT prompt for this mode asks for a `scene_plan`: layout, exactly three stages (`shows`, `moves`, up to
-four short labels), the complete replay, colours, real-time timing flag, accuracy and exclusions. Plans are
-validated, saved with pages, editable under the cards and included in Moodle backups. Existing pages without a
-plan still generate scenes from their cards. Other picture modes retain their existing prompts.
+| Picture style | Made by | Best for |
+| --- | --- | --- |
+| Illustration | OpenAI GPT Image 2.5 Flare | people, places and workplace stories |
+| Photo-realistic | OpenAI GPT Image 2.5 Flare | real equipment and settings |
+| 3D diagram | OpenAI GPT Image 2.5 Flare | realistic 3D organs and machines with flow arrows |
+| Technical model | OpenAI GPT Image 2.5 Flare | section views and schematics with exact labels |
+| Hand-drawn sketch | OpenAI GPT Image 2.5 Flare | a teacher's sketchnote on graph paper |
 
-LMS Labs page writing produces these plans when its `draftPictureModes` capability includes `svg`. Until that
-server update is published, teachers can import a plan using the downloaded ChatGPT prompt or add one in the
-page editor. The supplied `svg-1` drawing system prompt is unchanged.
+Animated diagrams are drawn by Claude, as SVG.
 
-The Pictures & voice workspace now uses larger media cards, no more than four per row, with responsive layouts,
-clearer remake controls and a redesigned price confirmation. Remakes are quoted before confirmation.
+- **Callouts** (tick box): pictures carry short labels and at most one small info card, written in the lesson's
+  language. Without it, photographs and illustrations have no words at all.
+- **Animate each page** (tick box): Claude draws one animated diagram per page with a stage for each card. While a
+  card is read, its stage plays slowly in time with the voice; after the last card the learner can replay the
+  whole animation at normal speed. Pages with nothing that moves keep their picture and cost nothing extra.
+- Animated diagrams and technical models share one house style: shaded 3D drawing, label cards set in the
+  bundled label font (Plus Jakarta Sans), colour that carries meaning, and parts that change shape or move the way
+  the real thing does.
+- Every SVG is cleaned by the plugin's safety filter before it is saved or shown.
 
 ## Requirements
 
@@ -43,8 +53,8 @@ clearer remake controls and a redesigned price confirmation. Remakes are quoted 
 - PHP 8.1 or later.
 - Cron running: confirmed requests are sent to LMS Labs by background (ad hoc) tasks.
 - An **LMS Labs** account. AI Visual Learning makes everything through LMS Labs and the site's shared LMS Labs credits;
-  no Google or OpenAI key is needed or accepted. LMS Labs uses Google Gemini (page writing), Google Nano Banana
-  (illustrations) and Google Cloud Text-to-Speech Chirp 3 HD (voiceover).
+  no Anthropic, OpenAI or Google key is needed or accepted. LMS Labs uses Anthropic Claude (page writing and animated
+  diagrams), OpenAI GPT Image 2.5 Flare (every still picture) and Google Cloud Text-to-Speech Chirp 3 HD (voiceover).
 - Recommended: **LMS Labs Central Config** (`local_aiconfig`) holding the site's LMS Labs Site ID and API key.
   Without it, both can be entered in the AI Visual Learning settings.
 
@@ -64,7 +74,8 @@ No Composer step or other build step is needed.
 ## Prices
 
 AI Visual Learning charges LMS Labs credits only for what LMS Labs delivers, and never more than the price shown and
-confirmed first.
+confirmed first. One credit costs the teacher US$0.10. Teachers never see this table: they see one total, in credits
+and US dollars, on the lesson form and again on the confirmation screen.
 
 | Operation | Unit | Approved price |
 | --- | --- | --- |
@@ -73,7 +84,7 @@ confirmed first.
 | Initial slide and cover pictures, question option pictures and narration | purchased slide | Included, no extra charge |
 | Optional new picture after successful delivery | picture | 2 credits |
 | Voice remake after successful delivery | clip | 2 credits for every deliberate remake |
-| Animated scene (picture mode "Animated scene per page") | page | 2 credits per scene, including every remake |
+| Animated diagram ("Animated diagrams" card) | page that has something that moves | 6 credits, and 6 credits for each deliberate remake |
 | Pictures and voice for legacy v1.0 slides | picture or clip | 2 credits per generation, including every deliberate remake |
 
 The slide charge settles when its text is delivered. Included media remains owed if delivery fails; do not buy another
@@ -82,22 +93,18 @@ slides are free. New slides use the `bundle-1` contract; existing slides retain 
 
 ## How a teacher builds a lesson
 
-1. **Add an AI Visual Learning** activity and fill in the form:
-   - title, industry and sub-industry (leave either blank to let the AI choose);
-   - the content to teach, and the maximum number of pages (up to 20);
-   - narration language, and a voice from the voices LMS Labs offers;
-   - cultural setting, illustration style and navigation mode;
-   - recap and check-question options (question types, pictures for picture questions), sounds, and completion rules.
-2. On **Build the lesson**, write the pages in one of two ways:
-   - **Write the pages with LMS Labs AI**: confirm the price, and the pages appear when LMS Labs delivers them.
-   - Or **download the prompt file**, run it in your own AI assistant, and paste its whole reply (JSON) into step 2.
-     The reply is checked for free and its pages and price are shown. The pages are created once you confirm and
-     LMS Labs confirms the charge.
-3. **Create the missing illustrations and voiceover**: the screen lists every picture and clip with the total, and
-   the balance. After you confirm, LMS Labs makes them in the background and the screen refreshes itself.
-4. Edit any page, reorder or delete pages, then preview the lesson. Only what changed needs making again: an edited
-   card needs one new clip, and a new prompt needs one new picture. The old media keeps playing until the new media
-   arrives.
+1. **Add an AI Visual Learning** activity and fill in the short form: the title, what to teach (a grey example shows
+   the idea), and optionally your notes, documents and instructions (up to 50,000 characters pasted from notes, a
+   unit outline, a procedure, a PDF, Word document or PowerPoint). Then pick cards for who it is for, the teaching
+   style, the picture style, animation and callouts, and choose the narration language and voice. The lesson's price
+   is shown as one total above the save buttons and updates as you choose. Everything else is under More options.
+2. Saving opens **Create my lesson**. The confirmation screen lists what will be made and shows the same one total;
+   Claude then writes the pages and the pictures, animated diagrams and narration are made automatically. Step 1
+   shows "Claude is writing your lesson…" and the screen refreshes itself as everything arrives.
+3. **Check your pages**: read, edit, reorder, add or delete pages. Anything a change makes out of date can be made
+   again in step 3; you always see one total price before confirming.
+4. Preview and share. Only what changed needs making again: an edited card needs one new clip, and a new picture
+   description needs one new picture. The old media keeps playing until the new media arrives.
 
 ### Charging, retries and media retention
 
@@ -121,7 +128,7 @@ slides are free. New slides use the `bundle-1` contract; existing slides retain 
 
 ### Cultural setting
 
-With **Match the country of the narration language** (the default), the language's country shapes the whole lesson. This applies both in the ChatGPT brief and in every image prompt: character names and appearance, workplaces, food, clothing, customs and etiquette.
+With **Match the country of the narration language** (the default), the language's country shapes the whole lesson. This applies both in the page writer's brief and in every picture prompt: character names and appearance, workplaces, food, clothing, customs and etiquette.
 
 - Thai narration produces Thai settings, such as a team meal at a local Thai restaurant.
 - Spanish (Spain) narration produces Spanish ones, such as paella with colleagues.
@@ -140,8 +147,6 @@ On the **Ready** step, **Download all content** gives one ZIP (free, nothing is 
 - `pictures/`, `voiceover/` (with a transcript) and `prompts/` (ready-made prompts with the lesson's content inside, to
   make more quizzes, scenarios or flashcards with any AI assistant).
 
-**Add questions to the question bank** puts the questions straight into the course question bank (on Moodle 5.0+, the
-course's own question bank activity), in a category named after the lesson, ready for a Moodle Quiz.
 
 ## Completion and reporting
 
@@ -159,7 +164,7 @@ On Moodle 5.0 and later the activity also appears on the course **Activities** o
 - Only teacher-written content leaves the site, from the Moodle server to LMS Labs (lms-labs.com):
   - for pages written by LMS Labs AI: the title, industry, sub-industry, language, cultural setting, illustration
     style and the content to teach;
-  - for pages from your own AI assistant: the page count and the page titles;
+  - for a page added by hand: its title;
   - for illustrations: the illustration prompt, with the art style, cultural setting and recurring characters;
   - for voiceover: each clip's text, language, voice and speed, and a clip reference that contains no text.
 - The Site ID and API key travel only in request headers. They never reach a browser, a URL or a log.

@@ -1,3 +1,1 @@
-every page's three cards are three visible stages of one scene, in order, each with one main movement;
-every scene_plan has exactly three stages that match the cards, labels of one to four words, a colour code
-that stays the same across the lesson, and no numbers the content does not give;
+every page's three cards are three visible stages of one scene, each with one main movement; every non-null "scene" has a type from the list, exactly three stages that match the cards in order, at most three labels per stage (one to four words, in the lesson's language) and no numbers the content does not give; "scene" is null on pages where nothing moves or changes; "scene_style" appears once and its palette is used on every page;

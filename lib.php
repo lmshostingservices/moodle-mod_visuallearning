@@ -206,6 +206,15 @@ function visuallearning_clean_instance_data(stdClass $data): void {
     }
     $data->speakingrate = max(0.5, min(1.5, (float)($data->speakingrate ?? 1)));
     $data->teachingapproach = \mod_visuallearning\local\approaches::clean($data->teachingapproach ?? null);
+    foreach (['objectives' => 600, 'priorknowledge' => 300, 'unitcode' => 100, 'aiinstructions' => 50000] as $field => $max) {
+        if (property_exists($data, $field)) {
+            $text = trim((string)$data->{$field});
+            $data->{$field} = $text === '' ? null : \core_text::substr($text, 0, $max);
+        }
+    }
+    if (property_exists($data, 'callouts')) {
+        $data->callouts = empty($data->callouts) ? 0 : 1;
+    }
     \mod_visuallearning\local\visual_styles::apply_choice($data);
     $data->visualstyle = \mod_visuallearning\local\visual_styles::clean($data->visualstyle ?? null);
     $data->learnerlevel = \mod_visuallearning\local\learner_levels::clean($data->learnerlevel ?? null);
@@ -499,7 +508,7 @@ function visuallearning_pluginfile($course, $cm, $context, $filearea, $args, $fo
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
-    if (!in_array($filearea, ['image', 'audio', 'cover', 'option', 'card'])) {
+    if (!in_array($filearea, ['image', 'audio', 'cover', 'option', 'card', 'svg'])) {
         return false;
     }
     require_course_login($course, true, $cm);
@@ -512,8 +521,10 @@ function visuallearning_pluginfile($course, $cm, $context, $filearea, $args, $fo
     if (!$file || $file->is_directory()) {
         return false;
     }
-    // File names carry a hash of what made the file, so they can be cached for a long time.
-    send_stored_file($file, YEARSECS, 0, $forcedownload, $options);
+    // File names carry a hash of what made the file, so they can be cached for a long time. SVG pictures and
+    // scenes were cleaned by svg_sanitiser when saved (no scripts, links or external references), so they are shown
+    // inline like any other picture.
+    send_stored_file($file, YEARSECS, 0, $forcedownload, $options + ['dontforcesvgdownload' => true]);
 }
 
 /**

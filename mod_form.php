@@ -38,57 +38,131 @@ class mod_visuallearning_mod_form extends moodleform_mod {
     public function definition() {
         $mform = $this->_form;
         $config = get_config('mod_visuallearning');
+        $styles = \mod_visuallearning\local\visual_styles::class;
+        $modes = \mod_visuallearning\local\picture_modes::class;
+        $current = $this->current ?? null;
 
-        $mform->addElement('header', 'general', get_string('general', 'form'));
+        // 1. Your lesson: the only things a teacher must decide.
+        $mform->addElement('header', 'general', get_string('lessonheader', 'mod_visuallearning'));
         $mform->addElement('text', 'name', get_string('booktitle', 'mod_visuallearning'), ['size' => 64]);
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
-        $this->standard_intro_elements();
-
-        // Content.
-        $mform->addElement('header', 'contentheader', get_string('contentheader', 'mod_visuallearning'));
-        $mform->setExpanded('contentheader');
-
-        $mform->addElement('text', 'industry', get_string('industry', 'mod_visuallearning'), ['size' => 48]);
-        $mform->setType('industry', PARAM_TEXT);
-        $mform->addHelpButton('industry', 'industry', 'mod_visuallearning');
-
-        $mform->addElement('text', 'subindustry', get_string('subindustry', 'mod_visuallearning'), ['size' => 48]);
-        $mform->setType('subindustry', PARAM_TEXT);
-        $mform->addHelpButton('subindustry', 'subindustry', 'mod_visuallearning');
 
         $mform->addElement(
             'textarea',
             'sourcecontent',
             get_string('sourcecontent', 'mod_visuallearning'),
-            ['rows' => 16, 'cols' => 80, 'style' => 'width:100%']
+            ['rows' => 5, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 10000,
+                'placeholder' => get_string('sourcecontent_placeholder', 'mod_visuallearning')]
         );
         $mform->setType('sourcecontent', PARAM_TEXT);
         $mform->addRule('sourcecontent', null, 'required', null, 'client');
         $mform->addHelpButton('sourcecontent', 'sourcecontent', 'mod_visuallearning');
 
-        // Pages come in groups of four: each group is recapped (four square pictures) and checked together.
-        $mform->addElement(
-            'select',
-            'learnerlevel',
-            get_string('learnerlevel', 'mod_visuallearning'),
-            \mod_visuallearning\local\learner_levels::options()
-        );
-        $mform->setDefault('learnerlevel', \mod_visuallearning\local\learner_levels::clean($config->defaultlearnerlevel ?? null));
-        $mform->addHelpButton('learnerlevel', 'learnerlevel', 'mod_visuallearning');
+        $mform->addElement('textarea', 'aiinstructions', get_string('aiinstructions', 'mod_visuallearning'),
+            ['rows' => 10, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 50000,
+                'placeholder' => get_string('aiinstructions_placeholder', 'mod_visuallearning')]);
+        $mform->setType('aiinstructions', PARAM_TEXT);
+        $mform->addHelpButton('aiinstructions', 'aiinstructions', 'mod_visuallearning');
 
+        $cards = \mod_visuallearning\local\form_cards::class;
+        $levels = [];
+        foreach (\mod_visuallearning\local\learner_levels::options() as $key => $name) {
+            $levels[$key] = ['title' => $name, 'desc' => get_string('learnerlevel_' . $key . '_card', 'mod_visuallearning'),
+                'icon' => $key];
+        }
+        $cards::add($mform, 'learnerlevel', get_string('learnerlevel', 'mod_visuallearning'), $levels,
+            \mod_visuallearning\local\learner_levels::clean($config->defaultlearnerlevel ?? null), 'learnerlevel');
+
+        $approaches = [];
+        foreach (\mod_visuallearning\local\approaches::options() as $key => $name) {
+            $approaches[$key] = ['title' => $name, 'desc' => get_string('approach_' . $key . '_card', 'mod_visuallearning'),
+                'icon' => $key];
+        }
+        $cards::add($mform, 'teachingapproach', get_string('teachingapproach', 'mod_visuallearning'), $approaches,
+            \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null), 'teachingapproach');
+
+        // Pages come in groups of four: each group is recapped (four square pictures) and checked together.
         $mform->addElement('select', 'maxpages', get_string('maxpages', 'mod_visuallearning'), visuallearning_page_counts());
         $mform->setDefault('maxpages', visuallearning_page_count($config->defaultmaxpages ?? 8));
         $mform->addHelpButton('maxpages', 'maxpages', 'mod_visuallearning');
 
-        // Voice and visuals.
+        // 2. Pictures: one style, and one tick box for animation.
+        $mform->addElement('header', 'picturesheader', get_string('picturesheader', 'mod_visuallearning'));
+        $mform->setExpanded('picturesheader');
+        $classic = ($current->picturemode ?? '') === $modes::ANIMATED;
+        // Picture style: a card for each style with an example of it (all showing the same heart).
+        $pictures = [];
+        foreach ($styles::form_options($classic) as $key => $name) {
+            $pictures[$key] = ['title' => $name, 'image' => $key,
+                'desc' => get_string('visualstyle_' . $key . '_card', 'mod_visuallearning')];
+        }
+        $defaultstyle = (string)($config->defaultvisualstyle ?? '');
+        $cards::add($mform, 'visualstyle', get_string('visualstyle', 'mod_visuallearning'), $pictures,
+            isset($styles::options()[$defaultstyle]) ? $defaultstyle : $styles::DEFAULT, 'visualstyle');
+        $mform->setType('visualstyle', PARAM_ALPHANUMEXT);
+
+        $cards::add($mform, 'animate', get_string('animate', 'mod_visuallearning'), [
+            0 => ['title' => get_string('animate_off', 'mod_visuallearning'), 'image' => 'motion-off',
+                'desc' => get_string('animate_off_card', 'mod_visuallearning')],
+            1 => ['title' => get_string('animate_on', 'mod_visuallearning'), 'image' => 'motion-on',
+                'desc' => get_string('animate_on_card', 'mod_visuallearning')],
+        ], ($config->defaultpicturemode ?? '') === $modes::SVG ? 1 : 0, 'animate');
+        $mform->setType('animate', PARAM_INT);
+        $mform->hideIf('vlcards_animate', 'visualstyle', 'eq', $styles::ANIMATED);
+
+        $cards::add($mform, 'callouts', get_string('callouts', 'mod_visuallearning'), [
+            0 => ['title' => get_string('callouts_off', 'mod_visuallearning'), 'image' => 'words-off',
+                'desc' => get_string('callouts_off_card', 'mod_visuallearning')],
+            1 => ['title' => get_string('callouts_on', 'mod_visuallearning'), 'image' => 'words-on',
+                'desc' => get_string('callouts_on_card', 'mod_visuallearning')],
+        ], (int)($config->defaultcallouts ?? 0), 'callouts');
+        $mform->setType('callouts', PARAM_INT);
+        $mform->hideIf('vlcards_callouts', 'visualstyle', 'eq', $styles::ANIMATED);
+
+        // 3. Voice.
         $mform->addElement('header', 'voiceheader', get_string('voiceheader', 'mod_visuallearning'));
         $mform->setExpanded('voiceheader');
-
         $mform->addElement('select', 'language', get_string('language', 'mod_visuallearning'), voices::language_options());
         $mform->setDefault('language', $config->defaultlanguage ?? 'en-AU');
         $mform->addHelpButton('language', 'language', 'mod_visuallearning');
+
+        // Only voices LMS Labs offers (its published catalogue); the voice already chosen is kept.
+        $default = (string)($config->defaultvoice ?? 'Aoede');
+        $currentvoice = (string)($current->voice ?? $default);
+        $mform->addElement('select', 'voice', get_string('voice', 'mod_visuallearning'), voices::voice_options('', $currentvoice));
+        $mform->setDefault('voice', $default);
+        $mform->addHelpButton('voice', 'voice', 'mod_visuallearning');
+
+        // 4. More options: everything with a sensible default, closed until wanted.
+        $mform->addElement('header', 'moreheader', get_string('moreheader', 'mod_visuallearning'));
+        $mform->setExpanded('moreheader', false);
+        $this->standard_intro_elements(get_string('lessondescription', 'mod_visuallearning'));
+
+        $mform->addElement('textarea', 'objectives', get_string('objectives', 'mod_visuallearning'),
+            ['rows' => 3, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 600]);
+        $mform->setType('objectives', PARAM_TEXT);
+        $mform->addHelpButton('objectives', 'objectives', 'mod_visuallearning');
+
+        $mform->addElement('textarea', 'priorknowledge', get_string('priorknowledge', 'mod_visuallearning'),
+            ['rows' => 2, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 300]);
+        $mform->setType('priorknowledge', PARAM_TEXT);
+        $mform->addHelpButton('priorknowledge', 'priorknowledge', 'mod_visuallearning');
+
+        $mform->addElement('text', 'unitcode', get_string('unitcode', 'mod_visuallearning'), ['size' => 32, 'maxlength' => 100]);
+        $mform->setType('unitcode', PARAM_TEXT);
+        $mform->addHelpButton('unitcode', 'unitcode', 'mod_visuallearning');
+
+        // Workplace stories happen in an industry; explanations do not need one.
+        $mform->addElement('text', 'industry', get_string('industry', 'mod_visuallearning'), ['size' => 48]);
+        $mform->setType('industry', PARAM_TEXT);
+        $mform->addHelpButton('industry', 'industry', 'mod_visuallearning');
+        $mform->hideIf('industry', 'teachingapproach', 'neq', 'story');
+        $mform->addElement('text', 'subindustry', get_string('subindustry', 'mod_visuallearning'), ['size' => 48]);
+        $mform->setType('subindustry', PARAM_TEXT);
+        $mform->addHelpButton('subindustry', 'subindustry', 'mod_visuallearning');
+        $mform->hideIf('subindustry', 'teachingapproach', 'neq', 'story');
 
         $mform->addElement(
             'select',
@@ -101,12 +175,26 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         );
         $mform->addHelpButton('imageculture', 'imageculture', 'mod_visuallearning');
 
-        // Only voices LMS Labs offers (its published catalogue); the voice already chosen is kept.
-        $default = (string)($config->defaultvoice ?? 'Aoede');
-        $current = (string)($this->current->voice ?? $default);
-        $mform->addElement('select', 'voice', get_string('voice', 'mod_visuallearning'), voices::voice_options('', $current));
-        $mform->setDefault('voice', $default);
-        $mform->addHelpButton('voice', 'voice', 'mod_visuallearning');
+        $mform->addElement('textarea', 'imagestyle', get_string('imagestyle', 'mod_visuallearning'),
+            ['rows' => 3, 'cols' => 80, 'style' => 'width:100%',
+                'placeholder' => get_string('imagestyle_placeholder', 'mod_visuallearning')]);
+        $mform->setType('imagestyle', PARAM_TEXT);
+        $mform->addHelpButton('imagestyle', 'imagestyle', 'mod_visuallearning');
+
+        $mform->addElement('advcheckbox', 'cardpictures', get_string('cardpictures', 'mod_visuallearning'),
+            get_string('cardpictures_label', 'mod_visuallearning'));
+        $mform->addHelpButton('cardpictures', 'cardpictures', 'mod_visuallearning');
+        $mform->hideIf('cardpictures', 'animate', 'eq', 1);
+        $mform->hideIf('cardpictures', 'visualstyle', 'eq', $styles::ANIMATED);
+
+        $paces = [];
+        foreach (\mod_visuallearning\local\animation_settings::OPTIONS['animationpacing'] as $value) {
+            $paces[$value] = get_string('animationpacing_' . $value, 'mod_visuallearning');
+        }
+        $mform->addElement('select', 'animationpacing', get_string('animationpacing', 'mod_visuallearning'), $paces);
+        $mform->setDefault('animationpacing', 'normal');
+        $mform->addHelpButton('animationpacing', 'animationpacing', 'mod_visuallearning');
+        $mform->hideIf('animationpacing', 'animate', 'neq', 1);
 
         $rates = ['0.90' => get_string('speed_slow', 'mod_visuallearning'),
             '1.00' => get_string('speed_normal', 'mod_visuallearning'),
@@ -134,74 +222,9 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->setDefault('autoplay', 0);
         $mform->addHelpButton('autoplay', 'autoplay', 'mod_visuallearning');
 
-        // What the pages explain and how they are pictured: teaching approach, visual style and picture mode
-        // (one picture per page, one picture per card, or animated diagrams).
-        $mform->addElement('header', 'picturesheader', get_string('picturesheader', 'mod_visuallearning'));
-        $mform->setExpanded('picturesheader');
-        $mform->addElement(
-            'select',
-            'teachingapproach',
-            get_string('teachingapproach', 'mod_visuallearning'),
-            \mod_visuallearning\local\approaches::options()
-        );
-        $mform->setDefault('teachingapproach', \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null));
-        $mform->addHelpButton('teachingapproach', 'teachingapproach', 'mod_visuallearning');
-
-        $mform->addElement(
-            'select',
-            'visualstyle',
-            get_string('visualstyle', 'mod_visuallearning'),
-            \mod_visuallearning\local\visual_styles::form_options()
-        );
-        $defaultstyle = (string)($config->defaultvisualstyle ?? '');
-        $mform->setDefault('visualstyle', isset(\mod_visuallearning\local\visual_styles::form_options()[$defaultstyle])
-            ? $defaultstyle : \mod_visuallearning\local\visual_styles::DEFAULT);
-        $mform->addHelpButton('visualstyle', 'visualstyle', 'mod_visuallearning');
-
-        $mform->addElement(
-            'select',
-            'picturemode',
-            get_string('picturemode', 'mod_visuallearning'),
-            \mod_visuallearning\local\picture_modes::form_options()
-        );
-        $defaultmode = (string)($config->defaultpicturemode ?? '');
-        $mform->setDefault('picturemode', isset(\mod_visuallearning\local\picture_modes::form_options()[$defaultmode])
-            ? $defaultmode : \mod_visuallearning\local\picture_modes::SINGLE);
-        $mform->addHelpButton('picturemode', 'picturemode', 'mod_visuallearning');
-        // Animated diagrams replace the pictures, so the picture mode does not apply.
-        $mform->hideIf('picturemode', 'visualstyle', 'eq', \mod_visuallearning\local\visual_styles::ANIMATED);
-        $mform->hideIf('picturemode', 'visualstyle', 'eq', \mod_visuallearning\local\picture_modes::SVG);
-        foreach (\mod_visuallearning\local\animation_settings::OPTIONS as $field => $values) {
-            $options = [];
-            foreach ($values as $value) {
-                $options[$value] = get_string($field . '_' . $value, 'mod_visuallearning');
-            }
-            $mform->addElement('select', $field, get_string($field, 'mod_visuallearning'), $options);
-            $mform->setDefault($field, $values[0]);
-            // The animation engine only applies to animated-diagram lessons.
-            $mform->hideIf($field, 'visualstyle', 'neq', \mod_visuallearning\local\visual_styles::ANIMATED);
-            if ($field !== 'animationmode') {
-                $mform->hideIf($field, 'animationmode', 'eq', 'static');
-                $mform->hideIf($field, 'animationmode', 'eq', 'legacy');
-            }
-        }
-
-        $mform->addElement(
-            'textarea',
-            'imagestyle',
-            get_string('imagestyle', 'mod_visuallearning'),
-            ['rows' => 4, 'cols' => 80, 'style' => 'width:100%']
-        );
-        $mform->setType('imagestyle', PARAM_TEXT);
-        $mform->setDefault('imagestyle', $config->defaultimagestyle ?? get_string('defaultimagestyle', 'mod_visuallearning'));
-        if ($defaultmode === \mod_visuallearning\local\picture_modes::SVG) {
-            $mform->setDefault('imagestyle', get_string('svg_art_direction', 'mod_visuallearning'));
-        }
-        $mform->addHelpButton('imagestyle', 'imagestyle', 'mod_visuallearning');
-
         // Recap and checks.
         $mform->addElement('header', 'reviewheader', get_string('reviewheader', 'mod_visuallearning'));
-        $mform->setExpanded('reviewheader');
+        $mform->setExpanded('reviewheader', false);
         $mform->addElement(
             'advcheckbox',
             'enablerecap',
@@ -235,7 +258,7 @@ class mod_visuallearning_mod_form extends moodleform_mod {
             'advcheckbox',
             'pickimages',
             get_string('pickimages', 'mod_visuallearning'),
-            get_string('pickimages_label', 'mod_visuallearning', \mod_visuallearning\local\ai\lmslabs::IMAGE_CREDITS)
+            get_string('pickimages_label', 'mod_visuallearning')
         );
         $mform->setDefault('pickimages', 1);
         $mform->addHelpButton('pickimages', 'pickimages', 'mod_visuallearning');
@@ -259,7 +282,67 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         }
 
         $this->standard_coursemodule_elements();
+        $this->add_price_estimate();
         $this->add_action_buttons();
+    }
+
+    /**
+     * The one price the teacher sees on this form: what creating the whole lesson can cost with the choices made,
+     * kept up to date as they change the number of pages, animation or card pictures.
+     */
+    protected function add_price_estimate(): void {
+        global $PAGE, $DB;
+        $mform = $this->_form;
+        if ($this->_instance && $DB->record_exists('visuallearning_pages', ['visuallearningid' => $this->_instance])) {
+            // A built lesson: saving its settings costs nothing, so no price is shown here.
+            return;
+        }
+        $lmslabs = \mod_visuallearning\local\ai\lmslabs::class;
+        $prices = ['page' => $lmslabs::approved_price('page'), 'animation' => $lmslabs::approved_price('animation'),
+            'card' => $lmslabs::approved_price('card'), 'cards' => \mod_visuallearning\local\picture_modes::CARDS,
+            'usd' => $lmslabs::CREDIT_USD];
+        $text = get_string('estimate_text', 'mod_visuallearning', (object)['credits' => '{credits}', 'usd' => '{usd}',
+            'pages' => '{pages}']);
+        $mform->addElement('html', \html_writer::div(
+            \html_writer::tag('div', get_string('estimate_heading', 'mod_visuallearning'), ['class' => 'vl-estimate-heading']) .
+            \html_writer::tag('div', '', ['class' => 'vl-estimate-text', 'aria-live' => 'polite']) .
+            \html_writer::tag('div', get_string('estimate_note', 'mod_visuallearning'), ['class' => 'vl-estimate-note']),
+            'vl-estimate', ['id' => 'vl-estimate', 'data-prices' => json_encode($prices), 'data-text' => $text]
+        ));
+        $PAGE->requires->js_init_code(<<<'JS'
+(function() {
+    var box = document.getElementById('vl-estimate');
+    var form = box && box.closest('form');
+    if (!form) {
+        return;
+    }
+    // Shown just above the save buttons, outside the collapsible sections, so it is always in sight.
+    var buttons = form.querySelector('[id^="fgroup_id_buttonar"]');
+    if (buttons) {
+        buttons.parentNode.insertBefore(box, buttons);
+    }
+    var prices = JSON.parse(box.dataset.prices);
+    var value = function(name) {
+        var el = form.querySelector('[name="' + name + '"]:checked') || form.querySelector('select[name="' + name + '"]');
+        return el ? el.value : '';
+    };
+    var update = function() {
+        var pages = parseInt(value('maxpages'), 10) || 0;
+        var cards = form.querySelector('input[type="checkbox"][name="cardpictures"]');
+        var animated = value('animate') === '1' && value('visualstyle') !== 'animated';
+        var each = prices.page + (animated ? prices.animation
+            : (cards && cards.checked && value('visualstyle') !== 'animated' ? prices.cards * prices.card : 0));
+        var credits = pages * each;
+        box.querySelector('.vl-estimate-text').textContent = box.dataset.text
+            .replace('{credits}', credits)
+            .replace('{usd}', 'US$' + (credits * prices.usd).toFixed(2))
+            .replace('{pages}', pages);
+    };
+    form.addEventListener('change', update);
+    update();
+})();
+JS
+        );
     }
 
     /**
@@ -268,21 +351,23 @@ class mod_visuallearning_mod_form extends moodleform_mod {
      * @param array $defaultvalues
      */
     public function data_preprocessing(&$defaultvalues) {
-        if (($defaultvalues['picturemode'] ?? '') === \mod_visuallearning\local\picture_modes::SVG) {
-            $defaultvalues['imagestyle'] = \mod_visuallearning\local\visual_styles::direction((object)$defaultvalues);
-            $defaultvalues['visualstyle'] = \mod_visuallearning\local\picture_modes::SVG;
-            $defaultvalues['picturemode'] = \mod_visuallearning\local\picture_modes::SINGLE;
+        // The stored picture mode becomes the form's simple choices.
+        $mode = (string)($defaultvalues['picturemode'] ?? '');
+        $defaultvalues['animate'] = $mode === \mod_visuallearning\local\picture_modes::SVG ? 1 : 0;
+        $defaultvalues['cardpictures'] = $mode === \mod_visuallearning\local\picture_modes::SEQUENCE ? 1 : 0;
+        if ($mode === \mod_visuallearning\local\picture_modes::ANIMATED) {
+            $defaultvalues['visualstyle'] = \mod_visuallearning\local\visual_styles::ANIMATED;
+        }
+        // A default art direction is shown as empty (the placeholder explains it); only the teacher's own words show.
+        if (isset($defaultvalues['imagestyle'])
+                && \mod_visuallearning\local\visual_styles::is_default_text((string)$defaultvalues['imagestyle'])) {
+            $defaultvalues['imagestyle'] = '';
         }
         if (isset($defaultvalues['questiontypes'])) {
             $chosen = explode(',', (string)$defaultvalues['questiontypes']);
             foreach (\mod_visuallearning\local\question::TYPES as $type) {
                 $defaultvalues['qt_' . $type] = in_array($type, $chosen, true) ? 1 : 0;
             }
-        }
-        if (($defaultvalues['picturemode'] ?? '') === \mod_visuallearning\local\picture_modes::ANIMATED) {
-            // Animated diagrams are chosen as a visual style.
-            $defaultvalues['visualstyle'] = \mod_visuallearning\local\visual_styles::ANIMATED;
-            $defaultvalues['picturemode'] = \mod_visuallearning\local\picture_modes::SINGLE;
         }
         if (isset($defaultvalues['speakingrate'])) {
             $rate = (float)$defaultvalues['speakingrate'];
@@ -304,6 +389,15 @@ class mod_visuallearning_mod_form extends moodleform_mod {
             $catalogue = \mod_visuallearning\local\ai\lmslabs::voice_catalogue();
         } finally {
             \mod_visuallearning\local\ai\lmslabs::$fetch = true;
+        }
+        // Everything the AI reads travels in one request, so the two boxes share LMS Labs' limit.
+        $total = 300; // The labels of the lines added to the content.
+        foreach (['sourcecontent', 'aiinstructions', 'objectives', 'priorknowledge', 'unitcode'] as $field) {
+            $total += \core_text::strlen(trim((string)($data[$field] ?? '')));
+        }
+        if ($total > \mod_visuallearning\local\ai\lmslabs::MAX_CONTENT) {
+            $errors['aiinstructions'] = get_string('aiinstructions_toolong', 'mod_visuallearning',
+                \mod_visuallearning\local\ai\lmslabs::MAX_CONTENT);
         }
         if (!empty($data['enablequiz'])) {
             $any = false;

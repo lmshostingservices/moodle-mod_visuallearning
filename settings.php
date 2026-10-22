@@ -36,15 +36,8 @@ if ($ADMIN->fulltree) {
         new admin_setting_heading(
             "$component/aiheading",
             get_string('settings_ai', $component),
-            get_string(
-                'settings_ai_desc',
-                $component,
-                (object)[
-                    'page' => \mod_visuallearning\local\ai\lmslabs::PAGE_CREDITS,
-                    'image' => \mod_visuallearning\local\ai\lmslabs::IMAGE_CREDITS,
-                    'voice' => \mod_visuallearning\local\ai\lmslabs::VOICE_CREDITS,
-                ]
-            ) . '<p><strong>' . get_string(\mod_visuallearning\local\credentials::status(), $component) . '</strong></p>'
+            get_string('settings_ai_desc', $component) . '<p><strong>'
+                . get_string(\mod_visuallearning\local\credentials::status(), $component) . '</strong></p>'
         )
     );
     foreach (['aiwrite', 'aiimages', 'aivoice'] as $name) {
@@ -107,6 +100,14 @@ if ($ADMIN->fulltree) {
             get_string('settings_defaultpicturemode_desc', $component),
             \mod_visuallearning\local\picture_modes::SINGLE,
             \mod_visuallearning\local\picture_modes::form_options()
+        )
+    );
+    $settings->add(
+        new admin_setting_configcheckbox(
+            "$component/defaultcallouts",
+            get_string('settings_defaultcallouts', $component),
+            get_string('settings_defaultcallouts_desc', $component),
+            0
         )
     );
     $settings->add(

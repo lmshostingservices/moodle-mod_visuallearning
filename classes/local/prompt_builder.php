@@ -17,21 +17,14 @@
 namespace mod_visuallearning\local;
 
 /**
- * Builds the ChatGPT prompt file and the final image prompts sent to Nano Banana.
+ * Builds the page writer's brief (run by Claude at LMS Labs), the picture prompts for OpenAI GPT Image and the briefs
+ * for Claude's animated diagrams.
  *
  * @package    mod_visuallearning
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class prompt_builder {
-    /** @var string Rules of every picture of a workplace story in the illustration style ({@see image_rules()}). */
-    public const IMAGE_GUARDRAILS = 'STRICT RULES: This must be an ILLUSTRATION, never a photograph, never photorealistic, '
-        . 'never 3D-rendered realism. Do NOT include any text, words, letters, numbers, captions, speech bubbles, '
-        . 'labels, logos, brand names or readable signage anywhere in the image. Adults in a professional, '
-        . 'workplace-appropriate setting with respectful representation. One clear scene, main subject '
-        . 'centred with comfortable margins, uncluttered background, warm and friendly mood. Only the people the '
-        . 'scene needs, natural proportions, simple relaxed hands, meaningful objects that show the idea.';
-
     /** @var string Culture setting: match the narration language's country. */
     public const CULTURE_LANGUAGE = 'language';
 
@@ -93,8 +86,8 @@ class prompt_builder {
     }
 
     /**
-     * The rules that close every picture prompt: the visual style's rendering rule, then the teaching approach's
-     * rules on text and content. For a workplace story in the illustration style this is exactly IMAGE_GUARDRAILS.
+     * The teaching approach's content rules for a picture (people, safety, accuracy), adjusted for young learners.
+     * What may be written in the picture is decided by the lesson's callouts setting ({@see words_rule()}).
      *
      * @param \stdClass $book
      * @return string
@@ -103,19 +96,43 @@ class prompt_builder {
         $rules = approaches::of($book)->image_rules();
         if (learner_levels::young($book)) {
             // School-age learners: the people shown need not be adults at work.
-            $rules = str_replace('Adults in a professional, workplace-appropriate setting with respectful representation.',
-                'Age-appropriate, safe and respectful representation.', $rules);
+            $rules = str_replace('Adults in a professional, workplace-appropriate setting with respectful representation',
+                'Age-appropriate, safe and respectful representation', $rules);
         }
-        return 'STRICT RULES: ' . visual_styles::render_rule($book) . ' ' . $rules;
+        return $rules;
     }
 
     /**
-     * The full prompt file a teacher pastes into ChatGPT.
+     * What may be written in an image-model picture: callouts (the teacher's choice) or nothing at all.
+     *
+     * @param \stdClass $book
+     * @param bool $edit for an edit of the picture before
+     * @return string
+     */
+    public static function words_rule(\stdClass $book, bool $edit = false): string {
+        $language = voices::language_name((string)$book->language);
+        if (!visual_styles::callouts($book)) {
+            return 'None. A completely text-free picture: no labels, captions, numbers, letters or marks that look '
+                . 'like writing; clothing, equipment, screens, signs and packaging show no readable text.';
+        }
+        if ($edit) {
+            return "Keep the existing callouts exactly as they are; add one only where the change gives its words in "
+                . "quotes, in {$language}, in the same tag style.";
+        }
+        return "Exactly the words in quotes in the scene, in {$language}, spelled exactly, and nothing else (no quoted "
+            . 'words: no writing at all). Each callout is a white rounded tag with dark navy bold sans-serif text and a '
+            . 'thin leader line ending in a small dot on its part; the "Info card" words go on one small dark navy '
+            . 'rounded card in a corner. Readable on a phone, never covering the subject.';
+    }
+
+    /**
+     * The page writer's brief: everything Claude needs to write the lesson's pages as JSON. Sent to LMS Labs with each
+     * draft once it says it takes it (capability "writerBrief"); until then LMS Labs uses its own copy of this brief.
      *
      * @param \stdClass $book
      * @return string
      */
-    public static function chatgpt_prompt(\stdClass $book): string {
+    public static function writer_prompt(\stdClass $book): string {
         $language = voices::language_name($book->language);
         $industry = trim((string)$book->industry);
         $subindustry = trim((string)$book->subindustry);
@@ -129,10 +146,8 @@ class prompt_builder {
         $visualstyle = visual_styles::of($book);
         $style = visual_styles::direction($book);
         $style = $style !== '' ? $style : get_string('defaultimagestyle', 'mod_visuallearning');
-        // Lessons made before approaches and styles existed keep exactly the inputs they always had.
-        $styleline = $visualstyle === visual_styles::DEFAULT ? "Illustration style chosen by the teacher: {$style}"
-            : 'Visual style chosen by the teacher: ' . get_string('visualstyle_' . $visualstyle, 'mod_visuallearning')
-                . ". {$style}";
+        $styleline = 'Picture style chosen by the teacher: ' . get_string('visualstyle_' . $visualstyle, 'mod_visuallearning')
+            . ". {$style}";
         if ($approach->key() !== approaches::DEFAULT) {
             $styleline .= "\nTeaching approach: " . get_string('approach_' . $approach->key(), 'mod_visuallearning');
         }
@@ -146,6 +161,9 @@ class prompt_builder {
         $check = $approach->check();
         $textcheck = $approach->text_check();
         $content = trim((string)$book->sourcecontent);
+        $extras = trim(self::lesson_extras($book));
+        $extras = $extras !== '' ? $extras . "\n" : '';
+        $material = self::material_block($book);
         $title = trim((string)$book->name);
         $place = self::culture($book);
         $quiz = !empty($book->enablequiz);
@@ -178,14 +196,18 @@ CULTURE;
         $imagesbrief = $approach->images_brief($where, $cultureline, $language);
         $culturestep = $approach->culture_brief($place) ?? $culturestep;
         [$modestep, $modekey, $modecheck, $keycount] = self::picture_mode_brief($book, $language);
-        $imagesbrief .= $modestep;
+        $imagesbrief .= $modestep . self::picture_words_brief($book, $language) . self::consistency_brief();
         $imageheading = "------------------------------------------------\nSTEP 5 - DESIGN THE ILLUSTRATIONS\n"
             . "------------------------------------------------";
+        // Every lesson describes its fixed layout once, so every picture (and every animated scene) matches.
+        $scenestylekey = "  \"scene_style\": {\"palette\": \"string\", \"recurring\": \"string\", "
+            . "\"subject\": \"string\"},\n";
         if (picture_modes::of($book) === picture_modes::SVG) {
-            // The supplied animated-scene brief replaces STEP 5, never appends a conflicting picture brief.
+            // The animated-scene brief replaces STEP 5, never appends a conflicting picture brief.
             $imageheading = '';
-            $imagesbrief = $modestep . "\nDefine a shared style_guide and lesson-wide colour code, characters, and "
-                . "cover_image_prompt. Keep the existing question and cover picture requirements.";
+            $imagesbrief = $modestep . "\nAlso write \"style_guide\", \"characters\" and \"cover_image_prompt\" as "
+                . "usual: the cover, recap and question pictures are stills in the lesson's picture style."
+                . self::picture_words_brief($book, $language);
         }
 
         return <<<PROMPT
@@ -205,12 +227,12 @@ Sub-industry: {$subindustryline}
 Language for ALL learner-facing text: {$language} ({$book->language})
 Country / culture of the learners: {$cultureline}
 Number of pages: exactly {$max}
-{$styleline}
+{$extras}{$styleline}
 
-Teaching content:
+What to teach (the topic and the key points):
 <<<CONTENT
 {$content}
-CONTENT
+CONTENT{$material}
 
 ------------------------------------------------
 STEP 1 - BREAK THE CONTENT INTO CONCEPTS
@@ -221,7 +243,8 @@ STEP 1 - BREAK THE CONTENT INTO CONCEPTS
   closely related ones or leave out the least important. Never pad with invented facts.
 - ONE concept per page. A concept is a single, simple, memorable idea. Never combine two ideas.
 - Order the pages so they build logically: foundations first, then application, then the big picture.
-- Stay faithful to the content. Do not invent facts, laws, figures or procedures that are not in it.
+- Stay faithful to the content and the teacher's material. Do not invent facts, laws, figures or procedures
+  that are not in them.
   You may add realistic workplace examples to illustrate the content.
 
 ------------------------------------------------
@@ -269,7 +292,7 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
     {"name": "string", "description": "string"}
   ],
   "cover_image_prompt": "string",
-  "pages": [
+{$scenestylekey}  "pages": [
     {
       "page": 1,
       "title": "string",
@@ -289,6 +312,42 @@ Before you answer, silently check: exactly {$max} pages; one concept per page; e
 customs fit the learners' country; {$textcheck} every question follows its type's
 exact shape and tests only its own page; the JSON is valid (double quotes, no trailing commas).
 PROMPT;
+    }
+
+    /**
+     * What keeps a lesson's pictures consistent and accurate, for the page writer (pictures of every style).
+     *
+     * @return string starting with a new line
+     */
+    public static function consistency_brief(): string {
+        return "\n- Once for the whole lesson, write \"scene_style\" (IN ENGLISH): \"palette\": the colour code used on "
+            . "every page, each colour with its meaning; \"recurring\": at most 25 words on the fixed layout and "
+            . "viewpoint, and how things that appear on several pages are drawn, so every picture matches (for example "
+            . "\"front view of a see-through upper body, the broken left forearm held out to the side\"); \"subject\": "
+            . "biology, physics, chemistry, mechanical, earth, maths, safety, business, or \"\" when none fits."
+            . "\n- Each image_prompt shows only its own page's step. When it shows a path, flow or process, say exactly "
+            . "where it starts and where it stops on this page (\"... and stops at the spinal cord\") and which way "
+            . "the arrows point, then end with 'Not shown:' and what later pages teach (\"Not shown: the brain\"); "
+            . "fix which side of the body or machine is involved and keep it the same on every page.";
+    }
+
+    /**
+     * The rule for words in pictures, for the page writer: the exact callouts to name in each picture prompt, or none.
+     *
+     * @param \stdClass $book
+     * @param string $language learner-facing language name
+     * @return string starting with a new line
+     */
+    public static function picture_words_brief(\stdClass $book, string $language): string {
+        $count = learner_levels::of($book) === 'primary' ? 'two' : 'three';
+        if (visual_styles::callouts($book)) {
+            return "\n- PICTURE WORDS (callouts are on): end each page image_prompt and card picture prompt with "
+                . "'Callouts:' and up to " . $count . " exact labels in double quotes, in {$language}, one "
+                . "to three words each, naming the parts the learner must notice; then 'Info card:' and at most eight "
+                . "words in double quotes stating the key point. The cover and answer-option pictures have no words.";
+        }
+        return "\n- PICTURE WORDS: none. Pictures carry no words at all, so never ask for labels, captions, signs or "
+            . "text in a picture prompt; show meaning with arrows, colour and composition.";
     }
 
     /**
@@ -481,84 +540,125 @@ SHAPE;
     }
 
     /**
-     * Final prompt sent (through LMS Labs) to the image model for a page or the cover.
+     * The final prompt of a still picture (page, cover, option or the first card picture).
      *
-     * When the prompt is longer than the route accepts, the least important parts are shortened first: characters
-     * who are not in the scene, then the art direction, then the cultural detail (the place is always kept), then
-     * the remaining characters and finally the scene itself. The rules are never shortened.
+     * Every style gets a short, positive, narrative prompt for the image model (OpenAI GPT Image): what to make and
+     * why, the scene, the look, the audience, people and place, the words allowed in the picture, the approach's
+     * rules, the composition and a short list of what to avoid.
      *
      * @param \stdClass $book
-     * @param string $sceneprompt
+     * @param string $sceneprompt what the picture shows (written by the page writer, in English)
      * @param int $max longest prompt in Unicode code points (0: no limit)
+     * @param string $aspect media::ASPECT or media::OPTION_ASPECT
+     * @param string $objective what this page teaches (its title), so the picture shows only that
      * @return string
      */
-    public static function image_prompt(\stdClass $book, string $sceneprompt, int $max = 0): string {
+    public static function image_prompt(
+        \stdClass $book,
+        string $sceneprompt,
+        int $max = 0,
+        string $aspect = media::ASPECT,
+        string $objective = ''
+    ): string {
         $scene = trim(preg_replace('/\s+/u', ' ', $sceneprompt));
+        $objective = trim(preg_replace('/\s+/u', ' ', $objective));
         $approach = approaches::of($book);
-        $master = $approach->image_master();
-        $rules = self::image_rules($book);
-        $style = visual_styles::direction($book);
-        $direction = trim((string)($book->styleguide ?? ''));
+        $style = visual_styles::STYLES[visual_styles::of($book)];
+        $science = $approach->image_master() !== '';
+        $open = 'Create a ' . $style['medium'] . ' for a lesson called "' . trim((string)$book->name) . '". '
+            . ($science ? $style['explain'] : 'It shows one moment of a workplace story, so the idea is obvious at a glance.');
+        $look = visual_styles::direction($book);
+        $guide = trim(preg_replace('/\s+/u', ' ', (string)($book->styleguide ?? '')));
+        $shared = scene_plan::clean_style($book->scenestyle ?? null);
+        $same = trim((string)($shared['recurring'] ?? ''));
         $culture = $approach->whole_cast() ? self::culture_direction($book) : self::culture_people($book);
         $cast = $approach->whole_cast() ? self::characters_text($book) : self::characters_text($book, $scene);
-        $label = $master !== '' ? 'EXPLAIN: ' : 'SCENE: ';
-        $audience = learner_levels::brief($book, 'picture');
-        $build = function () use (&$style, &$direction, &$culture, &$cast, &$scene, $master, $rules, $label,
-                $audience): string {
-            $parts = [];
-            if ($master !== '') {
-                $parts[] = 'VISUAL EXPLANATION: ' . $master;
+        // The look never names an audience any more, so the level's override sentence is not needed.
+        $audience = str_replace(' This overrides any audience named above.', '', learner_levels::brief($book, 'picture'));
+        $square = $aspect === media::OPTION_ASPECT;
+        $tail = [
+            // Answer options stay free of words: a label could give the answer away.
+            'WORDS IN THE PICTURE: ' . ($square ? 'None. Keep every surface free of writing.' : self::words_rule($book)),
+            'RULES: ' . self::image_rules($book),
+            'COMPOSITION: ' . ($square ? 'A square tile: one simple subject filling the frame' : 'One clear focal subject, '
+                . 'large in the frame') . ', comfortable margins, a calm uncluttered background.',
+            'AVOID: ' . $style['avoid'] . (visual_styles::callouts($book) && !$square ? '; logos, watermarks or misspelled words.'
+                : '; any text, letters, numbers, logos or watermarks.'),
+        ];
+        $build = function () use (&$look, &$guide, &$culture, &$cast, &$scene, &$same, $open, $audience, $science,
+                $tail, $objective): string {
+            $parts = [$open];
+            if ($objective !== '') {
+                $parts[] = 'THIS PAGE TEACHES: ' . $objective . ($science ? ' (only this step; later steps are on later '
+                    . 'pages)' : '');
             }
-            if ($style !== '') {
-                $parts[] = 'ART STYLE: ' . $style;
-            }
-            if ($direction !== '') {
-                $parts[] = 'ART DIRECTION: ' . $direction;
+            $parts[] = ($science ? 'EXPLAIN: ' : 'SCENE: ') . $scene;
+            $parts[] = 'LOOK: ' . trim($look . ($guide !== '' ? ' ' . $guide : ''));
+            if ($same !== '') {
+                $parts[] = 'SAME ON EVERY PAGE OF THIS LESSON: ' . $same;
             }
             if ($audience !== '') {
-                // Who the picture is for: how simple or detailed it is.
                 $parts[] = $audience;
             }
-            $parts[] = 'CULTURAL SETTING: ' . $culture;
-            if ($cast !== '') {
-                $parts[] = 'RECURRING CHARACTERS (draw them exactly like this whenever they appear): ' . $cast;
-            }
-            $parts[] = $label . $scene;
-            $parts[] = $rules;
-            return implode("\n\n", $parts);
+            $parts[] = 'PEOPLE AND PLACE: ' . $culture
+                . ($cast !== '' ? ' Recurring characters, drawn exactly like this whenever they appear: ' . $cast : '');
+            return implode("\n\n", array_merge($parts, $tail));
         };
         $prompt = $build();
         if ($max <= 0 || \core_text::strlen($prompt) <= $max) {
             return $prompt;
         }
-        $cast = self::characters_text($book, $scene);
+        // Too long: shorten the least important parts first. The lesson's own art direction, layout and cast keep
+        // its pages consistent, so they go last, just before the scene itself.
         $over = fn(): int => \core_text::strlen($build()) - $max;
-        $cut = function (string $text, int $by): string {
-            $keep = max(0, \core_text::strlen($text) - $by - 1);
-            return $keep < 20 ? '' : rtrim(\core_text::substr($text, 0, $keep)) . '…';
-        };
-        if ($over() > 0) {
-            $direction = $cut($direction, $over());
-        }
         if ($over() > 0 && $approach->whole_cast()) {
             $culture = self::culture_short($book);
         }
         if ($over() > 0) {
-            $style = $cut($style, $over());
+            $cast = self::characters_text($book, $scene);
         }
         if ($over() > 0) {
-            $cast = $cut($cast, $over());
+            // The look is shortened but never lost: at least its opening words (such as "Editorial textbook
+            // illustration") always stay, so the picture keeps the teacher's chosen style.
+            $essence = trim((string)strtok($look, ':.'));
+            $look = self::cut($look, $over());
+            $look = $look !== '' ? $look : $essence;
         }
         if ($over() > 0) {
-            $scene = $cut($scene, $over());
+            $guide = self::cut($guide, $over());
+        }
+        if ($over() > 0) {
+            $same = self::cut($same, $over());
+        }
+        if ($over() > 0) {
+            // The characters the scene names keep the start of their description, so they look the same on every page.
+            $essential = $cast !== '' ? rtrim(\core_text::substr($cast, 0, 160)) . (\core_text::strlen($cast) > 160 ? '…' : '')
+                : '';
+            $cast = self::cut($cast, $over());
+            $cast = $cast !== '' ? $cast : $essential;
+        }
+        if ($over() > 0) {
+            $scene = self::cut($scene, $over());
         }
         return \core_text::substr($build(), 0, $max);
     }
 
     /**
+     * Text shortened by some characters, ending with an ellipsis ('' when too little would be left).
+     *
+     * @param string $text
+     * @param int $by
+     * @return string
+     */
+    protected static function cut(string $text, int $by): string {
+        $keep = max(0, \core_text::strlen($text) - $by - 1);
+        return $keep < 20 ? '' : rtrim(\core_text::substr($text, 0, $keep)) . '…';
+    }
+
+    /**
      * The prompt that edits the picture before into the next card's picture (one picture per card).
      *
-     * The picture before is sent with it, so only the change is described; the art direction and rules are repeated so
+     * The picture before is sent with it, so only the change is described; the look and the rules are repeated so
      * the edit keeps the lesson's look and its accuracy rules.
      *
      * @param \stdClass $book
@@ -568,22 +668,30 @@ SHAPE;
      */
     public static function edit_prompt(\stdClass $book, string $change, int $max = 0): string {
         $change = trim(preg_replace('/\s+/u', ' ', $change));
-        $style = visual_styles::direction($book);
+        $style = visual_styles::STYLES[visual_styles::of($book)];
         $parts = ['EDIT THE ATTACHED PICTURE. Keep everything exactly as it is: the layout, viewpoint, framing, people, '
             . 'objects, colours, lighting and art style. Change only what is described below, so this picture flows on '
-            . 'from the one before.'];
-        if ($style !== '') {
-            $parts[] = 'ART STYLE: ' . $style;
+            . 'from the one before.', 'CHANGE: ' . $change];
+        $keep = 'KEEP UNCHANGED: the camera angle and composition; every person\'s face, hair, skin tone, build and '
+            . 'clothing; the colour code; every structure, part and connection already shown; the art style.';
+        if (($cast = self::characters_text($book, $change)) !== '') {
+            $keep .= ' The people keep exactly this appearance: ' . $cast . '.';
+        }
+        $parts[] = $keep;
+        $look = visual_styles::direction($book);
+        if ($look !== '') {
+            $parts['look'] = 'LOOK: ' . $look;
         }
         if (($audience = learner_levels::brief($book, 'picture')) !== '') {
             $parts[] = $audience;
         }
-        $parts[] = 'CHANGE: ' . $change;
-        $parts[] = self::image_rules($book);
+        $parts[] = 'WORDS IN THE PICTURE: ' . self::words_rule($book, true);
+        $parts[] = 'RULES: ' . self::image_rules($book);
+        $parts[] = 'AVOID: ' . $style['avoid'] . '.';
         $prompt = implode("\n\n", $parts);
         if ($max > 0 && \core_text::strlen($prompt) > $max) {
-            // The art style goes first: the picture being edited already carries it.
-            unset($parts[1]);
+            // The look goes first: the picture being edited already carries it.
+            unset($parts['look']);
             $prompt = \core_text::substr(implode("\n\n", $parts), 0, $max);
         }
         return $prompt;
@@ -637,7 +745,7 @@ SHAPE;
 
     /**
      * The brief for one page's animated SVG scene. LMS Labs sends it to Claude with the plugin's SVG system prompt
-     * (schema/svg-animation-system.md); teachers can also give both to their own AI assistant.
+     * (schema/svg-animation-system.md).
      *
      * @param \stdClass $book
      * @param \stdClass $page
@@ -652,49 +760,45 @@ SHAPE;
         $lines[] = 'PAGE TITLE: ' . trim((string)$page->title);
         $lines[] = 'LANGUAGE OF EVERY LABEL AND CAPTION: ' . voices::language_name((string)$book->language);
         $lines[] = '';
-        $lines[] = 'THE THREE CARDS (read aloud one after the other; stage N of the SVG plays while card N is read):';
+        $lines[] = 'THE THREE CARDS (read aloud one after the other; stage N plays while card N is read):';
         $n = 0;
         foreach (VISUALLEARNING_CARDS as $card) {
             $n++;
             $text = trim(preg_replace('/\s+/u', ' ', (string)$page->{$card . 'text'}));
-            $lines[] = 'CARD ' . $n . ' (' . approaches::card_label($book, $card) . '): ' . ($text !== '' ? $text : '(empty)');
+            $lines[] = 'CARD ' . $n . ': ' . ($text !== '' ? $text : '(empty)');
         }
-        $plan = scene_plan::drawing_brief($page->sceneplan ?? null);
+        if (!is_array(scene_plan::clean($page->sceneplan ?? null))) {
+            // No plan: the page picture's description is the best hint of the layout.
+            $scene = trim((string)$page->imageprompt);
+            if ($scene !== '') {
+                $lines[] = '';
+                $lines[] = 'THE PAGE PICTURE SHOWS (a hint for the layout): ' . $scene;
+            }
+        }
+        $plan = scene_plan::drawing_brief($page->sceneplan ?? null, scene_plan::clean_style($book->scenestyle ?? null));
         if ($plan !== '') {
             $lines[] = '';
             $lines[] = $plan;
         }
-        $summary = trim((string)$page->summarytext);
-        if ($summary !== '') {
-            $lines[] = 'ONE-SENTENCE RECAP: ' . $summary;
-        }
-        $scene = trim((string)$page->imageprompt);
-        if ($scene !== '') {
-            $lines[] = '';
-            $lines[] = 'THE PAGE PICTURE SHOWS (for context and a matching look): ' . $scene;
-        }
         $lines[] = '';
         if ($approach->image_master() !== '') {
-            $lines[] = 'TEACHING APPROACH: explain the real mechanism - what happens, why and what changes. Show the '
-                . 'mechanism, not just the object.';
+            $lines[] = 'APPROACH: explain the real mechanism: what happens, why and what changes.';
         } else {
-            $lines[] = 'TEACHING APPROACH: a workplace story. Animate the SKILL or PROCESS the story teaches, '
-                . 'not the people. Use simple figure icons only where a role must be shown.';
+            $lines[] = 'APPROACH: a workplace story. Animate the SKILL or PROCESS it teaches, not the people; simple '
+                . 'figure icons only where a role must be shown. ' . self::culture_people($book);
         }
-        $level = learner_levels::of($book);
-        $lines[] = 'AUDIENCE: ' . self::SVG_LEVELS[$level];
-        $picture = learner_levels::brief($book, 'picture');
-        if ($picture !== '') {
-            $lines[] = $picture;
+        $lines[] = 'AUDIENCE: ' . self::SVG_LEVELS[learner_levels::of($book)];
+        $lines[] = visual_styles::of($book) === 'whiteboard'
+            ? 'SCENE LOOK: hand-drawn sketch (follow the HAND-DRAWN rules).'
+            : 'SCENE LOOK: clean diagram (the house style).';
+        $own = trim((string)($book->imagestyle ?? ''));
+        if ($own !== '' && !visual_styles::is_default_text($own)) {
+            $lines[] = 'TEACHER\'S ART DIRECTION (use its colours and mood where they fit the house style): '
+                . \core_text::substr(preg_replace('/\s+/u', ' ', $own), 0, 400);
         }
-        $style = visual_styles::direction($book);
-        $direction = trim((string)($book->styleguide ?? ''));
-        if ($style !== '' || $direction !== '') {
-            $lines[] = 'ART DIRECTION (keep the house style below, and use these colours and mood where they fit): '
-                . trim($style . ' ' . $direction);
+        if (($own = self::teacher_instructions($book, 600)) !== '') {
+            $lines[] = 'TEACHER\'S INSTRUCTIONS (follow them unless they conflict with accuracy or safety): ' . $own;
         }
-        $lines[] = 'CULTURAL SETTING: ' . self::culture_people($book);
-        $lines[] = '';
         $lines[] = 'Use only facts the cards give; never invent numbers. Answer with the SVG only.';
         $out = implode("\n", $lines);
         return \core_text::strlen($out) > self::MAX_SVG_PROMPT ? \core_text::substr($out, 0, self::MAX_SVG_PROMPT) : $out;
@@ -707,5 +811,71 @@ SHAPE;
      */
     public static function svg_system(): string {
         return (string)file_get_contents(__DIR__ . '/../../schema/svg-animation-system.md');
+    }
+
+    /**
+     * The optional lesson inputs (learning objectives, prior knowledge, unit code) as brief lines, or ''.
+     *
+     * @param \stdClass $book
+     * @return string ending with a blank line when not empty
+     */
+    public static function lesson_extras(\stdClass $book): string {
+        $lines = [];
+        foreach (['objectives' => 'Learning objectives', 'priorknowledge' => 'What the learners already know',
+                'unitcode' => 'Unit / outcome code'] as $field => $label) {
+            $text = trim(preg_replace('/\s+/u', ' ', (string)($book->{$field} ?? '')));
+            if ($text !== '') {
+                $lines[] = $label . ': ' . $text;
+            }
+        }
+        return $lines ? implode("\n", $lines) . "\n\n" : '';
+    }
+
+    /**
+     * The teacher's notes, documents and instructions, as typed or pasted (line breaks kept), or ''.
+     *
+     * @param \stdClass $book
+     * @return string
+     */
+    public static function teacher_material(\stdClass $book): string {
+        $text = str_replace(["\r\n", "\r"], "\n", (string)($book->aiinstructions ?? ''));
+        $text = trim(preg_replace("/\n{3,}/", "\n\n", $text));
+        return \core_text::substr($text, 0, self::MAX_MATERIAL);
+    }
+
+    /**
+     * The block that follows the teaching content in the writer's brief and in a draft request ('' without material).
+     *
+     * @param \stdClass $book
+     * @return string starting with blank lines
+     */
+    public static function material_block(\stdClass $book): string {
+        $material = self::teacher_material($book);
+        if ($material === '') {
+            return '';
+        }
+        return "\n\nTeacher's notes, documents and instructions (use them as a source of facts, together with the "
+            . "teaching content; follow the instructions unless they conflict with accuracy, safety or the output format):\n"
+            . "<<<MATERIAL\n" . $material . "\nMATERIAL";
+    }
+
+    /** @var int Longest teacher's notes, documents and instructions (characters). */
+    public const MAX_MATERIAL = 50000;
+
+    /**
+     * The teacher's extra instructions and reference material for the AI, on one line ('' when none, or when longer
+     * than $max for a drawing brief, which takes only short instructions).
+     *
+     * @param \stdClass $book
+     * @param int $max longest result (characters)
+     * @return string
+     */
+    public static function teacher_instructions(\stdClass $book, int $max = 50000): string {
+        $text = trim(preg_replace('/\s+/u', ' ', (string)($book->aiinstructions ?? '')));
+        if (\core_text::strlen($text) > $max) {
+            // Too long to be instructions for a drawing (pasted reference material): the page writer uses it instead.
+            return $max < self::MAX_MATERIAL ? '' : \core_text::substr($text, 0, $max);
+        }
+        return $text;
     }
 }

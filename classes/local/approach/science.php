@@ -126,7 +126,7 @@ TXT;
 - "characters" is optional for this lesson. Leave it as an empty list [] unless some pictures really need
   people (for example a worker using a meter); then describe at most 3, as in a {$where} workplace in
   {$cultureline}.
-- For each page write "image_prompt" IN ENGLISH, 70-110 words, that EXPLAINS the page's concept so a
+- For each page write "image_prompt" IN ENGLISH, 60-90 words, that EXPLAINS the page's concept so a
   learner understands it from the picture alone. Work it out from these parts, then write one
   self-contained description (do not list the letters):
   A. the single concept the learner must understand;
@@ -156,9 +156,9 @@ TXT;
   biological structures, no invented reactions or mechanisms, before-and-after views under the same
   conditions. Never invent a fact to make a picture more attractive. Do not ask for exact numbers,
   equations, angles or scales unless the teaching content gives them; use shapes, arrows and colour.
-- Image rules: never photographs, at most a few short labels where a part cannot be identified without
-  one (prefer arrows, colour and standard symbols such as V, I, N, S, + and -), no sentences, logos or
-  brand names in the picture, one primary concept per picture.
+- Image rules: the picture style chosen above; prefer arrows, colour and standard symbols (V, I, N, S, +
+  and -) to words; words only as PICTURE WORDS below says; no logos or brand names; one primary concept
+  per picture.
 - "alt_text": one sentence in {$language} that explains what the picture shows, for screen-reader users.
 - Also write a "cover_image_prompt" (English, 40-90 words) for a clean overview picture of the whole
   topic: the main system or process at a glance, with the key parts the lesson explains. No text on the
@@ -203,7 +203,7 @@ TXT;
      * @return string
      */
     public function text_check(): string {
-        return 'image prompts ask for words only as a few short labels where essential;';
+        return 'image prompts ask for words only as PICTURE WORDS says;';
     }
 
     /**
@@ -237,10 +237,12 @@ TXT;
      * @return string
      */
     public function image_rules(): string {
-        return 'Accuracy before looks: correct connections, phase, directions, structures and proportions; never '
-            . 'invent a mechanism, value or equation. Only a few short, correctly spelled labels where essential; '
-            . 'prefer arrows, colour and standard symbols; no sentences, numbers or scales unless given; no logos. '
-            . 'One concept, clear hierarchy, consistent colour code, clean background; people only if described.';
+        return 'Accuracy first: correct connections, directions, structures and proportions; never invent a part, '
+            . 'mechanism, value or equation. Show only this page\'s step: a path, flow or process starts and stops '
+            . 'exactly where the scene says, with nothing beyond it (later steps belong to later pages). Every arrow '
+            . 'points the real way things flow or move, never both ways unless the scene says so. One concept, a clear '
+            . 'visual hierarchy, and only the colours of the lesson\'s colour code that this page needs; people only if '
+            . 'the scene describes them.';
     }
 
     /**

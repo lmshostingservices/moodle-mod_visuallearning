@@ -23,7 +23,7 @@ namespace mod_visuallearning\local;
  *   picture, card 3 edits card 2's); the page picture stays the cover, recap and question picture;
  * - animated: an animated diagram the plugin draws itself (SVG) from a small specification the AI writes, building
  *   up card by card; pages whose concept fits no diagram keep their picture;
- * - svg: one animated scene per page, drawn as SVG by Claude through LMS Labs (or pasted from the teacher's own AI);
+ * - svg: one animated diagram per page, drawn as SVG by Claude through LMS Labs;
  *   it holds a stage for each card, plays at a slow teaching pace timed to each card's voiceover, and can be replayed
  *   at normal speed once the page has been heard. The page picture stays the cover, recap and question picture.
  *

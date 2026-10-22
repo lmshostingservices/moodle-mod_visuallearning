@@ -210,7 +210,7 @@ final class svg_animation_test extends \advanced_testcase {
         $this->assertSame(media::svg_prompt($book, $page), $sent['prompt']);
         $row = $DB->get_record('visuallearning_aireq', ['operation' => 'animation'], '*', MUST_EXIST);
         $this->assertSame('completed', $row->status);
-        $this->assertTrue(media::svg_current($context, (int)$page->id, media::svg_prompt($book, $page)));
+        $this->assertTrue(media::svg_current($context, (int)$page->id, media::svg_key($book, $page)));
         // Nothing more to make, and the player gets the scene inline.
         $this->assertSame([], media::plan($book, $context, 'missing', 0, ['animation']));
         $cm = get_coursemodule_from_instance('visuallearning', $book->id);
@@ -252,9 +252,9 @@ final class svg_animation_test extends \advanced_testcase {
     public function test_teacher_can_paste_a_scene_from_their_own_ai(): void {
         [$book, $context, $page] = $this->book();
         $this->assertFalse(media::save_svg($context, (int)$page->id, 'x', 'not svg'));
-        $prompt = media::svg_prompt($book, $page);
-        $this->assertTrue(media::save_svg($context, (int)$page->id, $prompt, self::SCENE));
-        $this->assertTrue(media::svg_current($context, (int)$page->id, $prompt));
+        $key = media::svg_key($book, $page);
+        $this->assertTrue(media::save_svg($context, (int)$page->id, $key, self::SCENE));
+        $this->assertTrue(media::svg_current($context, (int)$page->id, $key));
         $this->assertSame('vls' . $page->id, (new \SimpleXMLElement(media::svg_file($context, (int)$page->id)->get_content()))['id']
             ->__toString());
     }

@@ -39,7 +39,10 @@ routes, so LMS Labs can reuse their handlers.
 
 `GET /pages/capabilities` → `{"tariff": {"page": 2}, "questionTypes": ["truefalse", "pick", "match", "sort"]}`
 
-`GET /images/capabilities` → `{"tariff": {"image": 2}, "model": "gemini-nano-banana-2.1", "aspectRatios": ["4:3", "1:1"]}`
+`GET /images/capabilities` → `{"tariff": {"image": 2}, "model": "gpt-image-2.5-flare", "aspectRatios": ["4:3", "1:1"], "maxPromptChars": 6000}`
+
+`maxPromptChars` (optional, 2,000 to 6,000) lets the plugin send longer picture prompts; it sends at most 2,000
+characters until LMS Labs publishes it.
 
 `questionTypes` lists the check-question types LMS Labs AI writes; when it is missing the plugin asks only for true or
 false. `aspectRatios` lists the picture shapes the image route makes; until it includes `1:1` the plugin makes no
@@ -91,8 +94,8 @@ Statements, prompts and feedback at most 160 characters; options, pair, group an
 option `image_prompt` in English for a square picture of that option alone (empty when the lesson uses text cards);
 `feedback` is one sentence explaining the right answer. A question that breaks these rules is dropped by the plugin
 (the page then has no question), so it is still charged as a page. The older `tf_statement` / `tf_answer` fields are
-still accepted. The plugin's `prompt_builder::chatgpt_prompt()` is the reference prompt. Proposed: LMS Labs runs it
-server-side with Gemini, so the prompt cannot be changed from a Moodle site. Rules:
+still accepted. The plugin's `prompt_builder::writer_prompt()` is the reference prompt. Proposed: LMS Labs runs it
+server-side with Claude (Sonnet 5.5), so the prompt cannot be changed from a Moodle site. Rules:
 
 - at most `maxPages` pages;
 - cards at most 250 characters;
@@ -111,12 +114,13 @@ This route only settles the charge: the pages themselves are never sent. The plu
 `200`. The price per page is the same as `/pages/draft` (owner direction: "whether they use ChatGPT or not it's the
 same cost"). A same-key replay after success returns the same `200` without a second charge.
 
-### Illustrations (Nano Banana through LMS Labs)
+### Pictures (OpenAI GPT Image 2.5 Flare through LMS Labs)
 
 `POST /images` (Accept: image/png, image/webp, image/jpeg, application/json; the plugin waits up to 170 s)
 
 ```json
-{"prompt": "at most 2,000 code points, English", "style": "illustration", "aspectRatio": "4:3 | 1:1",
+{"prompt": "at most maxPromptChars code points (2,000 by default), English",
+ "style": "illustration | realistic | model3d | diagram | whiteboard", "aspectRatio": "4:3 | 1:1",
  "purpose": "page | cover | option", "maxCredits": 2}
 ```
 
@@ -124,8 +128,11 @@ Page and cover pictures are `4:3`. Each option of a "Pick the picture" question 
 (`purpose: "option"`): 4 per picture question, the same price as any picture. `purpose` is for reporting only.
 
 `200` → raw image bytes (PNG, WebP or JPEG, at most 10 MiB), with `X-Credits-Charged` and `X-Credits-Balance`.
-Owner direction: the provider is Google **Nano Banana** (`gemini-nano-banana-2.1`, 1K), not GPT Image 2. This differs
-from the handover default and needs owner approval and a Gemini image route at LMS Labs. Not retained: a same-key
+Owner direction (22 October 2026): every still picture, in all five styles, is made by OpenAI **GPT Image 2.5
+Flare** (`gpt-image-2.5-flare`, Images API `POST /v1/images/generations`, one image per request, `quality: medium`,
+`output_format: png`). Sizes: `4:3` → `1536x1152`, `1:1` → `1024x1024`. Card pictures after the first are edits of the
+picture before (`POST /v1/images/edits` with that picture as input). Send the plugin's prompt unchanged, with no
+added system text. Not retained: a same-key
 request after completion → `410 RESULT_NOT_RETAINED`, with no new generation and no new charge.
 
 ### Voiceover (Chirp 3 HD through LMS Labs)
@@ -176,13 +183,13 @@ after completion → 410.
 
 ## Server work still required
 
-1. Owner approval: product identity, the activation price, the per-operation prices, and Nano Banana (instead of
-   GPT Image 2) for this product.
+1. Owner approval: product identity, the activation price and the per-operation prices. Approved providers: Claude
+   for pages and animated diagrams, GPT Image 2.5 Flare for pictures, Chirp 3 HD for voice.
 2. Register `mod_visuallearning` / `visuallearning` in the catalogue, with entitlement and the unlock price.
 3. Implement the routes above:
-   - draft, using the reference prompt and Gemini, writing one question per page in the requested types;
+   - draft, using the reference prompt and Claude, writing one question per page in the requested types;
    - import settlement;
-   - a Nano Banana image route making 4:3 and 1:1 pictures (publish `aspectRatios`);
+   - a GPT Image 2.5 Flare route making 4:3 and 1:1 pictures (publish `aspectRatios` and `maxPromptChars`);
    - Chirp 3 HD capabilities, quote and tts with clipRef remakes;
    - tariffs published in the capabilities, with `questionTypes` (pages) and `aspectRatios` (images).
 4. Create the docs page `https://lms-labs.com/docs/ai-visual-learning` (Discussion tab: `?tab=discussion`), the

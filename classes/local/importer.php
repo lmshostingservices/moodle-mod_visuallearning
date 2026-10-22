@@ -17,7 +17,7 @@
 namespace mod_visuallearning\local;
 
 /**
- * Validates and imports the JSON a teacher pastes back from ChatGPT.
+ * Validates and imports the pages JSON written by the page writer (Claude at LMS Labs), and pages added by hand.
  *
  * @package    mod_visuallearning
  * @copyright  2026 LMS Hosting Services
@@ -99,7 +99,7 @@ class importer {
         }
         $data = json_decode($json, true);
         if (!is_array($data)) {
-            // Common ChatGPT slip: trailing commas.
+            // Common model slip: trailing commas.
             $data = json_decode(preg_replace('/,\s*([\]}])/', '$1', $json), true);
         }
         if (!is_array($data)) {
@@ -127,11 +127,14 @@ class importer {
                 'question' => question::from_ai($p),
                 'card_image_prompts' => self::card_prompts($p['card_image_prompts'] ?? null),
                 'diagram' => diagram::clean($p['diagram'] ?? null),
-                'scene_plan' => scene_plan::clean($p['scene_plan'] ?? null),
+                // "scene" (1.8; null = nothing to animate) or "scene_plan" (1.7.2).
+                'scene_plan' => array_key_exists('scene', $p)
+                    ? ($p['scene'] === null ? scene_plan::NONE : scene_plan::clean($p['scene']))
+                    : scene_plan::clean($p['scene_plan'] ?? null),
             ];
-            if (isset($p['scene_plan']) && $page['scene_plan'] === null) {
-                $errors[] = get_string('import_missingfield', 'mod_visuallearning',
-                    (object)['page' => $n, 'field' => 'scene_plan (invalid)']);
+            if ((!empty($p['scene']) || !empty($p['scene_plan'])) && $page['scene_plan'] === null) {
+                // A plan that cannot be used is left out: the scene is drawn from the cards alone.
+                $warnings[] = get_string('import_badsceneplan', 'mod_visuallearning', $n);
             }
             foreach (['title', 'concept', 'action', 'outcome', 'image_prompt'] as $key) {
                 if ($page[$key] === '') {
@@ -183,6 +186,7 @@ class importer {
             'style_guide' => self::clean($data['style_guide'] ?? ''),
             'characters' => $chars,
             'cover_image_prompt' => self::clean($data['cover_image_prompt'] ?? ''),
+            'scene_style' => scene_plan::clean_style($data['scene_style'] ?? null),
             'pages' => $pages,
         ];
         return [$errors ? null : $result, $errors, $warnings];
@@ -211,6 +215,7 @@ class importer {
             'styleguide' => $data['style_guide'],
             'characters' => json_encode($data['characters']),
             'coverprompt' => $data['cover_image_prompt'],
+            'scenestyle' => scene_plan::style_json($data['scene_style'] ?? null),
             'coverstatus' => VISUALLEARNING_MEDIA_PENDING,
             'covererror' => null,
             'timemodified' => time(),
@@ -247,14 +252,14 @@ class importer {
     }
 
     /**
-     * Pull the JSON object out of a ChatGPT reply (handles code fences and chatter).
+     * Pull the JSON object out of a model reply (handles code fences and chatter).
      *
      * @param string $raw
      * @return string|null
      */
     public static function extract_json(string $raw): ?string {
         $raw = trim($raw);
-        // Strip a UTF-8 BOM and smart quotes ChatGPT sometimes uses around keys.
+        // Strip a UTF-8 BOM and smart quotes models sometimes use around keys.
         $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw);
         if (preg_match('/\x60{3}(?:json)?\s*(\{.*\})\s*\x60{3}/s', $raw, $m)) {
             return $m[1];

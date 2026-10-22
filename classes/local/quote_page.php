@@ -59,82 +59,69 @@ class quote_page {
         echo html_writer::start_div('vl-quote-page');
         echo $OUTPUT->heading(get_string('quote_heading', 'mod_visuallearning'));
         echo $intro;
+        // What will be made, without prices: the teacher sees one price, the total.
         $lines = [];
-        foreach ($summary['items'] as $operation => $count) {
-            $included = (int)($summary['included'][$operation] ?? 0);
-            $free = $operation === requests::VOICE ? (int)$summary['free'] : 0;
-            $a = (object)['count' => $count - $included, 'free' => $free,
-                'price' => lmslabs::approved_price(requests::price_operation($operation))];
-            $parts = [];
-            if ($count - $included > 0) {
-                $key = $free ? 'quote_line_voicefree' : 'quote_line_' . $operation;
-                $parts[] = get_string($key, 'mod_visuallearning', $a);
+        $total = (int)$summary['credits'];
+        if (isset($summary['autobudget'])) {
+            $lines[] = get_string('quote_item_lesson', 'mod_visuallearning');
+            if ((int)$summary['autobudget'] > 0) {
+                $lines[] = get_string('quote_item_lesson_animated', 'mod_visuallearning');
             }
-            if ($included) {
-                $parts[] = get_string('quote_line_included', 'mod_visuallearning', (object)['count' => $included,
-                    'what' => get_string('quote_what_' . $operation, 'mod_visuallearning')]);
-            }
-            foreach ($parts as $part) {
-                $lines[] = html_writer::tag('li', $part, ['class' => 'vl-quote-line']);
+            $total += (int)$summary['autobudget'];
+        } else {
+            foreach ($summary['items'] as $operation => $count) {
+                $one = (int)$count === 1 && get_string_manager()->string_exists('quote_item_' . $operation . '_one',
+                    'mod_visuallearning');
+                $lines[] = get_string('quote_item_' . $operation . ($one ? '_one' : ''), 'mod_visuallearning', $count);
             }
         }
-        echo html_writer::tag('ul', implode('', $lines), ['class' => 'vl-quote-lines']);
-        if (!empty($summary['dropped'])) {
-            $dropped = get_string('quote_dropped', 'mod_visuallearning', (object)['count' => $summary['dropped'],
-                'why' => get_string('hold_' . $summary['droppedhold'], 'mod_visuallearning')]);
-            echo html_writer::tag('p', $dropped, ['class' => 'text-muted']);
-        }
-        if (!empty($summary['droppedcards'])) {
-            $dropped = get_string('quote_droppedcards', 'mod_visuallearning', (object)['count' => $summary['droppedcards'],
-                'why' => get_string('hold_' . $summary['droppedcardshold'], 'mod_visuallearning')]);
-            echo html_writer::tag('p', $dropped, ['class' => 'text-muted']);
-        }
-        if (!empty($summary['droppedanimations'])) {
-            $dropped = get_string('quote_droppedanimations', 'mod_visuallearning', (object)[
-                'count' => $summary['droppedanimations'],
-                'why' => get_string('hold_' . $summary['droppedanimationshold'], 'mod_visuallearning')]);
-            echo html_writer::tag('p', $dropped, ['class' => 'text-muted']);
+        echo html_writer::tag('ul', implode('', array_map(fn($l) => html_writer::tag('li', $l, ['class' => 'vl-quote-line']),
+            $lines)), ['class' => 'vl-quote-lines']);
+        foreach (['dropped' => 'quote_dropped', 'droppedcards' => 'quote_droppedcards',
+                'droppedanimations' => 'quote_droppedanimations'] as $field => $string) {
+            if (!empty($summary[$field])) {
+                $hold = $summary[$field === 'dropped' ? 'droppedhold' : $field . 'hold'];
+                echo html_writer::tag('p', get_string($string, 'mod_visuallearning', (object)['count' => $summary[$field],
+                    'why' => get_string('hold_' . $hold, 'mod_visuallearning')]), ['class' => 'text-muted']);
+            }
         }
         if ($summary['skipped']) {
-            $skipped = get_string('quote_skipped', 'mod_visuallearning', $summary['skipped']);
-            echo html_writer::tag('p', $skipped, ['class' => 'text-muted']);
+            echo html_writer::tag('p', get_string('quote_skipped', 'mod_visuallearning', $summary['skipped']),
+                ['class' => 'text-muted']);
         }
         $balance = lmslabs::balance();
         $a = (object)[
-            'credits' => $summary['credits'],
+            'credits' => $total,
+            'usd' => lmslabs::usd($total),
             'balance' => $balance === null ? get_string('balance_unknown', 'mod_visuallearning')
                 : ($balance['unlimited'] ? get_string('balance_unlimited', 'mod_visuallearning') : $balance['credits']),
         ];
-        echo html_writer::tag(
-            'p',
-            html_writer::tag('strong', get_string('quote_total', 'mod_visuallearning', $a)),
-            ['class' => 'vl-quote-total']
+        // The one price: the total for everything listed above.
+        echo html_writer::div(
+            html_writer::tag('strong', get_string('quote_total', 'mod_visuallearning', $a)) .
+            ($balance !== null && !$balance['unlimited']
+                ? html_writer::div(get_string('quote_balance', 'mod_visuallearning', $a), 'vl-quote-balance') : ''),
+            'vl-quote-total'
         );
-        if ((int)$summary['credits'] === 0) {
-            echo html_writer::tag('p', get_string('quote_nocharge', 'mod_visuallearning'));
-        }
-        if ($balance !== null && !$balance['unlimited'] && $balance['credits'] < $summary['credits']) {
+        if ($balance !== null && !$balance['unlimited'] && $balance['credits'] < $total) {
             $low = get_string('quote_lowbalance', 'mod_visuallearning', $a);
             echo $OUTPUT->notification($low, \core\output\notification::NOTIFY_WARNING);
         }
-        echo html_writer::tag('p', get_string('quote_rules', 'mod_visuallearning'), ['class' => 'text-muted small vl-quote-rules']);
         $confirm = new moodle_url(
             $baseurl,
             ['action' => 'confirm', 'batch' => $summary['batch'], 'credits' => $summary['credits'], 'sesskey' => sesskey()]
         );
         $cancel = new moodle_url($baseurl, ['action' => 'cancelquote', 'batch' => $summary['batch'], 'sesskey' => sesskey()]);
-        $nocharge = (int)$summary['credits'] === 0;
-        echo $OUTPUT->confirm(
-            get_string($nocharge ? 'quote_confirmfree' : 'quote_confirm', 'mod_visuallearning', $a),
-            new single_button(
-                $confirm,
-                $nocharge ? get_string('quote_confirmbuttonfree', 'mod_visuallearning')
-                    : get_string('quote_confirmbutton', 'mod_visuallearning', $summary['credits']),
-                'post',
-                single_button::BUTTON_PRIMARY
-            ),
-            new single_button($cancel, get_string('cancel'), 'post')
+        $nocharge = $total === 0;
+        $label = $nocharge ? get_string('quote_confirmbuttonfree', 'mod_visuallearning')
+            : get_string(isset($summary['autobudget']) ? 'quote_confirmbutton_lesson' : 'quote_confirmbutton', 'mod_visuallearning');
+        echo html_writer::div(
+            $OUTPUT->render(new single_button($cancel, get_string('cancel'), 'post')) .
+            $OUTPUT->render(new single_button($confirm, $label, 'post', single_button::BUTTON_PRIMARY)),
+            'vl-quote-actions'
         );
+        echo html_writer::tag('p', get_string($nocharge ? 'quote_confirmfree' : 'quote_confirm', 'mod_visuallearning', $a) . ' '
+            . get_string('quote_rules', 'mod_visuallearning'), ['class' => 'text-muted small vl-quote-rules']);
         echo html_writer::end_div();
         echo $OUTPUT->footer();
         exit;

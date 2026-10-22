@@ -203,5 +203,67 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026102102, 'visuallearning');
     }
+    if ($oldversion < 2026102200) {
+        // 1.8.0: optional learning objectives, prior knowledge and unit code, and the lesson-wide scene style.
+        $table = new xmldb_table('visuallearning');
+        $fields = [
+            new xmldb_field('objectives', XMLDB_TYPE_TEXT, null, null, null, null, null, 'sourcecontent'),
+            new xmldb_field('priorknowledge', XMLDB_TYPE_TEXT, null, null, null, null, null, 'objectives'),
+            new xmldb_field('unitcode', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'priorknowledge'),
+            new xmldb_field('scenestyle', XMLDB_TYPE_TEXT, null, null, null, null, null, 'unitcode'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_mod_savepoint(true, 2026102200, 'visuallearning');
+    }
+
+    if ($oldversion < 2026102201) {
+        // 1.8.0: the callouts choice, and new picture prompts for Nano Banana and Claude.
+        $table = new xmldb_table('visuallearning');
+        $field = new xmldb_field('callouts', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'scenestyle');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        // Explanations always allowed a few labels: they keep them. Workplace stories stay free of words.
+        $DB->set_field_select('visuallearning', 'callouts', 1, 'teachingapproach = ?', ['science']);
+        // The prompts changed, so every picture already made is renamed to its new prompt: nothing is made again.
+        \mod_visuallearning\local\media::restamp_all();
+        upgrade_mod_savepoint(true, 2026102201, 'visuallearning');
+    }
+
+    if ($oldversion < 2026102202) {
+        // 1.8.0: the teacher's extra instructions for the AI.
+        $table = new xmldb_table('visuallearning');
+        $field = new xmldb_field('aiinstructions', XMLDB_TYPE_TEXT, null, null, null, null, null, 'scenestyle');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026102202, 'visuallearning');
+    }
+
+    if ($oldversion < 2026102203) {
+        // 1.8.0: every still picture is made by OpenAI GPT Image. The default art direction no longer names an audience
+        // ("for adult learners" contradicted school lessons), and picture prompts carry the lesson's fixed layout.
+        foreach (\mod_visuallearning\local\visual_styles::LEGACY_DEFAULTS as $legacy) {
+            if (trim((string)get_config('mod_visuallearning', 'defaultimagestyle')) === $legacy) {
+                unset_config('defaultimagestyle', 'mod_visuallearning');
+            }
+            // Compared in PHP: a text column cannot be compared in full in SQL on every database.
+            $like = $DB->sql_like('imagestyle', '?');
+            $rows = $DB->get_records_select('visuallearning', $like, [$DB->sql_like_escape(substr($legacy, 0, 60)) . '%'],
+                '', 'id, imagestyle');
+            foreach ($rows as $row) {
+                if (trim((string)$row->imagestyle) === $legacy) {
+                    $DB->set_field('visuallearning', 'imagestyle', '', ['id' => $row->id]);
+                }
+            }
+        }
+        // Pictures already made stay current: they are renamed to their new prompts, so nothing is made again.
+        \mod_visuallearning\local\media::restamp_all();
+        upgrade_mod_savepoint(true, 2026102203, 'visuallearning');
+    }
     return true;
 }

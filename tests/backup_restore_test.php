@@ -40,7 +40,11 @@ final class backup_restore_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
         $course = $this->getDataGenerator()->create_course();
-        $book = $this->getDataGenerator()->create_module('visuallearning', ['course' => $course->id]);
+        $book = $this->getDataGenerator()->create_module('visuallearning', ['course' => $course->id, 'callouts' => 1,
+            'objectives' => 'Explain how water flows', 'priorknowledge' => 'Pipes', 'unitcode' => 'HLTAAP001',
+            'visualstyle' => 'model3d', 'aiinstructions' => 'No brand names.']);
+        $DB->set_field('visuallearning', 'scenestyle', '{"palette":"blue = water","recurring":"","subject":"earth"}',
+            ['id' => $book->id]);
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_visuallearning');
         $context = \context_module::instance($book->cmid);
         $fs = get_file_storage();
@@ -96,6 +100,12 @@ final class backup_restore_test extends \advanced_testcase {
         $this->assertCount(2, $newpages);
         $restored = array_values($newpages);
         $this->assertSame($plan, $restored[0]->sceneplan);
+        $this->assertSame('1', (string)$newbook->callouts);
+        $this->assertSame('model3d', $newbook->visualstyle);
+        $this->assertSame('No brand names.', $newbook->aiinstructions);
+        $this->assertSame('HLTAAP001', $newbook->unitcode);
+        $this->assertSame('Explain how water flows', $newbook->objectives);
+        $this->assertSame('{"palette":"blue = water","recurring":"","subject":"earth"}', $newbook->scenestyle);
         $this->assertNull($restored[1]->sceneplan);
 
         $newcontext = \context_module::instance($newcm->id);

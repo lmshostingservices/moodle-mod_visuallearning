@@ -636,6 +636,23 @@ final class requests_test extends \advanced_testcase {
         $draft = ['pages' => [['title' => 'One', 'concept' => 'C.', 'action' => 'A.', 'outcome' => 'O.',
             'image_prompt' => 'Scene.', 'summary' => 'S.', 'tf_statement' => 'T.', 'tf_answer' => false]]];
         $this->answers['/pages/draft'] = [[200, [], json_encode(['draft' => $draft, 'creditsCharged' => 2])]];
+        $this->answers['/speech/quote'] = array_fill(0, 20, [200, [], '{"credits":0}']);
+        // LMS Labs reports every included slot of the new slides as still to make.
+        $base = lmslabs::$transport;
+        lmslabs::$transport = function ($url, $headers) use ($base) {
+            global $DB;
+            if (preg_match('~/v2/bundles/([a-f0-9-]+)$~', $url, $m)) {
+                $slots = [];
+                foreach (['picture', 'cover', 'clip:concept', 'clip:action', 'clip:outcome', 'clip:summary', 'clip:question',
+                        'clip:feedback'] as $slot) {
+                    $slots[$slot] = ['state' => 'awaiting-retry'];
+                }
+                $slides = array_map(fn($p) => ['slideId' => $p->slideid, 'slots' => $slots],
+                    array_values($DB->get_records('visuallearning_pages', ['bundleid' => $m[1]])));
+                return [200, json_encode(['slides' => $slides])];
+            }
+            return $base($url, $headers);
+        };
         requests::confirm($book, $summary['batch'], (int)$teacher->id, $summary['credits']);
         $this->run_tasks();
         $sent = json_decode($this->posts('/pages/draft')[0][2], true);
@@ -644,6 +661,22 @@ final class requests_test extends \advanced_testcase {
         $this->assertSame('Australia', $sent['culture']);
         $this->assertSame(1, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
         $this->assertSame('completed', $DB->get_field('visuallearning_aireq', 'status', ['operation' => 'write']));
+        // Everything the page needs was then asked for automatically, within what the teacher approved.
+        $media = $DB->get_records_select('visuallearning_aireq', "operation <> 'write'");
+        $this->assertNotEmpty($media);
+        foreach ($media as $row) {
+            $this->assertNotSame('quoted', $row->status);
+            $this->assertContains($row->operation, ['image', 'cover', 'voice']);
+            $this->assertSame(0, (int)$row->maxcredits, 'The first picture, cover and narration are in the page price.');
+        }
+        $this->assertSame(0, requests::autobuild_budget($book));
+    }
+
+    public function test_animated_lessons_approve_their_diagrams_with_the_pages(): void {
+        [$book, , $teacher] = $this->book(0, ['maxpages' => 4, 'picturemode' => 'svg']);
+        $summary = requests::quote($book, (int)$teacher->id, [['operation' => requests::WRITE]]);
+        $this->assertSame(4 * lmslabs::ANIMATION_CREDITS, $summary['autobudget']);
+        $this->assertSame(4 * lmslabs::PAGE_CREDITS, $summary['credits']);
     }
 
     public function test_image_prompt_fits_the_route(): void {
@@ -656,9 +689,14 @@ final class requests_test extends \advanced_testcase {
         $page->imageprompt = 'Maya greets a guest. ' . str_repeat('Warm light. ', 100);
         $prompt = media::image_prompt($book, $page);
         $this->assertLessThanOrEqual(lmslabs::MAX_PROMPT, \core_text::strlen($prompt));
-        // The rules are never cut.
-        $this->assertStringContainsString(\mod_visuallearning\local\prompt_builder::IMAGE_GUARDRAILS, $prompt);
+        // The words rule, the rules and what to avoid are never cut.
+        $this->assertStringContainsString('WORDS IN THE PICTURE: None', $prompt);
+        $this->assertStringContainsString('RULES: Adults in a professional', $prompt);
+        $this->assertStringContainsString('AVOID: photographic skin', $prompt);
         $this->assertStringNotContainsString('Tom - short', $prompt);
+        // The look is shortened but never lost, and the named character keeps a description.
+        $this->assertStringContainsString('LOOK: Hand-drawn illustration', $prompt);
+        $this->assertStringContainsString('Maya - tall', $prompt);
     }
 
     public function test_learner_page_never_calls_lms_labs(): void {

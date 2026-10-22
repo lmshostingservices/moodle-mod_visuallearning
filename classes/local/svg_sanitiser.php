@@ -44,7 +44,8 @@ class svg_sanitiser {
     public const ELEMENTS = ['svg', 'g', 'defs', 'symbol', 'use', 'title', 'desc', 'style', 'path', 'rect', 'circle',
         'ellipse', 'line', 'polyline', 'polygon', 'text', 'tspan', 'textPath', 'linearGradient', 'radialGradient', 'stop',
         'clipPath', 'mask', 'pattern', 'marker', 'filter', 'feDropShadow', 'feGaussianBlur', 'feOffset', 'feFlood',
-        'feComposite', 'feMerge', 'feMergeNode', 'feBlend', 'feColorMatrix', 'feMorphology', 'animate',
+        'feComposite', 'feMerge', 'feMergeNode', 'feBlend', 'feColorMatrix', 'feMorphology', 'feTurbulence',
+        'feDisplacementMap', 'feComponentTransfer', 'feFuncA', 'feFuncR', 'feFuncG', 'feFuncB', 'animate',
         'animateTransform', 'animateMotion', 'mpath', 'set'];
 
     /** @var string[] Animation elements, whose target attribute is checked. */

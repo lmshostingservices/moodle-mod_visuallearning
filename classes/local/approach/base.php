@@ -106,7 +106,7 @@ abstract class base {
      * @return string
      */
     public function text_check(): string {
-        return 'no text in any image prompt;';
+        return 'image prompts ask for words only as PICTURE WORDS says;';
     }
 
     /**

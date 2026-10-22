@@ -2,6 +2,61 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.8.0] - 2026-10-22
+
+- **One click makes the whole lesson.** The teacher fills in a short form and presses "Create my lesson": Claude
+  writes the pages, then the pictures, animated diagrams and narration are made automatically, within the price
+  approved on one confirmation screen. A new lesson opens straight on this step.
+- **Visual settings.** Who it is for, teaching style, picture style, animation and callouts are clickable cards. The
+  picture-style cards show the same heart in each style (made with GPT Image), and the animated card beats.
+- **"What to teach" stays short** (the topic and key points, with a grey example), and a separate box, **"Your notes,
+  documents and instructions"**, takes up to 50,000 characters pasted from notes, a unit outline, a procedure, a PDF,
+  Word document or PowerPoint. The writer uses it as a source of facts with its line breaks kept; short instructions
+  also reach the drawings.
+- **One price, shown twice.** The form shows the lesson's total live as the teacher chooses (pages, animation, card
+  pictures), and the confirmation screen shows the same single total with a plain list of what will be made. No
+  per-item prices anywhere; remakes also show one total. A built lesson's settings page shows no price (saving costs
+  nothing).
+- While Claude writes, step 1 shows a live "Claude is writing your lesson…" status and hides the button, so a lesson
+  can never be bought twice. Once written, step 1 shows "Your pages are written" and keeps "Write the whole lesson
+  again…" as a quiet secondary option.
+- Removed the "Add questions to the question bank" button. The questions are still in the content download as Moodle
+  XML, GIFT and CSV.
+- Fixed: "New animated scene" in step 3 said nothing needed making instead of offering the remake.
+- **The ChatGPT prompt file and paste-back are gone**, and so is pasting SVG from another AI: everything is made
+  through LMS Labs (Claude for the pages and the animated diagrams; OpenAI GPT Image 2.5 Flare for every picture).
+  Pages can still be added and edited by hand.
+- **Five picture styles**, all made by **OpenAI GPT Image 2.5 Flare**: Illustration, Photo-realistic, 3D diagram,
+  Technical model and Hand-drawn sketch. Side-by-side tests showed it far ahead of Nano Banana, above all for exact
+  labels.
+- **Callouts**: labels and a short info card on pictures, or no words at all.
+- New picture prompts, tuned for GPT Image:
+  - sharper art direction and a specific "avoid" list for each style;
+  - one scene per picture;
+  - science pictures show only the page's step (a pathway stops where the page says) with arrows pointing the real
+    way, and only the colours that page needs;
+  - the lesson's fixed layout ("same on every page") reaches every picture, so the pages match;
+  - labels are exactly the quoted words and nothing else, and with callouts off the picture is completely text-free;
+  - workplace pictures keep hands outside machines and show the right protective gear;
+  - the page writer states where each pathway starts and stops, which way its arrows point and what is not shown;
+  - each page picture names what the page teaches (its title), and card-picture edits list what must stay unchanged
+    (camera, people's appearance, colours, structures).
+- Each delivered picture's request keeps a receipt: the model, its token use and cost when LMS Labs reports them, the
+  size and the file type, so image models can be compared.
+- Fixed: the default illustration look said "for adult learners" in every lesson, school lessons included. Lessons
+  and sites holding the old wording get the new one on upgrade, and existing pictures are kept.
+- Fixed: shortening a long picture prompt could drop the characters' descriptions and the whole look. The look and
+  the start of each named character's description now always stay; picture prompts can be up to 6,000 characters
+  once LMS Labs publishes `maxPromptChars`.
+- Animated diagrams in a new house style: realistic shaded drawing, parts that change shape, label cards in the
+  bundled "VL Sans" font (Plus Jakarta Sans, OFL), and a wider scene on the page. Scene plans v3 and a lesson-wide
+  scene style with subject rule packs.
+- Optional learning objectives, prior knowledge and unit code under More options.
+- Prices (1 credit = US$0.10, every price at least twice its cost): animated diagram 6 credits a page; page 10
+  credits including its first picture and narration; picture or voice remake 2 credits. LMS Labs must publish the
+  same prices before they can be bought.
+- Upgrading keeps every picture already made: stored pictures are renamed to their new prompt fingerprints.
+
 ## [1.7.2] - 2026-10-21
 
 - Animated SVG lessons use the supplied three-stage scene-plan brief and exact house-style art direction.

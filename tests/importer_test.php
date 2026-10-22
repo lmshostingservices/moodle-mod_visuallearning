@@ -147,7 +147,7 @@ final class importer_test extends \advanced_testcase {
             'questiontypes' => 'truefalse,pick,match,sort',
             'pickimages' => 1,
         ];
-        $prompt = prompt_builder::chatgpt_prompt($book);
+        $prompt = prompt_builder::writer_prompt($book);
         $this->assertStringContainsString('Number of pages: exactly 12', $prompt);
         $this->assertStringContainsString('Thai (th-TH)', $prompt);
         $this->assertStringContainsString('NOT PROVIDED', $prompt);
@@ -156,7 +156,7 @@ final class importer_test extends \advanced_testcase {
         $this->assertStringContainsString('"question"', $prompt);
         $this->assertStringContainsString('{"type": "truefalse", "statement"', $prompt);
         $this->assertStringContainsString('{"type": "pick", "prompt"', $prompt);
-        $this->assertStringContainsString('SQUARE illustration', $prompt);
+        $this->assertStringContainsString('SQUARE picture', $prompt);
         $this->assertStringContainsString('{"type": "match", "prompt"', $prompt);
         $this->assertStringContainsString('{"type": "sort", "prompt"', $prompt);
         $this->assertStringContainsString('"feedback"', $prompt);
@@ -165,7 +165,7 @@ final class importer_test extends \advanced_testcase {
         // Only the types the teacher allows, and text cards when option pictures are off.
         $book->questiontypes = 'pick';
         $book->pickimages = 0;
-        $only = prompt_builder::chatgpt_prompt($book);
+        $only = prompt_builder::writer_prompt($book);
         $this->assertStringContainsString('Every question uses the type "pick"', $only);
         $this->assertStringNotContainsString('{"type": "sort"', $only);
         $this->assertStringNotContainsString('SQUARE illustration', $only);
@@ -176,11 +176,11 @@ final class importer_test extends \advanced_testcase {
         $imageprompt = prompt_builder::image_prompt($book, 'Maya at the pub.');
         $this->assertStringContainsString('Watercolour', $imageprompt);
         $this->assertStringContainsString('Maya - supervisor', $imageprompt);
-        $this->assertStringContainsString('ILLUSTRATION', $imageprompt);
+        $this->assertStringContainsString('hand-illustrated teaching picture', $imageprompt);
         $this->assertStringContainsString('takes place in Thailand', $imageprompt);
 
         $book->imageculture = 'international';
         $this->assertStringContainsString('international setting', prompt_builder::image_prompt($book, 'Scene.'));
-        $this->assertStringContainsString('International / neutral', prompt_builder::chatgpt_prompt($book));
+        $this->assertStringContainsString('International / neutral', prompt_builder::writer_prompt($book));
     }
 }

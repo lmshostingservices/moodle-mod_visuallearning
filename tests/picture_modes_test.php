@@ -131,17 +131,17 @@ final class picture_modes_test extends \advanced_testcase {
         [$single] = $this->lesson();
         [$sequence] = $this->lesson(['picturemode' => 'sequence']);
         [$animated] = $this->lesson(['picturemode' => 'animated']);
-        $plain = prompt_builder::chatgpt_prompt($single);
+        $plain = prompt_builder::writer_prompt($single);
         $this->assertStringNotContainsString('STEP 6', $plain);
         $this->assertStringNotContainsString('card_image_prompts', $plain);
         $this->assertStringNotContainsString('"diagram"', $plain);
 
-        $cards = prompt_builder::chatgpt_prompt($sequence);
+        $cards = prompt_builder::writer_prompt($sequence);
         $this->assertStringContainsString('STEP 6 - ONE PICTURE PER CARD', $cards);
         $this->assertStringContainsString('"card_image_prompts": ["string", "string", "string"]', $cards);
         $this->assertStringContainsString('"Same picture, same', $cards);
 
-        $diagrams = prompt_builder::chatgpt_prompt($animated);
+        $diagrams = prompt_builder::writer_prompt($animated);
         $this->assertStringContainsString('STEP 6 - ANIMATED DIAGRAMS', $diagrams);
         $this->assertStringContainsString('"diagram":', $diagrams);
         foreach (diagram::TYPES as $type) {
@@ -256,7 +256,7 @@ final class picture_modes_test extends \advanced_testcase {
     public function test_prompt_file_explains_stages(): void {
         $this->resetAfterTest();
         [$animated] = $this->lesson(['picturemode' => 'animated']);
-        $text = prompt_builder::chatgpt_prompt($animated);
+        $text = prompt_builder::writer_prompt($animated);
         $this->assertStringContainsString('"stages"', $text);
         $this->assertStringContainsString('Rising to the peak is 0 to 90', $text);
     }
@@ -272,7 +272,7 @@ final class picture_modes_test extends \advanced_testcase {
         $this->assertSame([1, 2, 3, 4, 1], array_map(fn($i) => visuallearning_recap_number($i, 5), range(0, 4)));
         $this->resetAfterTest();
         [$book] = $this->lesson(['maxpages' => 12]);
-        $text = prompt_builder::chatgpt_prompt($book);
+        $text = prompt_builder::writer_prompt($book);
         $this->assertStringContainsString('Number of pages: exactly 12', $text);
         $this->assertStringContainsString('EXACTLY 12 pages', $text);
     }
@@ -280,7 +280,9 @@ final class picture_modes_test extends \advanced_testcase {
     public function test_animated_diagrams_are_a_visual_style_choice(): void {
         global $DB;
         $this->resetAfterTest();
-        $this->assertArrayHasKey('animated', \mod_visuallearning\local\visual_styles::form_options());
+        // The classic built-in animated diagrams are offered only to lessons that already use them.
+        $this->assertArrayNotHasKey('animated', \mod_visuallearning\local\visual_styles::form_options());
+        $this->assertArrayHasKey('animated', \mod_visuallearning\local\visual_styles::form_options(true));
         $this->assertSame(['single', 'sequence', 'svg'], array_keys(picture_modes::form_options()));
         [$book] = $this->lesson(['visualstyle' => 'animated', 'picturemode' => 'sequence']);
         $this->assertSame('diagram', $book->visualstyle);
@@ -292,7 +294,7 @@ final class picture_modes_test extends \advanced_testcase {
         [$adult] = $this->lesson();
         $this->assertSame('adult', \mod_visuallearning\local\learner_levels::of($adult));
         $this->assertStringNotContainsString('AUDIENCE:', prompt_builder::image_prompt($adult, 'An engine.', 2000));
-        $this->assertStringNotContainsString('LEARNER LEVEL', prompt_builder::chatgpt_prompt($adult));
+        $this->assertStringNotContainsString('LEARNER LEVEL', prompt_builder::writer_prompt($adult));
 
         [$kids] = $this->lesson(['learnerlevel' => 'primary', 'picturemode' => 'animated']);
         $picture = prompt_builder::image_prompt($kids, 'A car engine with its pistons moving.', 2000);
@@ -302,7 +304,7 @@ final class picture_modes_test extends \advanced_testcase {
         $this->assertStringContainsString('Age-appropriate', $picture);
         $this->assertLessThanOrEqual(2000, \core_text::strlen($picture));
         $this->assertStringContainsString('AUDIENCE: primary', prompt_builder::edit_prompt($kids, 'Add a spark.', 2000));
-        $file = prompt_builder::chatgpt_prompt($kids);
+        $file = prompt_builder::writer_prompt($kids);
         $this->assertStringContainsString('LEARNER LEVEL: primary school children', $file);
         $this->assertStringContainsString('keep every diagram very simple', $file);
 

@@ -50,9 +50,8 @@ class learner_levels {
                 . 'adults at work are shown doing their job safely.',
             'picture' => 'AUDIENCE: primary school children (about 5 to 11). Make the picture very simple, friendly and '
                 . 'easy to read at a glance: one big clear subject, at most three main parts, bold rounded shapes, '
-                . 'bright cheerful colours, no technical detail, at most one or two simple words. Use a familiar '
-                . 'comparison where it helps. Any people shown are friendly and age-appropriate. This overrides any '
-                . 'audience named above.',
+                . 'bright cheerful colours, no technical detail. Use a familiar comparison where it helps. Any people '
+                . 'shown are friendly and age-appropriate. This overrides any audience named above.',
             'diagram' => '- The learners are primary school children: keep every diagram very simple, at most three '
                 . 'parts or steps, plain everyday labels, and prefer the process, cycle and bars types (no phasors or '
                 . 'phase angles).',
@@ -63,8 +62,8 @@ class learner_levels {
                 . 'from teenagers\' lives and the world around them. Include key numbers and simple formulas only where '
                 . 'the content gives them.',
             'picture' => 'AUDIENCE: secondary school students (about 12 to 17). Clear and engaging with moderate detail: '
-                . 'show the main parts and how they connect, with a few short labels using the correct terms. A modern, '
-                . 'energetic look that is never childish. This overrides any audience named above.',
+                . 'show the main parts and how they connect. A modern, energetic look that is never childish. This '
+                . 'overrides any audience named above.',
             'diagram' => '- The learners are secondary school students: moderate detail, up to four or five labelled '
                 . 'parts, correct technical terms.',
         ],
@@ -74,8 +73,8 @@ class learner_levels {
                 . 'correct terms without simplifying, include quantitative relationships, standards and conditions '
                 . 'where the content gives them, and assume the basics are known.',
             'picture' => 'AUDIENCE: university students and professionals. Technically detailed and precise, like a '
-                . 'high-quality textbook or engineering figure: show the full mechanism, the relevant variables and '
-                . 'correctly spelled technical labels. This overrides any audience named above.',
+                . 'high-quality textbook or engineering figure: show the full mechanism, every relevant part and the '
+                . 'variables involved. This overrides any audience named above.',
             'diagram' => '- The learners are university students and professionals: full technical detail is welcome '
                 . '(several waves or vectors, phase relationships, every component, standard symbols and units).',
         ],

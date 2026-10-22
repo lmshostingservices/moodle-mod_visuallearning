@@ -260,6 +260,70 @@ class media {
     }
 
     /**
+     * Renames every lesson's current pictures to the stems of today's prompts (after the prompt builder changes in an
+     * upgrade), so pictures already made stay current and are never made or charged again.
+     */
+    public static function restamp_all(): void {
+        global $DB;
+        $fetch = lmslabs::$fetch;
+        lmslabs::$fetch = false;
+        try {
+            foreach ($DB->get_recordset('visuallearning', null, 'id') as $book) {
+                $cm = get_coursemodule_from_instance('visuallearning', $book->id, $book->course, false, IGNORE_MISSING);
+                if ($cm) {
+                    self::restamp($book, \context_module::instance($cm->id));
+                }
+            }
+        } finally {
+            lmslabs::$fetch = $fetch;
+        }
+    }
+
+    /**
+     * Renames one lesson's latest pictures (page, cover, option and card pictures) to their current prompt stems.
+     *
+     * @param stdClass $book
+     * @param \context $context
+     */
+    public static function restamp(stdClass $book, \context $context): void {
+        global $DB;
+        $rename = function (?\stored_file $file, string $stem): void {
+            if (!$file || str_starts_with($file->get_filename(), $stem . '.')) {
+                return;
+            }
+            $name = $stem . '.' . pathinfo($file->get_filename(), PATHINFO_EXTENSION);
+            if (!get_file_storage()->file_exists($file->get_contextid(), 'mod_visuallearning', $file->get_filearea(),
+                    $file->get_itemid(), $file->get_filepath(), $name)) {
+                $file->rename($file->get_filepath(), $name);
+            }
+        };
+        $latest = function (string $area, int $itemid, string $prefix) use ($context): ?\stored_file {
+            $files = get_file_storage()->get_area_files($context->id, 'mod_visuallearning', $area, $itemid,
+                'timemodified DESC, id DESC', false);
+            foreach ($files as $file) {
+                if ($prefix === '' || str_starts_with($file->get_filename(), $prefix)) {
+                    return $file;
+                }
+            }
+            return null;
+        };
+        $rename($latest(self::AREA_COVER, 0, 'image-'), self::image_stem(self::image_prompt($book, null)));
+        foreach ($DB->get_records('visuallearning_pages', ['visuallearningid' => $book->id]) as $page) {
+            $rename($latest(self::AREA_IMAGE, (int)$page->id, 'image-'), self::image_stem(self::image_prompt($book, $page)));
+            foreach (self::option_prompts($book, $page) as $option => $prompt) {
+                $rename($latest(self::AREA_OPTION, (int)$page->id, 'option' . $option . '-'),
+                    self::option_stem((int)$option, $prompt));
+            }
+            $reference = '';
+            foreach (self::card_prompts($book, $page) as $card => $prompt) {
+                $file = $latest(self::AREA_CARD, (int)$page->id, 'card' . $card . '-');
+                $rename($file, self::card_stem((int)$card, $prompt, $reference));
+                $reference = $file ? $file->get_contenthash() : '';
+            }
+        }
+    }
+
+    /**
      * The full illustration prompt of a page, or of the cover (page null).
      *
      * @param stdClass $book
@@ -271,7 +335,8 @@ class media {
         if (trim($scene) === '' && $page) {
             $scene = $page->title . '. ' . $page->actiontext;
         }
-        return prompt_builder::image_prompt($book, $scene, lmslabs::MAX_PROMPT);
+        return prompt_builder::image_prompt($book, $scene, lmslabs::max_prompt(), self::ASPECT,
+            $page ? trim((string)$page->title) : '');
     }
 
     /**
@@ -293,8 +358,7 @@ class media {
         $out = [];
         foreach ($q['data']['options'] as $i => $option) {
             $scene = trim($option['image_prompt']) !== '' ? $option['image_prompt'] : $option['label'];
-            $scene .= ' Square picture, one simple subject, filling the frame.';
-            $out[$i] = prompt_builder::image_prompt($book, $scene, lmslabs::MAX_PROMPT);
+            $out[$i] = prompt_builder::image_prompt($book, $scene, lmslabs::max_prompt(), self::OPTION_ASPECT);
         }
         return $out;
     }
@@ -401,8 +465,9 @@ class media {
         }
         $out = [];
         foreach (picture_modes::card_prompts($page) as $i => $scene) {
-            $out[$i + 1] = $i === 0 ? prompt_builder::image_prompt($book, $scene, lmslabs::MAX_PROMPT)
-                : prompt_builder::edit_prompt($book, $scene, lmslabs::MAX_PROMPT);
+            $out[$i + 1] = $i === 0 ? prompt_builder::image_prompt($book, $scene, lmslabs::max_prompt(), self::ASPECT,
+                    trim((string)$page->title))
+                : prompt_builder::edit_prompt($book, $scene, lmslabs::max_prompt());
         }
         return $out;
     }
@@ -534,10 +599,27 @@ class media {
      * @return string
      */
     public static function svg_prompt(stdClass $book, stdClass $page): string {
-        if (picture_modes::of($book) !== picture_modes::SVG) {
+        if (picture_modes::of($book) !== picture_modes::SVG || scene_plan::is_none($page)) {
             return '';
         }
         return prompt_builder::svg_prompt($book, $page);
+    }
+
+    /**
+     * What a page's scene is made from: its cards, its plan and the lesson inputs that change the drawing. A scene
+     * stays current while these stay the same, even when the wording of the brief changes in a plugin update.
+     *
+     * @param stdClass $book
+     * @param stdClass $page
+     * @return string 40 hex characters
+     */
+    public static function svg_key(stdClass $book, stdClass $page): string {
+        return sha1(json_encode([
+            'svg-1', (string)$page->title, (string)$page->concepttext, (string)$page->actiontext, (string)$page->outcometext,
+            (string)($page->sceneplan ?? ''), (string)($book->scenestyle ?? ''), (string)$book->language,
+            learner_levels::of($book), visual_styles::of($book) === 'whiteboard' ? 'sketch' : 'clean',
+            approaches::of($book)->key(), trim((string)($book->imagestyle ?? '')),
+        ], JSON_UNESCAPED_UNICODE));
     }
 
     /**
@@ -562,19 +644,30 @@ class media {
     }
 
     /**
-     * Whether the page's animated SVG scene was made from this brief.
+     * Whether the page's animated SVG scene was made from these inputs (see svg_key()).
      *
      * @param \context $context
      * @param int $pageid
-     * @param string $prompt
+     * @param string $key
      * @return bool
      */
-    public static function svg_current(\context $context, int $pageid, string $prompt): bool {
-        if ($prompt === '') {
+    public static function svg_current(\context $context, int $pageid, string $key): bool {
+        if ($key === '') {
             return false;
         }
-        return (bool)get_file_storage()->get_file($context->id, 'mod_visuallearning', self::AREA_SVG, $pageid, '/',
-            'anim-' . sha1($prompt) . '.svg');
+        $files = get_file_storage()->get_area_files($context->id, 'mod_visuallearning', self::AREA_SVG, $pageid, 'id', false);
+        foreach ($files as $file) {
+            if ($file->get_filename() === 'scene-' . $key . '.svg') {
+                return true;
+            }
+        }
+        // A scene saved before 1.8 (named after its brief) counts as current until the page is made again.
+        foreach ($files as $file) {
+            if (str_starts_with($file->get_filename(), 'scene-')) {
+                return false;
+            }
+        }
+        return (bool)$files;
     }
 
     /**
@@ -582,16 +675,16 @@ class media {
      *
      * @param \context $context
      * @param int $pageid
-     * @param string $prompt the brief it was made from
+     * @param string $key what it was made from (svg_key())
      * @param string $svg the SVG as delivered or pasted
      * @return bool false when it is not a usable SVG (nothing is saved)
      */
-    public static function save_svg(\context $context, int $pageid, string $prompt, string $svg): bool {
+    public static function save_svg(\context $context, int $pageid, string $key, string $svg): bool {
         $clean = svg_sanitiser::clean($svg, self::svg_scope($pageid));
         if ($clean === null) {
             return false;
         }
-        $name = 'anim-' . sha1($prompt) . '.svg';
+        $name = 'scene-' . $key . '.svg';
         self::save($context, self::AREA_SVG, $pageid, $name, $clean, 'image/svg+xml');
         foreach (get_file_storage()->get_area_files($context->id, 'mod_visuallearning', self::AREA_SVG, $pageid, 'id',
                 false) as $file) {
@@ -664,7 +757,7 @@ class media {
         string $ext
     ): void {
         $name = self::image_stem($prompt) . '.' . $ext;
-        $mimes = ['png' => 'image/png', 'webp' => 'image/webp', 'jpg' => 'image/jpeg'];
+        $mimes = ['png' => 'image/png', 'webp' => 'image/webp', 'jpg' => 'image/jpeg', 'svg' => 'image/svg+xml'];
         self::save($context, $area, $itemid, $name, $bytes, $mimes[$ext]);
         foreach (get_file_storage()->get_area_files($context->id, 'mod_visuallearning', $area, $itemid, 'id', false) as $file) {
             if ($file->get_filename() !== $name) {
@@ -674,10 +767,10 @@ class media {
     }
 
     /**
-     * The picture format of some bytes, or '' when they are not a PNG, WebP or JPEG.
+     * The picture format of some bytes, or '' when they are not a PNG, WebP, JPEG or a cleaned SVG.
      *
      * @param string $bytes
-     * @return string png, webp, jpg or ''
+     * @return string png, webp, jpg, svg or ''
      */
     public static function image_type(string $bytes): string {
         if (str_starts_with($bytes, "\x89PNG\r\n\x1a\n")) {
@@ -688,6 +781,10 @@ class media {
         }
         if (substr($bytes, 0, 4) === 'RIFF' && substr($bytes, 8, 4) === 'WEBP') {
             return 'webp';
+        }
+        // A still drawn as SVG (already cleaned by svg_sanitiser, so it starts with the svg element itself).
+        if (str_starts_with($bytes, '<svg ') && str_ends_with(rtrim($bytes), '</svg>')) {
+            return 'svg';
         }
         return '';
     }
@@ -780,9 +877,10 @@ class media {
                 }
             }
             if (in_array('animation', $kinds, true) && ($svgprompt = self::svg_prompt($book, $page)) !== '') {
-                if ($scope === 'all' || !self::svg_current($context, (int)$page->id, $svgprompt)) {
+                $svgkey = self::svg_key($book, $page);
+                if ($scope === 'all' || !self::svg_current($context, (int)$page->id, $svgkey)) {
                     $out[] = ['operation' => 'animation', 'targetid' => (int)$page->id, 'part' => '',
-                        'prompt' => $svgprompt];
+                        'prompt' => $svgprompt, 'key' => $svgkey];
                 }
             }
             if (in_array('voice', $kinds, true)) {
@@ -848,7 +946,7 @@ class media {
                 }
             }
             if (($svgprompt = self::svg_prompt($book, $page)) !== '') {
-                $pictures = $pictures && self::svg_current($context, (int)$page->id, $svgprompt);
+                $pictures = $pictures && self::svg_current($context, (int)$page->id, self::svg_key($book, $page));
             }
             $image = $state($pictures, 'image:' . $page->id);
             $allclips = true;
