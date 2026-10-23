@@ -119,10 +119,9 @@ class prompt_builder {
             return "Keep the existing callouts exactly as they are; add one only where the change gives its words in "
                 . "quotes, in {$language}, in the same tag style.";
         }
-        return "Exactly the words in quotes in the scene, in {$language}, spelled exactly, and nothing else (no quoted "
-            . 'words: no writing at all). Each callout is a white rounded tag with dark navy bold sans-serif text and a '
-            . 'thin leader line ending in a small dot on its part; the "Info card" words go on one small dark navy '
-            . 'rounded card in a corner. Readable on a phone, never covering the subject.';
+        return "Only the words in quotes in the scene, spelled exactly, in {$language}; nothing else. Callouts: white "
+            . 'rounded tags, navy bold sans-serif, a thin leader line to a dot on the part. The "Info card" words: one '
+            . 'small navy rounded card in a corner. Readable on a phone; never over the subject.';
     }
 
     /**
@@ -586,15 +585,15 @@ SHAPE;
                 : '; any text, letters, numbers, logos or watermarks.'),
         ];
         $build = function () use (&$look, &$guide, &$culture, &$cast, &$scene, &$same, $open, $audience, $science,
-                $tail, $objective): string {
+                $tail, $objective, $square): string {
             $parts = [$open];
             if ($objective !== '') {
-                $parts[] = 'THIS PAGE TEACHES: ' . $objective . ($science ? ' (only this step; later steps are on later '
-                    . 'pages)' : '');
+                $parts[] = 'THIS PAGE TEACHES: ' . $objective;
             }
             $parts[] = ($science ? 'EXPLAIN: ' : 'SCENE: ') . $scene;
-            $parts[] = 'LOOK: ' . trim($look . ($guide !== '' ? ' ' . $guide : ''));
-            if ($same !== '') {
+            $parts[] = 'LOOK: ' . trim($look . ($guide !== '' ? ' ' . $guide . ' (Use each colour only where this picture '
+                . 'shows that part.)' : ''));
+            if ($same !== '' && !$square) {
                 $parts[] = 'SAME ON EVERY PAGE OF THIS LESSON: ' . $same;
             }
             if ($audience !== '') {
@@ -622,7 +621,7 @@ SHAPE;
             // illustration") always stay, so the picture keeps the teacher's chosen style.
             $essence = trim((string)strtok($look, ':.'));
             $look = self::cut($look, $over());
-            $look = $look !== '' ? $look : $essence;
+            $look = \core_text::strlen($look) > \core_text::strlen($essence) + 1 ? $look : $essence;
         }
         if ($over() > 0) {
             $guide = self::cut($guide, $over());
@@ -673,7 +672,9 @@ SHAPE;
             . 'objects, colours, lighting and art style. Change only what is described below, so this picture flows on '
             . 'from the one before.', 'CHANGE: ' . $change];
         $keep = 'KEEP UNCHANGED: the camera angle and composition; every person\'s face, hair, skin tone, build and '
-            . 'clothing; the colour code; every structure, part and connection already shown; the art style.';
+            . 'clothing; the colour code; every structure, part and connection already shown; every object, where it is '
+            . 'and in its colour, above all safety devices such as locks, tags and guards, unless the change names it; '
+            . 'the art style.';
         if (($cast = self::characters_text($book, $change)) !== '') {
             $keep .= ' The people keep exactly this appearance: ' . $cast . '.';
         }

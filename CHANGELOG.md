@@ -2,7 +2,7 @@
 
 All notable changes to mod_visuallearning are documented here.
 
-## [1.8.0] - 2026-10-22
+## [1.8.1] - 2026-10-23
 
 - **One click makes the whole lesson.** The teacher fills in a short form and presses "Create my lesson": Claude
   writes the pages, then the pictures, animated diagrams and narration are made automatically, within the price
@@ -41,6 +41,16 @@ All notable changes to mod_visuallearning are documented here.
   - the page writer states where each pathway starts and stops, which way its arrows point and what is not shown;
   - each page picture names what the page teaches (its title), and card-picture edits list what must stay unchanged
     (camera, people's appearance, colours, structures).
+- From the first real GPT Image 2.5 Flare test (about US$0.015 a picture, 11 to 14 seconds):
+  - people in explanation pictures are fully clothed, with anatomy as a see-through overlay on the clothing (never a
+    bare chest);
+  - square answer-option pictures no longer get the page layout, and each colour of the colour code appears only
+    where the picture shows that part;
+  - card-picture edits keep every object, above all locks, tags and guards, exactly as before;
+  - tighter rule wording, so less of each lesson's own content is cut while LMS Labs caps prompts at 2,000
+    characters, and the style's name is never cut mid-word.
+- Recap: the four pictures keep their 4:3 shape, so nothing is cropped (labels at the edges were cut off), and the
+  pages not being read fade slightly instead of being blurred, so every picture stays sharp. The grid is also larger.
 - Each delivered picture's request keeps a receipt: the model, its token use and cost when LMS Labs reports them, the
   size and the file type, so image models can be compared.
 - Fixed: the default illustration look said "for adult learners" in every lesson, school lessons included. Lessons

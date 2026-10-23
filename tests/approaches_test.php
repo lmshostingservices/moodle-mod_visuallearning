@@ -115,7 +115,7 @@ final class approaches_test extends \advanced_testcase {
         $this->assertStringContainsString('LOOK: Precise flat-vector educational schematic', $prompt);
         $this->assertStringContainsString('RULES: Accuracy first', $prompt);
         $this->assertStringContainsString("Show only this page's step", $prompt);
-        $this->assertStringContainsString('Every arrow points the real way', $prompt);
+        $this->assertStringContainsString('Arrows point only the real way things move', $prompt);
         $this->assertStringNotContainsString('Maya', $prompt);
         $this->assertLessThanOrEqual(2000, \core_text::strlen($prompt));
         // Someone the scene names is still drawn as described.
@@ -139,8 +139,8 @@ final class approaches_test extends \advanced_testcase {
 
         $book->callouts = 1;
         $prompt = prompt_builder::image_prompt($book, 'A coil and its field. Callouts: "Coil", "Field".', 2000);
-        $this->assertStringContainsString('WORDS IN THE PICTURE: Exactly the words in quotes in the scene, in English '
-            . '(Australia), spelled exactly, and nothing else', $prompt);
+        $this->assertStringContainsString('WORDS IN THE PICTURE: Only the words in quotes in the scene, spelled exactly, in '
+            . 'English (Australia); nothing else', $prompt);
         $this->assertStringContainsString('logos, watermarks or misspelled words', $prompt);
         $this->assertStringContainsString("'Callouts:'", prompt_builder::writer_prompt($book));
         // Answer options never carry words.

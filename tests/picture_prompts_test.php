@@ -96,7 +96,7 @@ final class picture_prompts_test extends \advanced_testcase {
             $book->visualstyle = $style;
             $prompt = prompt_builder::image_prompt($book, $scene, 2000);
             $this->assertLessThanOrEqual(2000, \core_text::strlen($prompt), $style);
-            $this->assertStringContainsString('WORDS IN THE PICTURE: Exactly the words in quotes', $prompt, $style);
+            $this->assertStringContainsString('WORDS IN THE PICTURE: Only the words in quotes', $prompt, $style);
             $this->assertStringContainsString('RULES: Accuracy first', $prompt, $style);
             $this->assertStringContainsString('AVOID: ', $prompt, $style);
             $this->assertMatchesRegularExpression('/LOOK: \\S/', $prompt, $style);
@@ -127,12 +127,29 @@ final class picture_prompts_test extends \advanced_testcase {
         [$book, $page] = $this->lesson(['teachingapproach' => 'science']);
         $page->title = 'The signal races to the spinal cord';
         $prompt = media::image_prompt($book, $page);
-        $this->assertStringContainsString('THIS PAGE TEACHES: The signal races to the spinal cord (only this step', $prompt);
+        $this->assertStringContainsString('THIS PAGE TEACHES: The signal races to the spinal cord', $prompt);
         // The cover teaches the whole lesson, so it names no single step.
         $this->assertStringNotContainsString('THIS PAGE TEACHES', media::image_prompt($book, null));
         // An edit says what must stay the same.
         $edit = prompt_builder::edit_prompt($book, 'The pulses reach the neck.', 2000);
         $this->assertStringContainsString('KEEP UNCHANGED: the camera angle and composition', $edit);
+    }
+
+    public function test_first_api_test_findings_are_covered(): void {
+        $this->resetAfterTest();
+        [$book] = $this->lesson(['teachingapproach' => 'science', 'callouts' => 1, 'styleguide' => 'Colour code: amber, violet.',
+            'scenestyle' => json_encode(['palette' => 'amber', 'recurring' => 'Front view of the upper body.', 'subject' => 'biology'])]);
+        $page = prompt_builder::image_prompt($book, 'The nerve enters the spinal cord.', 6000);
+        // People in explanations are clothed; anatomy is an overlay.
+        $this->assertStringContainsString('fully clothed, with anatomy as a see-through overlay', $page);
+        $this->assertStringContainsString('only where this picture shows that part', $page);
+        $this->assertStringContainsString('SAME ON EVERY PAGE OF THIS LESSON', $page);
+        // A square option is a close-up: no page layout.
+        $square = prompt_builder::image_prompt($book, 'The spinal cord.', 6000, media::OPTION_ASPECT);
+        $this->assertStringNotContainsString('SAME ON EVERY PAGE', $square);
+        // Edits keep safety devices.
+        $edit = prompt_builder::edit_prompt($book, 'She holds up her key.', 6000);
+        $this->assertStringContainsString('above all safety devices such as locks, tags and guards', $edit);
     }
 
     public function test_the_image_model_is_recorded_with_each_picture(): void {

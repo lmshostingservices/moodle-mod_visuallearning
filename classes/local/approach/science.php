@@ -237,12 +237,10 @@ TXT;
      * @return string
      */
     public function image_rules(): string {
-        return 'Accuracy first: correct connections, directions, structures and proportions; never invent a part, '
-            . 'mechanism, value or equation. Show only this page\'s step: a path, flow or process starts and stops '
-            . 'exactly where the scene says, with nothing beyond it (later steps belong to later pages). Every arrow '
-            . 'points the real way things flow or move, never both ways unless the scene says so. One concept, a clear '
-            . 'visual hierarchy, and only the colours of the lesson\'s colour code that this page needs; people only if '
-            . 'the scene describes them.';
+        return 'Accuracy first: correct parts, connections and proportions; invent nothing. Show only this page\'s step: '
+            . 'a path or flow stops exactly where the scene says. Arrows point only the real way things move. One '
+            . 'concept; only the colour-code colours this page needs; people only if the scene names them, fully clothed, '
+            . 'with anatomy as a see-through overlay on the clothing (never a bare chest).';
     }
 
     /**

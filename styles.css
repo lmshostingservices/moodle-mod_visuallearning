@@ -1344,12 +1344,12 @@
     position: relative;
     grid-column: span 2;
     border-radius: 16px;
-    background: #ece9e1 center / cover no-repeat;
+    background: #ece9e1 center / contain no-repeat;
     box-shadow: 0 14px 28px -20px rgba(31, 36, 51, .55);
     min-height: 0;
 }
 
-/* A shorter last group (pages added by hand): its pictures stay square too, side by side. */
+/* A shorter last group (pages added by hand): its pictures keep their 4:3 shape too, side by side. */
 .mod-visuallearning .pb-recap-mosaic[data-count="1"],
 .mod-visuallearning .pb-recap-mosaic[data-count="2"],
 .mod-visuallearning .pb-recap-mosaic[data-count="3"] {
@@ -1362,7 +1362,7 @@
 
 .mod-visuallearning .pb-recap-mosaic[data-count="1"] {
     --pb-cols: 1;
-    width: min(100%, calc(var(--pb-avail) - 12px));
+    width: min(100%, calc((var(--pb-avail) - 12px) * 4 / 3));
     margin: auto;
 }
 
@@ -1378,13 +1378,14 @@
 .mod-visuallearning .pb-recap-mosaic[data-count="2"] .pb-recap-tile,
 .mod-visuallearning .pb-recap-mosaic[data-count="3"] .pb-recap-tile {
     grid-column: auto;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 3;
 }
 
-/* A full recap: four even, square illustrations in a 2 x 2 grid, as large as the column allows. */
+/* A full recap: four even 4:3 pictures in a 2 x 2 grid, as large as the column allows. Page pictures are 4:3, so
+   the whole picture shows, labels included: nothing is cropped. */
 .mod-visuallearning .pb-recap-mosaic[data-count="4"] {
     width: 100%;
-    max-width: calc(var(--pb-avail) - 12px);
+    max-width: calc((var(--pb-avail) - 12px) * 4 / 3);
     height: auto;
     margin: 0 auto;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1394,7 +1395,7 @@
 
 .mod-visuallearning .pb-recap-mosaic[data-count="4"] .pb-recap-tile {
     grid-column: auto;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 3;
 }
 
 .mod-visuallearning .pb-recap-tile {
@@ -1404,15 +1405,14 @@
         box-shadow .5s var(--pb-ease);
 }
 
-/* Frosted-glass veil, shown on every tile except the one being read out. */
+/* A light veil on every tile except the one being read out: the others fade back but stay sharp (no blur), so
+   their pictures and labels remain readable. */
 .mod-visuallearning .pb-recap-tile::after {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: rgba(255, 255, 255, .38);
-    -webkit-backdrop-filter: blur(10px) saturate(120%);
-    backdrop-filter: blur(10px) saturate(120%);
+    background: rgba(255, 255, 255, .42);
     opacity: 0;
     pointer-events: none;
     transition: opacity .5s var(--pb-ease);
