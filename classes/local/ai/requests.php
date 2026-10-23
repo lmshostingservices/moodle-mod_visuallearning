@@ -307,7 +307,7 @@ class requests {
      * @return array
      */
     public static function write_body(stdClass $book): array {
-        $content = trim(str_replace(["\r\n", "\r"], "\n", (string)$book->sourcecontent));
+        $content = trim(prompt_builder::plain_text((string)$book->sourcecontent));
         if ($content === '') {
             throw new moodle_exception('write_nocontent', 'mod_visuallearning');
         }

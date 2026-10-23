@@ -159,7 +159,7 @@ class prompt_builder {
         $example = $approach->example();
         $check = $approach->check();
         $textcheck = $approach->text_check();
-        $content = trim((string)$book->sourcecontent);
+        $content = trim(self::plain_text((string)$book->sourcecontent));
         $extras = trim(self::lesson_extras($book));
         $extras = $extras !== '' ? $extras . "\n" : '';
         $material = self::material_block($book);
@@ -257,7 +257,8 @@ STEP 3 - WRITE EACH PAGE (THREE CARDS)
 {$cardsbrief}
 Writing rules for the cards:
 - Plain, warm, confident language. Short sentences (under 25 words each). Active voice.
-- Each card is AT MOST 250 characters (the narrator reads one card per clip).
+- Each card is AT MOST 230 characters, and never more than 250 (the narrator reads one card per clip; a longer
+  card makes the whole lesson fail its delivery check).
 - Written to be READ ALOUD: no bullet points, no brackets, no abbreviations or acronyms without
   saying them in full first, no symbols (write "per cent", not "%"; "and", not "&").
 - Each card must make sense when heard on its own, and the three cards must read as one flowing story.
@@ -309,7 +310,8 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
 Before you answer, silently check: exactly {$max} pages; one concept per page; every page has all
 {$keycount} keys; {$check}{$modecheck} names, places, food and
 customs fit the learners' country; {$textcheck} every question follows its type's
-exact shape and tests only its own page; the JSON is valid (double quotes, no trailing commas).
+exact shape and tests only its own page; no text anywhere contains the characters < or > (write "less than",
+"more than" or "to"; arrows such as → are fine); the JSON is valid (double quotes, no trailing commas).
 PROMPT;
     }
 
@@ -502,7 +504,8 @@ TXT;
 SHAPE;
             case question::PICK:
                 $picture = $pictures ? $optionbrief
-                    : '  Options are shown as text cards, so leave "image_prompt" empty.';
+                    : '  Options are shown as text cards (their pictures are not made), but still write a short "image_prompt" '
+                        . '(one sentence describing the option) and "alt_text": the delivery check requires both.';
                 return <<<SHAPE
   PICK THE PICTURE - a question with EXACTLY 4 options, of which exactly one is right. The wrong options
   are believable mistakes, not jokes. "correct" is the position of the right option (0 to 3); vary it.
@@ -839,7 +842,7 @@ SHAPE;
      * @return string
      */
     public static function teacher_material(\stdClass $book): string {
-        $text = str_replace(["\r\n", "\r"], "\n", (string)($book->aiinstructions ?? ''));
+        $text = self::plain_text((string)($book->aiinstructions ?? ''));
         $text = trim(preg_replace("/\n{3,}/", "\n\n", $text));
         return \core_text::substr($text, 0, self::MAX_MATERIAL);
     }
@@ -858,6 +861,19 @@ SHAPE;
         return "\n\nTeacher's notes, documents and instructions (use them as a source of facts, together with the "
             . "teaching content; follow the instructions unless they conflict with accuracy, safety or the output format):\n"
             . "<<<MATERIAL\n" . $material . "\nMATERIAL";
+    }
+
+    /**
+     * Text pasted from PowerPoint, Word or a PDF, made safe to send: soft line breaks (U+000B), page breaks (U+000C)
+     * and carriage returns become line breaks, and any other control character is removed. LMS Labs refuses a
+     * request that contains them.
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function plain_text(string $text): string {
+        $text = str_replace(["\r\n", "\r", "\v", "\f"], "\n", $text);
+        return preg_replace('/[\x00-\x08\x0E-\x1F\x7F]/u', '', $text) ?? $text;
     }
 
     /** @var int Longest teacher's notes, documents and instructions (characters). */

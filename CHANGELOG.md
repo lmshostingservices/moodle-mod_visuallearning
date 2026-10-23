@@ -2,6 +2,16 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.8.2] - 2026-10-23
+
+- Fixed: lessons with "pick the picture" questions shown as text cards always failed to write. The writer was told
+  to leave the option picture prompts empty, which LMS Labs' delivery check rejects. It now writes a short
+  description, which is not used.
+- Fixed: notes pasted from PowerPoint, Word or a PDF made LMS Labs refuse the whole lesson. Soft line breaks and page
+  breaks are now sent as normal line breaks, and other invisible control characters are removed.
+- The writer is told to keep each card to 230 characters, and to never use the characters < or >. LMS Labs rejects a
+  whole lesson for one card over 250 characters or one of those characters.
+
 ## [1.8.1] - 2026-10-23
 
 - **One click makes the whole lesson.** The teacher fills in a short form and presses "Create my lesson": Claude
