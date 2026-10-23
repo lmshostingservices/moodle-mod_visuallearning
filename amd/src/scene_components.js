@@ -28,7 +28,11 @@ const gearPoints = ({radius, teeth}) => Array.from({length: teeth * 4}, (_, i) =
     return [Math.cos(a) * r, Math.sin(a) * r].join(',');
 }).join(' ');
 
-/** Build a scoped SVG tree; IDs cannot collide across mounted pages. */
+/**
+ * Build a scoped SVG tree; IDs cannot collide across mounted pages.
+ * @param {Element} host
+ * @param {Object} spec
+ */
 export const buildScene = (host, spec) => {
     const prefix = 'vl-scene-' + (++instance) + '-';
     const svg = element('svg', {viewBox: spec.viewBox.join(' '),

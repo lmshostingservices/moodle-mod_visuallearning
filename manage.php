@@ -290,17 +290,19 @@ if ($step < 1 || $step > 4) {
     $step = !$total ? 1 : ($mediadone ? 4 : ($mediastarted ? 3 : 2));
 }
 // Refresh while LMS Labs requests run in the background.
-$PAGE->requires->js_call_amd('mod_visuallearning/manage', 'init', [$inprogress ? 15 : 0, $step]);
+$PAGE->requires->js_call_amd('mod_visuallearning/manage', 'init', [$inprogress ? 10 : 0, $step]);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($book->name) . ' — ' . get_string('managepages', 'mod_visuallearning'));
 
 // The lesson's choices in one quiet line, as the teacher made them on the settings cards.
 $mode = \mod_visuallearning\local\picture_modes::of($book);
+$stylename = \mod_visuallearning\local\visual_styles::options()[\mod_visuallearning\local\visual_styles::of($book)];
 $summary = [
     \mod_visuallearning\local\learner_levels::options()[\mod_visuallearning\local\learner_levels::of($book)],
     \mod_visuallearning\local\approaches::options()[\mod_visuallearning\local\approaches::of($book)->key()],
-    \mod_visuallearning\local\visual_styles::options()[\mod_visuallearning\local\visual_styles::of($book)],
+    $mode === \mod_visuallearning\local\picture_modes::SVG ? get_string('summary_stills', 'mod_visuallearning', $stylename)
+        : $stylename,
     $mode === \mod_visuallearning\local\picture_modes::ANIMATED ? get_string('visualstyle_animated', 'mod_visuallearning')
         : get_string($mode === \mod_visuallearning\local\picture_modes::SVG ? 'animate_on' : 'animate_off', 'mod_visuallearning'),
     get_string(\mod_visuallearning\local\visual_styles::callouts($book) ? 'callouts_on' : 'callouts_off', 'mod_visuallearning'),
@@ -362,7 +364,7 @@ $nav = function (int $n, bool $nextok, string $hint = ''): string {
     return html_writer::div($back . html_writer::div($hint . $next, 'vl-wizard-next'), 'vl-wizard-nav');
 };
 
-echo html_writer::start_div('vl-wizard', ['data-step' => $step]);
+echo html_writer::start_div('vl-wizard', ['data-step' => $step, 'data-refresh' => $inprogress ? 10 : 0]);
 
 // Step tracker.
 $items = '';

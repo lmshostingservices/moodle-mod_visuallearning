@@ -87,6 +87,61 @@ export const init = (refreshSeconds, step) => {
         });
     }
     if (refreshSeconds > 0) {
-        window.setTimeout(() => window.location.reload(), refreshSeconds * 1000);
+        poll(root, refreshSeconds);
     }
+};
+
+/**
+ * While LMS Labs works in the background, check the page again every few seconds and update it in place (no
+ * flash, no lost scroll position, never a resubmitted form). It stops once nothing is being made any more.
+ *
+ * @param {HTMLElement|null} root The wizard.
+ * @param {number} seconds Interval.
+ */
+const poll = (root, seconds) => {
+    let failures = 0;
+    const check = async() => {
+        if (document.hidden) {
+            // Checked again as soon as the tab is visible.
+            document.addEventListener('visibilitychange', check, {once: true});
+            return;
+        }
+        let next = 0;
+        try {
+            const response = await fetch(window.location.href, {credentials: 'same-origin', cache: 'no-store',
+                headers: {'X-Requested-With': 'fetch'}});
+            const html = await response.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const fresh = doc.querySelector('.vl-wizard');
+            if (!response.ok || !fresh || !root) {
+                throw new Error('No wizard');
+            }
+            const step = Number(root.dataset.step) || 1;
+            // Keep open details (the list of requests) open.
+            const open = Array.from(root.querySelectorAll('details[open]')).map((d) => d.className);
+            root.innerHTML = fresh.innerHTML;
+            open.forEach((name) => root.querySelectorAll('details').forEach((d) => {
+                if (d.className === name) {
+                    d.open = true;
+                }
+            }));
+            show(root, step, false);
+            next = Number(fresh.dataset.refresh) || 0;
+            failures = 0;
+            if (!next) {
+                // Everything has arrived: a full load picks up anything else on the page (notices, the step tracker).
+                window.location.reload();
+                return;
+            }
+        } catch (e) {
+            failures++;
+            if (failures >= 3) {
+                window.location.reload();
+                return;
+            }
+            next = seconds;
+        }
+        window.setTimeout(check, next * 1000);
+    };
+    window.setTimeout(check, seconds * 1000);
 };

@@ -36,6 +36,7 @@ class mod_visuallearning_mod_form extends moodleform_mod {
      * Form definition.
      */
     public function definition() {
+        global $PAGE;
         $mform = $this->_form;
         $config = get_config('mod_visuallearning');
         $styles = \mod_visuallearning\local\visual_styles::class;
@@ -102,6 +103,30 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $cards::add($mform, 'visualstyle', get_string('visualstyle', 'mod_visuallearning'), $pictures,
             isset($styles::options()[$defaultstyle]) ? $defaultstyle : $styles::DEFAULT, 'visualstyle');
         $mform->setType('visualstyle', PARAM_ALPHANUMEXT);
+        // With animation on, this style is for the still pictures only: the animated diagrams have their own look.
+        $stillnote = html_writer::div(get_string('visualstyle_stillnote', 'mod_visuallearning'), 'alert alert-info py-2 mb-0');
+        $mform->addElement('static', 'visualstyle_stillnote', '', $stillnote);
+        // Shown only while animation is on (a static element cannot use hideIf, so a few lines of script do it).
+        $PAGE->requires->js_init_code(<<<'JS'
+(function() {
+    var note = document.getElementById('fitem_id_visualstyle_stillnote');
+    var form = note && note.closest('form');
+    if (!form) {
+        return;
+    }
+    var value = function(name) {
+        var el = form.querySelector('[name="' + name + '"]:checked');
+        return el ? el.value : '';
+    };
+    var update = function() {
+        note.hidden = !(value('animate') === '1' && value('visualstyle') !== 'animated');
+        note.style.display = note.hidden ? 'none' : '';
+    };
+    form.addEventListener('change', update);
+    update();
+})();
+JS
+        );
 
         $cards::add($mform, 'animate', get_string('animate', 'mod_visuallearning'), [
             0 => ['title' => get_string('animate_off', 'mod_visuallearning'), 'image' => 'motion-off',
@@ -264,6 +289,17 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->addHelpButton('pickimages', 'pickimages', 'mod_visuallearning');
         $mform->hideIf('pickimages', 'enablequiz', 'notchecked');
         $mform->hideIf('pickimages', 'qt_pick', 'notchecked');
+
+        // After a wrong answer: back to the page to listen again (Next locked until then), or simply try again.
+        $mform->addElement(
+            'advcheckbox',
+            'relistenlock',
+            get_string('relistenlock', 'mod_visuallearning'),
+            get_string('relistenlock_label', 'mod_visuallearning')
+        );
+        $mform->setDefault('relistenlock', 1);
+        $mform->addHelpButton('relistenlock', 'relistenlock', 'mod_visuallearning');
+        $mform->hideIf('relistenlock', 'enablequiz', 'notchecked');
 
         $mform->addElement(
             'advcheckbox',

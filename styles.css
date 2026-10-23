@@ -5453,3 +5453,310 @@
     color: #64748b;
     font-size: .92rem;
 }
+
+/* ---------- Page slide: page number, title and Listen in one row across the top ---------- */
+/* The cards then have the full height of the picture beside them, so they never run below it. */
+.mod-visuallearning .pb-spread {
+    grid-template-rows: auto minmax(0, 1fr);
+    row-gap: 14px;
+    align-items: stretch;
+}
+
+.mod-visuallearning .pb-spread > .pb-slide-head {
+    grid-column: 1 / -1;
+    align-items: center;
+    min-width: 0;
+}
+
+.mod-visuallearning .pb-spread > .pb-slide-head .pb-slide-headings {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: .9rem;
+    row-gap: .15rem;
+}
+
+.mod-visuallearning .pb-spread > .pb-slide-head .pb-page-title {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.mod-visuallearning .pb-spread > .pb-figure,
+.mod-visuallearning .pb-spread > .pb-text {
+    min-height: 0;
+    height: 100%;
+}
+
+.mod-visuallearning .pb-spread > .pb-text {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Long cards beside a shorter picture: tighter, in two steps (set by the player only when needed). */
+.mod-visuallearning .pb-spread.is-dense .pb-cards {
+    gap: 10px;
+}
+
+.mod-visuallearning .pb-spread.is-dense .pb-card {
+    padding: 10px 16px;
+}
+
+.mod-visuallearning .pb-spread.is-dense .pb-card-head {
+    margin-bottom: .2rem;
+}
+
+.mod-visuallearning .pb-spread.is-dense .pb-card-text {
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+.mod-visuallearning .pb-spread.is-denser .pb-cards {
+    gap: 8px;
+}
+
+.mod-visuallearning .pb-spread.is-denser .pb-card {
+    padding: 8px 14px;
+}
+
+.mod-visuallearning .pb-spread.is-denser .pb-card-icon {
+    width: 26px;
+    height: 26px;
+}
+
+.mod-visuallearning .pb-spread.is-denser .pb-card-text {
+    font-size: .93rem;
+    line-height: 1.4;
+}
+
+/* ---------- Zoom: any picture opens full screen ---------- */
+.mod-visuallearning .vl-zoomable {
+    cursor: zoom-in;
+}
+
+.mod-visuallearning .pb-recap-tile {
+    cursor: zoom-in;
+}
+
+/* A small magnifier on the picture says it can be opened (placed on the picture's corner by the player). */
+.mod-visuallearning .vl-zoom-badge {
+    position: absolute;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(15, 23, 42, .72);
+    box-shadow: 0 6px 14px -6px rgba(15, 23, 42, .6);
+    opacity: .85;
+    cursor: zoom-in;
+    transition: opacity .2s, transform .2s;
+}
+
+.mod-visuallearning .vl-zoom-badge svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mod-visuallearning .vl-zoom-badge:hover,
+.mod-visuallearning .vl-zoom-badge:focus-visible,
+.mod-visuallearning .pb-recap-tile:hover .vl-zoom-badge {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.mod-visuallearning .vl-zoom-badge:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, .65);
+    outline-offset: 2px;
+}
+
+.mod-visuallearning .pb-recap-tile .vl-zoom-badge {
+    right: 8px;
+    bottom: 8px;
+    width: 28px;
+    height: 28px;
+    pointer-events: none;
+}
+
+.mod-visuallearning .pb-recap-tile .vl-zoom-badge svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* The magnifier is not one of the figure's picture layers: always shown, placed by the player. */
+.mod-visuallearning .pb-page-figure.has-layers > .vl-zoom-badge[type] {
+    grid-area: auto;
+    visibility: visible;
+    opacity: .85;
+    pointer-events: auto;
+}
+
+.mod-visuallearning .pb-page-figure.has-layers > .vl-zoom-badge[type]:hover,
+.mod-visuallearning .pb-page-figure.has-layers > .vl-zoom-badge[type]:focus-visible {
+    opacity: 1;
+}
+
+.mod-visuallearning .vl-zoom-badge[hidden] {
+    display: none;
+}
+
+body.vl-zoom-open {
+    overflow: hidden;
+}
+
+.vl-zoom {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    flex-direction: column;
+    background: rgba(15, 23, 42, .94);
+    animation: vl-zoom-in .2s ease both;
+}
+
+.vl-zoom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 14px;
+}
+
+.vl-zoom-btn {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.vl-zoom-btn:hover,
+.vl-zoom-btn:focus-visible {
+    background: rgba(255, 255, 255, .26);
+    outline: 2px solid rgba(255, 255, 255, .6);
+    outline-offset: 2px;
+}
+
+.vl-zoom-close {
+    margin-left: 10px;
+}
+
+.vl-zoom-level {
+    min-width: 3.5em;
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+}
+
+.vl-zoom-view {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    display: grid;
+    padding: 16px;
+    cursor: zoom-out;
+}
+
+.vl-zoom.is-zoomed .vl-zoom-view {
+    cursor: grab;
+}
+
+.vl-zoom-canvas {
+    margin: auto;
+    cursor: zoom-in;
+}
+
+.vl-zoom.is-zoomed .vl-zoom-canvas {
+    cursor: grab;
+}
+
+.vl-zoom-item {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .6);
+    user-select: none;
+}
+
+img.vl-zoom-item {
+    object-fit: contain;
+}
+
+@keyframes vl-zoom-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vl-zoom {
+        animation: none;
+    }
+}
+
+.mod-visuallearning .pb-q-figure {
+    position: relative;
+    cursor: zoom-in;
+}
+
+/* Themes that colour every button (white text, a brand background) never reach the player's own top-bar buttons. */
+.mod-visuallearning .pb-topbar .pb-toc-toggle,
+.mod-visuallearning .pb-topbar .pb-toc-toggle:hover,
+.mod-visuallearning .pb-topbar .pb-toc-toggle:focus,
+.mod-visuallearning .pb-topbar .pb-toc-toggle:active,
+.mod-visuallearning .pb-topbar .pb-sound-toggle,
+.mod-visuallearning .pb-topbar .pb-sound-toggle:hover,
+.mod-visuallearning .pb-topbar .pb-sound-toggle:focus,
+.mod-visuallearning .pb-topbar .pb-sound-toggle:active {
+    color: var(--pb-ink, #1f2433);
+    font-family: inherit;
+    text-shadow: none;
+}
+
+.mod-visuallearning .pb-topbar .pb-toc-toggle,
+.mod-visuallearning .pb-topbar .pb-sound-toggle {
+    background-color: #fff;
+}
+
+.mod-visuallearning .pb-topbar .pb-toc-toggle:hover,
+.mod-visuallearning .pb-topbar .pb-toc-toggle:focus,
+.mod-visuallearning .pb-topbar .pb-sound-toggle:hover,
+.mod-visuallearning .pb-topbar .pb-sound-toggle:focus {
+    background-color: #f6f7fb;
+}
+
+.mod-visuallearning .pb-topbar .pb-toc-toggle:focus-visible,
+.mod-visuallearning .pb-topbar .pb-sound-toggle:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, .5);
+    outline-offset: 2px;
+}
+
+/* Try again after a wrong answer (when the teacher does not send learners back to the page). */
+.mod-visuallearning .pb-q-tryagain {
+    width: 100%;
+}
+
+.mod-visuallearning .pb-q-panel .pb-q-tryagain + .pb-q-golisten {
+    margin-top: 8px;
+}
+
+/* An animated scene keeps a row under it for its "play at normal speed" button: the cards line up with the scene
+   itself, not with that row. */
+.mod-visuallearning:not(.is-narrow) .pb-spread:has(.pb-diagram.is-svgscene) > .pb-text {
+    padding-bottom: 54px;
+}

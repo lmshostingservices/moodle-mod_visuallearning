@@ -60,13 +60,16 @@ const operations = {
     pan: [{}, xy], change_colour: [{}, {fill: colour}], change_value: [{}, {value}],
     connect: [{}, {connected: v => v === true}], disconnect: [{}, {connected: v => v === false}]
 };
-const operation = v => object(v, {type: enumeration(Object.keys(operations)), params: isObject, final: isObject}) &&
+const operation = v => object(v, {type: enumeration(Object.keys(operations)), params: isObject, "final": isObject}) &&
     object(v.params, operations[v.type][0]) && object(v.final, operations[v.type][1]);
 const action = v => object(v, {target: x => x === '@camera' || id(x),
     startMs: x => integer(x, 0, 120000), durationMs: x => integer(x, 1, 120000),
     easing: enumeration(['linear', 'smooth', 'ease-in', 'ease-out']), operation});
 
-/** Property channels are public so other validators can reproduce concurrency checks. */
+/**
+ * Property channels are public so other validators can reproduce concurrency checks.
+ * @param {Object} op
+ */
 export const actionChannels = op => {
     if (['reveal', 'hide'].includes(op.type)) {
         return ['visible', 'opacity'];
@@ -80,7 +83,10 @@ export const actionChannels = op => {
     return Object.keys(op.final);
 };
 
-/** Reject non-JSON values, accessors, cycles, surprising prototypes and oversized inputs before recursion. */
+/**
+ * Reject non-JSON values, accessors, cycles, surprising prototypes and oversized inputs before recursion.
+ * @param {Object} spec
+ */
 const safeJson = spec => {
     let count = 0;
     let textBytes = 0;
@@ -340,7 +346,10 @@ const semantics = s => {
     return actionCount <= 192 && [...particleMax.values()].reduce((a, b) => a + b, 0) <= 256;
 };
 
-/** Strict boolean contract. Invalid data never throws through a rendering or import boundary. */
+/**
+ * Strict boolean contract. Invalid data never throws through a rendering or import boundary.
+ * @param {Object} spec
+ */
 export const validateScene = spec => {
     try {
         return safeJson(spec) && structure(spec) && semantics(spec);

@@ -114,7 +114,9 @@ class answer_question extends external_api {
             $progress->tfpassed = 1;
             $progress->timepassed = $now;
         }
-        if (!$correct && !$progress->tfpassed) {
+        // The teacher may let learners simply try again instead of listening to the page first.
+        $lock = !isset($book->relistenlock) || !empty($book->relistenlock);
+        if (!$correct && !$progress->tfpassed && $lock) {
             $progress->relisten = 1;
         }
         $DB->update_record('visuallearning_progress', $progress);
@@ -143,14 +145,14 @@ class answer_question extends external_api {
             if (isset($clips['feedback'])) {
                 $audio = visuallearning_file_url(media::clip_file($context, $book, $page, 'feedback', $clips['feedback']));
             }
-        } else if (isset($clips['retry'])) {
+        } else if ($lock && isset($clips['retry'])) {
             // The narrator sends the learner back to the page (only when that clip has been made).
             $retryaudio = visuallearning_file_url(media::clip_file($context, $book, $page, 'retry', $clips['retry']));
         }
         return [
             'correct' => $correct,
             'attempts' => (int)$progress->tfattempts,
-            'relisten' => !$correct && !$progress->tfpassed,
+            'relisten' => !$correct && !$progress->tfpassed && $lock,
             'feedback' => $feedback,
             'feedbackaudio' => $audio,
             'retryaudio' => $retryaudio,

@@ -76,12 +76,14 @@ LABEL CARDS AND TYPE (the world-class finish; follow exactly)
   leader's x2/y2 with the same keyTimes).
 - Notes such as "To the lungs" or "Heat to the room" are tags: 24px-high pills (rx 12) in a pale tint of their
   colour with a slightly darker 1px stroke and 11.5px weight 700 text in the colour, 12px padding each side.
-- A legend is one card listing colour dots with 12.5px weight 700 names, top right when there is room.
+- A legend is one card listing colour dots with 12.5px weight 700 names, top right when there is room. Its width is
+  14 + 9 (dot) + 8 + 7.3 x the characters of the longest name + 14, rounded up; never narrower.
 - A label of a part that belongs to one stage takes that stage's class, so it fades with it.
 
 SPACING (the scene must never look cramped)
 - Keep 24px clear inside the plate edges, and 16px between any two labels, pills or panels (never touching).
 - Pills: at least 12px of space between their text and each end. Panels: at least 18px padding on every side.
+  Every card, pill, tag and legend is sized from its longest text plus its padding; when unsure, make it wider.
 - Width of text, to size pills and panels: about 8px per character for 13.5px bold text, 7.4px for 13.5px regular
   text, 12px for a 20px heading. Round up and add the padding. When a line would not fit, shorten the words or
   add a line; never let text run past its pill or panel.
@@ -127,6 +129,27 @@ ACCURACY
 - If the concept cannot be shown accurately as a diagram, draw the simplest true picture of its parts and
   relationships instead of something wrong.
 - Write every label and caption in the lesson's language. Keep labels short (one to four words).
+
+REALITY CHECK (do this silently before you answer; fix everything it finds)
+1. Name the real thing you drew and picture a photograph of it. Compare outline, proportions and parts: would a
+   worker who uses it every day recognise it at once? A haul truck has a huge rear tipping tray (body) over two
+   large rear wheels, a cab high on the front left, a big front bumper and a ladder to the cab; it is never a
+   box on two equal wheels. Redraw anything that looks like clip-art, a toy or a generic shape.
+2. Check every part is in its true place, size and number (wheels, axles, valves, chambers, bones, pipes) and
+   joined to what it really joins.
+3. Check every motion against the real world, frame by frame:
+   - direction: a dump truck's tray tips UP at the front and rotates about its rear hinge, so the load slides out
+     the back; a piston is pushed down by the expanding gas; blood leaves a ventricle when it squeezes; water
+     falls, warm air rises;
+   - pivot and limits: things rotate about their real hinge or axle and stop where they really stop;
+   - cause and effect: the thing that drives a motion moves first (the hydraulic ram extends, then the tray
+     lifts); linked parts stay joined at every moment;
+   - gravity and flow: loose material falls down and out, fluids flow from high to low pressure, arrows point
+     the way things really move.
+4. Check the stages: each card's stage shows what that card says, in the order it happens.
+5. Check every label names the part its leader touches, and fits inside its card with its padding.
+If anything fails, correct the drawing or the animation before answering. Never answer with a motion that goes
+the wrong way.
 
 WORKED EXAMPLE (how blood flows through the heart; the chambers change shape on each beat)
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" role="img" aria-labelledby="ht hd" class="stage-all" data-stage-seconds="6">

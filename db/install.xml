@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/visuallearning/db" VERSION="20261018" COMMENT="XMLDB file for Moodle mod/visuallearning"
+<XMLDB PATH="mod/visuallearning/db" VERSION="20261023" COMMENT="XMLDB file for Moodle mod/visuallearning"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -40,6 +40,7 @@
         <FIELD NAME="questiontypes" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT="truefalse,pick,match,sort" SEQUENCE="false" COMMENT="Question types the AI may use, comma separated"/>
         <FIELD NAME="pickimages" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Picture-pick options get their own pictures (else text cards)"/>
         <FIELD NAME="sounds" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Little interface sounds for learners"/>
+        <FIELD NAME="relistenlock" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="A wrong answer sends the learner back to listen to the page again before going on"/>
         <FIELD NAME="styleguide" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Art direction returned by ChatGPT"/>
         <FIELD NAME="characters" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Recurring cast descriptions"/>
         <FIELD NAME="coverprompt" TYPE="text" NOTNULL="false" SEQUENCE="false"/>

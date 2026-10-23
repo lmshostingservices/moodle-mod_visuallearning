@@ -26,7 +26,13 @@ const initialState = spec => ({
     }]))
 });
 
-/** Apply only this action's write channels to state, deriving all intermediate values from its start snapshot. */
+/**
+ * Apply only this action's write channels to state, deriving all intermediate values from its start snapshot.
+ * @param {Object} state
+ * @param {Object} plan
+ * @param {number} time
+ * @param {Object} paths
+ */
 const apply = (state, plan, time, paths) => {
     const a = plan.action;
     if (time < a.startMs) {
@@ -112,6 +118,7 @@ const apply = (state, plan, time, paths) => {
 /**
  * Compile immutable action-start snapshots once, then evaluate in bounded linear time per frame.
  * Returns null for invalid input. Callers cannot mutate the original scene through the evaluator.
+ * @param {Object} input
  */
 export const createEvaluator = input => {
     if (!validateScene(input)) {
@@ -150,7 +157,12 @@ export const createEvaluator = input => {
     };
 };
 
-/** Pure exported testing and seeking API. Invalid scenes or invalid clock inputs return null. */
+/**
+ * Pure exported testing and seeking API. Invalid scenes or invalid clock inputs return null.
+ * @param {Object} spec
+ * @param {number} card
+ * @param {number} timeMs
+ */
 export const evaluateScene = (spec, card, timeMs = 0) => {
     const evaluator = createEvaluator(spec);
     return evaluator ? evaluator(card, timeMs) : null;

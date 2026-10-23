@@ -105,6 +105,28 @@ final class answer_question_test extends \externallib_advanced_testcase {
     }
 
     /**
+     * With the teacher's "send back to listen" setting off, a wrong answer can simply be tried again.
+     */
+    public function test_try_again_without_listening_when_the_lock_is_off(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course();
+        $book = $this->getDataGenerator()->create_module('visuallearning', ['course' => $course->id, 'relistenlock' => 0]);
+        $this->assertEquals(0, $DB->get_field('visuallearning', 'relistenlock', ['id' => $book->id]));
+        $page = $this->getDataGenerator()->get_plugin_generator('mod_visuallearning')->create_page($book->id, ['tfanswer' => 1]);
+        $this->setUser($this->getDataGenerator()->create_and_enrol($course, 'student'));
+
+        $result = $this->answer($book->cmid, $page->id, ['value' => false]);
+        $this->assertFalse($result['correct']);
+        $this->assertFalse($result['relisten']);
+        $this->assertSame('', $result['retryaudio']);
+        // Not locked: the next answer counts straight away.
+        $result = $this->answer($book->cmid, $page->id, ['value' => true]);
+        $this->assertTrue($result['correct']);
+        $this->assertSame(2, $result['attempts']);
+    }
+
+    /**
      * Picture pick, matching and sorting are checked on the server; their answers never reach the browser.
      */
     public function test_pick_match_and_sort(): void {

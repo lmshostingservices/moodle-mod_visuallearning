@@ -68,7 +68,7 @@ const el = (tag, attrs = {}, parent = null) => {
  * A text element, on one or more lines.
  *
  * @param {Element} parent
- * @param {string|string[]} text
+ * @param {string|string[]} textValue
  * @param {number} x
  * @param {number} y
  * @param {Object} attrs

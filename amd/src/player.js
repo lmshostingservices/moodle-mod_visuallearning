@@ -78,6 +78,10 @@ const PAIR_COLOURS = 4;
  * @param {string} text
  * @returns {string}
  */
+/** The magnifier icon of the zoom buttons. */
+const ZOOM_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+    'stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M10.5 8v5M8 10.5h5"/></svg>';
+
 const esc = (text) => String(text === undefined || text === null ? '' : text).replace(/[&<>"']/g,
     (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 
@@ -277,17 +281,11 @@ class Player {
         this.q('.pb-prev-label').textContent = this.str('previous');
         this.q('.pb-replay').setAttribute('aria-label', this.str('replay'));
         this.q('.pb-replay').title = this.str('replay');
+        // One mute button for the voiceover and the little sounds: muting pauses the voiceover where it is, and
+        // nothing starts reading by itself while muted; unmuting (or pressing Listen or play) carries on.
         const soundBtn = this.q('.pb-sound-toggle');
-        if (this.data.sounds) {
-            this.updateSoundToggle();
-            soundBtn.addEventListener('click', () => {
-                Sounds.setMuted(!Sounds.isMuted());
-                this.updateSoundToggle();
-                Sounds.play('pop');
-            });
-        } else {
-            soundBtn.hidden = true;
-        }
+        this.updateSoundToggle();
+        soundBtn.addEventListener('click', () => this.setMute(!Sounds.isMuted()));
         // A barely-there tick when the pointer or focus reaches an answer.
         const stage = this.q('.pb-stage');
         stage.addEventListener('pointerover', (e) => {
@@ -334,10 +332,33 @@ class Player {
             this.go(this.current - 1);
         });
         this.q('.pb-next').addEventListener('click', () => this.next());
-        this.q('.pb-playpause').addEventListener('click', () => this.togglePlay());
-        this.q('.pb-replay').addEventListener('click', () => this.narrate());
+        // The learner asked to hear it: a muted lesson unmutes first.
+        const unmuteFirst = () => {
+            if (Sounds.isMuted()) {
+                this.setMute(false, false);
+            }
+        };
+        this.q('.pb-playpause').addEventListener('click', () => {
+            if (!(this.narrating && this.paused && Sounds.isMuted())) {
+                unmuteFirst();
+                this.togglePlay();
+                return;
+            }
+            this.setMute(false);
+        });
+        this.q('.pb-replay').addEventListener('click', () => {
+            unmuteFirst();
+            this.narrate();
+        });
         this.root.querySelectorAll('.pb-listen').forEach((btn) => {
-            btn.addEventListener('click', () => this.togglePlay());
+            btn.addEventListener('click', () => {
+                if (Sounds.isMuted() && this.narrating && this.paused) {
+                    this.setMute(false);
+                    return;
+                }
+                unmuteFirst();
+                this.togglePlay();
+            });
         });
 
         this.audio.addEventListener('ended', () => this.finishClip());
@@ -349,6 +370,7 @@ class Player {
 
         document.addEventListener('keydown', (e) => this.onKey(e));
         window.addEventListener('resize', () => this.fitToViewport());
+        this.bindZoom();
         // Moodle's sticky footer slides away on scroll on phones: keep our bar sitting just above it.
         let ticking = false;
         window.addEventListener('scroll', () => {
@@ -532,6 +554,31 @@ class Player {
     }
 
     /**
+     * Mute or unmute the voiceover and sounds. Muting pauses the voiceover where it is; unmuting carries on from there.
+     *
+     * @param {boolean} muted
+     * @param {boolean} resume whether to carry on a voiceover the mute paused
+     */
+    setMute(muted, resume = true) {
+        Sounds.setMuted(muted);
+        this.updateSoundToggle();
+        if (muted) {
+            if (this.narrating && !this.paused) {
+                this.togglePlay();
+                this.mutePaused = true;
+            }
+            return;
+        }
+        if (this.data.sounds) {
+            Sounds.play('pop');
+        }
+        if (resume && this.mutePaused && this.narrating && this.paused) {
+            this.togglePlay();
+        }
+        this.mutePaused = false;
+    }
+
+    /**
      * Show the mute state on the sound button.
      */
     updateSoundToggle() {
@@ -567,6 +614,268 @@ class Player {
         this.root.classList.toggle('is-short', avail < 600);
         this.root.classList.toggle('is-tiny', avail < 480);
         this.updateCoverScroll();
+        this.fitCards();
+    }
+
+    /**
+     * Keep the three cards within the height of the picture beside them: tighter type and spacing, in two steps,
+     * only when the cards would otherwise run below the picture.
+     */
+    fitCards() {
+        const qfig = this.q('.pb-q-figure');
+        if (qfig && !qfig.hidden) {
+            const img = qfig.querySelector('img');
+            this.placeZoomBadge(qfig, img && img.complete && img.naturalWidth ? img : qfig);
+            if (img && !img.complete) {
+                img.addEventListener('load', () => this.fitCards(), {once: true});
+            }
+        }
+        const spread = this.q('.pb-spread');
+        if (!spread) {
+            return;
+        }
+        spread.classList.remove('is-dense', 'is-denser');
+        if (spread.hidden) {
+            return;
+        }
+        const figure = spread.querySelector('.pb-page-figure');
+        const media = figure.querySelector('.vl-svgscene') || figure.querySelector('.is-shown') || figure;
+        this.placeZoomBadge(figure, media);
+        if (this.root.classList.contains('is-narrow')) {
+            return;
+        }
+        const text = spread.querySelector('.pb-text');
+        const inner = spread.querySelector('.pb-text-inner');
+        const height = media.getBoundingClientRect().height;
+        const target = Math.min(text.clientHeight, height > 120 ? height : text.clientHeight);
+        for (const cls of ['is-dense', 'is-denser']) {
+            if (inner.scrollHeight <= target + 4) {
+                break;
+            }
+            spread.classList.add(cls);
+        }
+    }
+
+    /**
+     * Open a picture full screen, to look at its labels closely: click or tap it (or press Enter on it). Scenes and
+     * diagrams open as a still copy; the zoom buttons, the mouse wheel and a double tap enlarge it further.
+     *
+     * @param {HTMLElement} source an img, an svg, or an element with a background image (a recap tile)
+     * @param {string} label
+     */
+    openZoom(source, label) {
+        this.closeZoom();
+        const overlay = document.createElement('div');
+        overlay.className = 'vl-zoom';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-label', label || this.str('zoomtitle'));
+        overlay.innerHTML = '<div class="vl-zoom-bar">' +
+            '<button type="button" class="vl-zoom-btn" data-zoom="out" aria-label="' + esc(this.str('zoomout')) + '">−</button>' +
+            '<span class="vl-zoom-level">100%</span>' +
+            '<button type="button" class="vl-zoom-btn" data-zoom="in" aria-label="' + esc(this.str('zoomin')) + '">+</button>' +
+            '<button type="button" class="vl-zoom-btn vl-zoom-close" data-zoom="close" aria-label="' +
+            esc(this.str('zoomclose')) + '">×</button></div><div class="vl-zoom-view"><div class="vl-zoom-canvas"></div></div>';
+        const canvas = overlay.querySelector('.vl-zoom-canvas');
+        let item;
+        let ratio = 4 / 3;
+        if (source.tagName && source.tagName.toLowerCase() === 'img') {
+            item = document.createElement('img');
+            item.src = source.currentSrc || source.src;
+            item.alt = source.alt || '';
+            if (source.naturalWidth) {
+                ratio = source.naturalWidth / source.naturalHeight;
+            }
+        } else if (source.tagName && source.tagName.toLowerCase() === 'svg') {
+            item = source.cloneNode(true);
+            item.removeAttribute('style');
+            const vb = source.viewBox && source.viewBox.baseVal;
+            if (vb && vb.width) {
+                ratio = vb.width / vb.height;
+            }
+        } else {
+            const url = (getComputedStyle(source).backgroundImage.match(/url\(["']?(.*?)["']?\)/) || [])[1];
+            if (!url) {
+                return;
+            }
+            item = document.createElement('img');
+            item.src = url;
+            item.alt = '';
+            item.addEventListener('load', () => {
+                ratio = item.naturalWidth / item.naturalHeight;
+                layout();
+            });
+        }
+        item.classList.add('vl-zoom-item');
+        canvas.appendChild(item);
+        const view = overlay.querySelector('.vl-zoom-view');
+        let zoom = 1;
+        const layout = () => {
+            const w = view.clientWidth - 32;
+            const h = view.clientHeight - 32;
+            const fitW = Math.min(w, h * ratio);
+            canvas.style.width = Math.round(fitW * zoom) + 'px';
+            canvas.style.height = Math.round(fitW * zoom / ratio) + 'px';
+            overlay.querySelector('.vl-zoom-level').textContent = Math.round(zoom * 100) + '%';
+            overlay.classList.toggle('is-zoomed', zoom > 1);
+        };
+        const setZoom = (z, cx, cy) => {
+            const before = zoom;
+            zoom = Math.max(1, Math.min(4, z));
+            // Keep the point under the pointer (or the middle) where it is.
+            const fx = (view.scrollLeft + (cx ?? view.clientWidth / 2)) / Math.max(1, canvas.offsetWidth + 32);
+            const fy = (view.scrollTop + (cy ?? view.clientHeight / 2)) / Math.max(1, canvas.offsetHeight + 32);
+            layout();
+            if (before !== zoom) {
+                view.scrollLeft = fx * (canvas.offsetWidth + 32) - (cx ?? view.clientWidth / 2);
+                view.scrollTop = fy * (canvas.offsetHeight + 32) - (cy ?? view.clientHeight / 2);
+            }
+        };
+        overlay.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-zoom]');
+            if (btn) {
+                const action = btn.dataset.zoom;
+                if (action === 'close') {
+                    this.closeZoom();
+                } else {
+                    setZoom(zoom * (action === 'in' ? 1.5 : 1 / 1.5));
+                }
+                return;
+            }
+            if (e.target === view || e.target === overlay) {
+                this.closeZoom();
+            }
+        });
+        canvas.addEventListener('dblclick', (e) => {
+            const r = view.getBoundingClientRect();
+            setZoom(zoom > 1 ? 1 : 2.5, e.clientX - r.left, e.clientY - r.top);
+        });
+        view.addEventListener('wheel', (e) => {
+            if (!e.ctrlKey && zoom === 1 && e.deltaY > 0) {
+                return;
+            }
+            e.preventDefault();
+            const r = view.getBoundingClientRect();
+            setZoom(zoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX - r.left, e.clientY - r.top);
+        }, {passive: false});
+        // Drag to move around a zoomed picture.
+        let drag = null;
+        view.addEventListener('pointerdown', (e) => {
+            if (zoom > 1 && e.pointerType === 'mouse') {
+                drag = {x: e.clientX, y: e.clientY, left: view.scrollLeft, top: view.scrollTop};
+                view.setPointerCapture(e.pointerId);
+            }
+        });
+        view.addEventListener('pointermove', (e) => {
+            if (drag) {
+                view.scrollLeft = drag.left - (e.clientX - drag.x);
+                view.scrollTop = drag.top - (e.clientY - drag.y);
+            }
+        });
+        view.addEventListener('pointerup', () => {
+            drag = null;
+        });
+        this.zoomKeys = (e) => {
+            if (e.key === 'Escape') {
+                this.closeZoom();
+            } else if (e.key === '+' || e.key === '=') {
+                setZoom(zoom * 1.5);
+            } else if (e.key === '-') {
+                setZoom(zoom / 1.5);
+            }
+        };
+        this.zoomResize = () => layout();
+        document.addEventListener('keydown', this.zoomKeys);
+        window.addEventListener('resize', this.zoomResize);
+        this.zoomReturn = document.activeElement;
+        document.body.appendChild(overlay);
+        document.body.classList.add('vl-zoom-open');
+        this.zoom = overlay;
+        layout();
+        overlay.querySelector('.vl-zoom-close').focus();
+    }
+
+    /**
+     * Close the full-screen picture, back to where the learner was.
+     */
+    closeZoom() {
+        if (!this.zoom) {
+            return;
+        }
+        this.zoom.remove();
+        this.zoom = null;
+        document.body.classList.remove('vl-zoom-open');
+        document.removeEventListener('keydown', this.zoomKeys);
+        window.removeEventListener('resize', this.zoomResize);
+        if (this.zoomReturn && this.zoomReturn.focus) {
+            this.zoomReturn.focus({preventScroll: true});
+        }
+    }
+
+    /**
+     * Make the pictures of the page and recap slides open full screen when clicked (one listener for the player).
+     */
+    bindZoom() {
+        const pick = (target) => {
+            const tile = target.closest('.pb-recap-tile');
+            if (tile) {
+                return tile;
+            }
+            const figure = target.closest('.pb-page-figure, .pb-q-figure');
+            if (!figure || target.closest('button')) {
+                return null;
+            }
+            return figure.querySelector('.vl-svgscene') || figure.querySelector('.is-shown .dg-svg, .is-shown svg')
+                || figure.querySelector('img.is-shown') || figure.querySelector('.is-shown img')
+                || figure.querySelector('img:not([hidden])');
+        };
+        this.root.addEventListener('click', (e) => {
+            const source = pick(e.target);
+            if (source) {
+                e.preventDefault();
+                this.openZoom(source, this.str('zoomtitle'));
+            }
+        });
+        // A magnifier button on the picture (keyboard and screen readers use it; the picture itself is clickable too).
+        this.root.querySelectorAll('.pb-page-figure, .pb-q-figure').forEach((f) => {
+            f.classList.add('vl-zoomable');
+            const badge = document.createElement('button');
+            badge.type = 'button';
+            badge.className = 'vl-zoom-badge';
+            badge.setAttribute('aria-label', this.str('zoomopen'));
+            badge.title = this.str('zoomopen');
+            badge.innerHTML = ZOOM_ICON;
+            badge.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const source = pick(f.firstElementChild || f) || pick(f);
+                if (source) {
+                    this.openZoom(source, this.str('zoomtitle'));
+                }
+            });
+            f.appendChild(badge);
+        });
+    }
+
+    /**
+     * Put the magnifier on the bottom right corner of what the page figure shows.
+     *
+     * @param {HTMLElement} figure
+     * @param {HTMLElement} media
+     */
+    placeZoomBadge(figure, media) {
+        const badge = figure.querySelector('.vl-zoom-badge');
+        if (!badge) {
+            return;
+        }
+        const f = figure.getBoundingClientRect();
+        const m = media.getBoundingClientRect();
+        if (!m.width || media === figure) {
+            badge.hidden = true;
+            return;
+        }
+        badge.hidden = false;
+        badge.style.left = Math.round(m.right - f.left - 46) + 'px';
+        badge.style.top = Math.round(m.bottom - f.top - 46) + 'px';
     }
 
     /**
@@ -646,7 +955,8 @@ class Player {
         let html = '<h3 class="pb-cover-heading">' + esc(this.str('coverhow')) + '</h3><ol class="pb-how">';
         how.forEach(([cls, icon, title, text], n) => {
             html += '<li class="pb-how-step ' + cls + '"><span class="pb-how-icon">' + icon +
-                (how.length > 1 ? '<span class="pb-how-num">' + (n + 1) + '</span>' : '') + '</span><span class="pb-how-body"><strong>' + esc(title) +
+                (how.length > 1 ? '<span class="pb-how-num">' + (n + 1) + '</span>' : '') +
+                '</span><span class="pb-how-body"><strong>' + esc(title) +
                 '</strong><span>' + esc(text) + '</span></span></li>';
         });
         html += '</ol>';
@@ -1179,8 +1489,18 @@ class Player {
             pacing: (this.data.animationsettings || {}).animationpacing || 'normal',
             strings: {replay: this.str('animationreplay'), stageReplay: this.str('animationstagereplay'),
                 normal: this.str('animationnormal')},
-            onReplay: () => this.narrate(0),
-            onStageReplay: stage => this.narrate(0, stage - 1),
+            onReplay: () => {
+                if (Sounds.isMuted()) {
+                    this.setMute(false, false);
+                }
+                this.narrate(0);
+            },
+            onStageReplay: stage => {
+                if (Sounds.isMuted()) {
+                    this.setMute(false, false);
+                }
+                this.narrate(0, stage - 1);
+            },
         });
         if (this.diagram) {
             this.diagram.finish(card);
@@ -1197,6 +1517,7 @@ class Player {
      * What the figure shows while a card is read (or tapped): its card picture, or its part of the diagram.
      *
      * @param {number} i card position
+     * @param {number} ms
      */
     showCard(i, ms = 0) {
         if (this.diagram) {
@@ -1271,6 +1592,13 @@ class Player {
         this.updateNext();
         this.fitToViewport();
         this.scrollIntoPlace();
+        // Pictures and scenes take their size a moment later: fit the cards to them again then.
+        window.requestAnimationFrame(() => this.fitCards());
+        window.setTimeout(() => this.fitCards(), 400);
+        const pageimg = step.type === 'page' ? this.q('.pb-page-image') : null;
+        if (pageimg && !pageimg.complete) {
+            pageimg.addEventListener('load', () => this.fitCards(), {once: true});
+        }
 
         if (step.type === 'page') {
             this.track('view');
@@ -1280,7 +1608,8 @@ class Player {
         // wait for Listen unless autoplay is on.
         const page = step.type === 'question' ? this.pages[step.page] : null;
         const revisit = this.returnTo !== null && step.type === 'page';
-        if ((page && !page.passed && !page.relisten) || revisit || (step.type !== 'question' && this.data.autoplay)) {
+        const autostart = (page && !page.passed && !page.relisten) || revisit || (step.type !== 'question' && this.data.autoplay);
+        if (autostart && !Sounds.isMuted()) {
             this.narrate(650);
         }
     }
@@ -1420,7 +1749,7 @@ class Player {
             if (this.pages[i].image) {
                 tile.style.backgroundImage = 'url("' + this.pages[i].image + '")';
             }
-            tile.innerHTML = '<span>' + (n + 1) + '</span>';
+            tile.innerHTML = '<span>' + (n + 1) + '</span><i class="vl-zoom-badge" aria-hidden="true">' + ZOOM_ICON + '</i>';
             mosaic.appendChild(tile);
         });
         const list = this.q('.pb-recap-list');
@@ -1944,7 +2273,7 @@ class Player {
             this.feedbackClip = result.feedback ? {el: this.q('.pb-q-panel'), urls: [result.feedbackaudio],
                 text: result.feedback} : null;
             this.updateNext();
-            if (this.feedbackClip && result.feedbackaudio) {
+            if (this.feedbackClip && result.feedbackaudio && !Sounds.isMuted()) {
                 this.narrate(500);
             } else {
                 this.slideDone = true;
@@ -1969,7 +2298,7 @@ class Player {
         this.renderSegments(step);
         this.showPanel('wrong', page, result);
         this.updateNext();
-        if (result.retryaudio) {
+        if (result.retryaudio && !Sounds.isMuted()) {
             // The narrator sends the learner back to the page.
             this.feedbackClip = {el: this.q('.pb-q-panel'), urls: [result.retryaudio], text: ''};
             this.narrate(500);
@@ -2022,6 +2351,26 @@ class Player {
         panel.className = 'pb-q-panel is-' + kind;
         panel.hidden = false;
         const num = this.pages.indexOf(page) + 1;
+        if (kind === 'wrong' && this.data.relistenlock === false) {
+            // The teacher lets learners simply try again: the wrong choice stays crossed out, and listening to the
+            // page again is offered but never required.
+            panel.setAttribute('role', 'alert');
+            panel.innerHTML = '<div class="pb-q-panel-head"><span class="pb-q-panel-icon">' + HEADPHONES_SVG + '</span>' +
+                '<strong>' + esc(this.str('notquite')) + '</strong></div>' +
+                '<p>' + esc(this.str('tryagaintext', num)) + '</p>';
+            const again = this.button('', 'pb-btn pb-btn-primary pb-q-tryagain', () => this.go(this.current));
+            again.innerHTML = '<span>' + esc(this.str('tryagain')) + '</span>';
+            panel.appendChild(again);
+            const listen = this.button('', 'pb-btn pb-btn-ghost pb-q-golisten', () => this.goListen());
+            listen.innerHTML = BACK_SVG + '<span>' + esc(this.str('golisten', num)) + '</span>';
+            panel.appendChild(listen);
+            const note = document.createElement('span');
+            note.className = 'pb-q-note';
+            note.textContent = this.str('attemptx', page.attempts) + ' · ' + this.str('nopenalty');
+            panel.appendChild(note);
+            window.setTimeout(() => again.focus({preventScroll: true}), 350);
+            return;
+        }
         if (kind === 'wrong') {
             panel.setAttribute('role', 'alert');
             const thumb = page.image ? '<img src="' + esc(page.image) + '" alt="">' : '<span class="is-empty"></span>';
@@ -2158,6 +2507,7 @@ class Player {
      * Narrate the current slide from its first clip.
      *
      * @param {number} [delay] Milliseconds to wait first (lets the entrance animation land).
+     * @param {number} fromCard
      */
     async narrate(delay = 150, fromCard = 0) {
         this.stopAudio();

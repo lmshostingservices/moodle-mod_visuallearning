@@ -6,7 +6,12 @@
 import {createEvaluator} from './scene_timeline';
 import {buildScene} from './scene_components';
 
-/** Invalid input leaves the existing image/container contents intact and returns null. */
+/**
+ * Invalid input leaves the existing image/container contents intact and returns null.
+ * @param {HTMLElement} container
+ * @param {Object} input
+ * @param {Object} options
+ */
 export const render = (container, input, options = {}) => {
     const evaluate = createEvaluator(input);
     if (!evaluate || !container || typeof container.appendChild !== 'function') {

@@ -151,7 +151,8 @@ class book_data {
                 'gotfirst', 'gotnth', 'tapmatch', 'matchedof', 'tapsort', 'stilltosort', 'dropin', 'soundon',
                 'soundoff', 'yourresults', 'firsttry', 'ntries', 'rightfirst', 'answerstotal', 'timespent', 'notyet',
                 'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel', 'cardpicture', 'diagramlabel',
-                'animationreplay', 'animationstagereplay', 'animationnormal'] as $key
+                'animationreplay', 'animationstagereplay', 'animationnormal', 'tryagain', 'tryagaintext',
+                'zoomtitle', 'zoomin', 'zoomout', 'zoomclose', 'zoomopen'] as $key
         ) {
             $strings[$key] = get_string('player_' . strtolower($key), 'mod_visuallearning');
         }
@@ -170,6 +171,8 @@ class book_data {
             'recap' => (bool)$book->enablerecap,
             'quiz' => (bool)$book->enablequiz,
             'sounds' => !empty($book->sounds),
+            // A wrong answer sends the learner back to the page (Next locked until it is heard again), or not.
+            'relistenlock' => !isset($book->relistenlock) || !empty($book->relistenlock),
             'pictures' => question::pictures($book),
             'numbered' => approaches::of($book)->numbered_cards(),
             'groupsize' => VISUALLEARNING_GROUP_SIZE,

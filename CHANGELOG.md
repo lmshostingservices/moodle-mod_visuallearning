@@ -2,6 +2,24 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.8.3] - 2026-10-23
+
+- Fixed: labels in animated scenes ran past their cards, pills and legends ("Oxygen-poor blood" overflowing its
+  legend). The player now fits every label in its card when the scene is shown: it widens the card where there is
+  room (or moves a legend at the edge inwards), keeps 12-14px of padding, and only then makes the text a little
+  smaller. The scene brief also gives exact widths for legends and asks for every card to be sized from its text.
+- Page slides: the page number, title and Listen button are now one row across the top, so the three cards have the
+  full height of the picture beside them. When cards would still run below the picture, their type and spacing
+  tighten a little.
+- Zoom: every page picture, animated scene, recap picture and question picture opens full screen with a click (or the
+  magnifier button). Zoom in up to 400% with the buttons, the mouse wheel or a double click, and drag to move around.
+  Esc closes it.
+- Build the lesson: while LMS Labs works, step 3 now updates itself in place every 10 seconds (no more spinning until
+  the page is refreshed by hand), and loads the finished page once everything has arrived.
+- The Contents and sound buttons keep their dark text in themes that colour all buttons.
+- Settings: with animation on, a note explains that the picture style is the style of the still pictures (cover,
+  recap, question pictures), and the lesson summary shows "Still pictures: ...".
+
 ## [1.8.2] - 2026-10-23
 
 - Fixed: lessons with "pick the picture" questions shown as text cards always failed to write. The writer was told

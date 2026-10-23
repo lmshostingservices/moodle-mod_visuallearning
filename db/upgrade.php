@@ -265,5 +265,15 @@ function xmldb_visuallearning_upgrade($oldversion) {
         \mod_visuallearning\local\media::restamp_all();
         upgrade_mod_savepoint(true, 2026102203, 'visuallearning');
     }
+
+    if ($oldversion < 2026102302) {
+        // 1.8.3: teachers can let learners simply try again after a wrong answer (on by default, as before).
+        $table = new xmldb_table('visuallearning');
+        $field = new xmldb_field('relistenlock', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'sounds');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026102302, 'visuallearning');
+    }
     return true;
 }
