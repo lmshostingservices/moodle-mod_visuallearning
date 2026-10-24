@@ -54,12 +54,13 @@ class mod_visuallearning_mod_form extends moodleform_mod {
             'textarea',
             'sourcecontent',
             get_string('sourcecontent', 'mod_visuallearning'),
-            ['rows' => 5, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 10000,
+            ['rows' => 11, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 10000,
                 'placeholder' => get_string('sourcecontent_placeholder', 'mod_visuallearning')]
         );
         $mform->setType('sourcecontent', PARAM_TEXT);
         $mform->addRule('sourcecontent', null, 'required', null, 'client');
         $mform->addHelpButton('sourcecontent', 'sourcecontent', 'mod_visuallearning');
+        $this->add_ai_assistant_instructions();
 
         $mform->addElement('textarea', 'aiinstructions', get_string('aiinstructions', 'mod_visuallearning'),
             ['rows' => 10, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 50000,
@@ -320,6 +321,96 @@ JS
         $this->standard_coursemodule_elements();
         $this->add_price_estimate();
         $this->add_action_buttons();
+    }
+
+    /**
+     * A button under "What to teach" that opens instructions for an AI assistant (ChatGPT, Claude, Copilot...), with a
+     * copy button: the teacher pastes them into the assistant with their topic and notes, and pastes its answer back.
+     */
+    protected function add_ai_assistant_instructions(): void {
+        global $PAGE;
+        $mform = $this->_form;
+        $c = 'mod_visuallearning';
+        $dialog = \html_writer::tag('dialog',
+            \html_writer::div(
+                \html_writer::tag('h3', get_string('aiassistant_title', $c), ['id' => 'vl-aiassist-title']) .
+                \html_writer::div(
+                    \html_writer::tag('button', get_string('aiassistant_copy', $c),
+                        ['type' => 'button', 'class' => 'btn btn-primary vl-aiassist-copy',
+                            'data-copied' => get_string('aiassistant_copied', $c)]) .
+                    \html_writer::tag('button', '&times;', ['type' => 'button', 'class' => 'vl-aiassist-close',
+                        'aria-label' => get_string('aiassistant_close', $c)]),
+                    'vl-aiassist-actions'),
+                'vl-aiassist-head') .
+            \html_writer::tag('p', get_string('aiassistant_intro', $c), ['class' => 'vl-aiassist-intro']) .
+            \html_writer::tag('pre', '', ['class' => 'vl-aiassist-text', 'tabindex' => '0']),
+            ['id' => 'vl-aiassist', 'class' => 'vl-aiassist', 'aria-labelledby' => 'vl-aiassist-title',
+                'data-prompt' => get_string('aiassistant_prompt', $c)]);
+        $button = \html_writer::tag('button', get_string('aiassistant_button', $c),
+            ['type' => 'button', 'class' => 'btn btn-outline-primary vl-aiassist-open']);
+        $mform->addElement('static', 'vl_aiassistant', '', $button . $dialog);
+        $PAGE->requires->js_init_code(<<<'JS'
+(function() {
+    var dialog = document.getElementById('vl-aiassist');
+    var form = dialog && dialog.closest('form');
+    if (!dialog || !form || typeof dialog.showModal !== 'function') {
+        return;
+    }
+    var open = form.querySelector('.vl-aiassist-open');
+    var copy = dialog.querySelector('.vl-aiassist-copy');
+    var text = dialog.querySelector('.vl-aiassist-text');
+    var label = copy.textContent;
+    var timer = null;
+    var fill = function() {
+        // The number of slides follows the "Number of pages" choice on the form.
+        var select = form.querySelector('select[name="maxpages"]');
+        var pages = select && select.value ? select.value : '4, 8 or 12';
+        text.textContent = dialog.dataset.prompt.split('{pages}').join(pages);
+    };
+    var done = function() {
+        copy.textContent = copy.dataset.copied;
+        window.clearTimeout(timer);
+        timer = window.setTimeout(function() {
+            copy.textContent = label;
+        }, 2000);
+    };
+    var fallback = function() {
+        var range = document.createRange();
+        range.selectNodeContents(text);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        try {
+            document.execCommand('copy');
+            done();
+        } catch (e) {
+            // The text stays selected, ready for Ctrl+C.
+        }
+    };
+    open.addEventListener('click', function() {
+        fill();
+        copy.textContent = label;
+        dialog.showModal();
+    });
+    copy.addEventListener('click', function() {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text.textContent).then(done, fallback);
+        } else {
+            fallback();
+        }
+    });
+    dialog.querySelector('.vl-aiassist-close').addEventListener('click', function() {
+        dialog.close();
+    });
+    // A click on the backdrop closes it too.
+    dialog.addEventListener('click', function(e) {
+        if (e.target === dialog) {
+            dialog.close();
+        }
+    });
+})();
+JS
+        );
     }
 
     /**

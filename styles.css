@@ -5783,3 +5783,92 @@ img.vl-zoom-item {
 .mod-visuallearning:not(.is-narrow) .pb-spread:has(.pb-diagram.is-svgscene) > .pb-text {
     padding-bottom: 54px;
 }
+
+/* ---------- Settings: "AI Assistant Instructions" pop-up under "What to teach" ---------- */
+.vl-aiassist-open {
+    margin-top: -.25rem;
+}
+
+.vl-aiassist {
+    width: min(760px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    padding: 0;
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 30px 70px -20px rgba(15, 23, 42, .5);
+    color: #1f2433;
+}
+
+.vl-aiassist[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.vl-aiassist::backdrop {
+    background: rgba(15, 23, 42, .55);
+}
+
+.vl-aiassist-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 16px 20px 0;
+}
+
+.vl-aiassist-head h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.vl-aiassist-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-shrink: 0;
+}
+
+.vl-aiassist-copy {
+    min-width: 6rem;
+}
+
+.vl-aiassist-close {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #64748b;
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.vl-aiassist-close:hover,
+.vl-aiassist-close:focus-visible {
+    background: #f1f5f9;
+    color: #1f2433;
+}
+
+.vl-aiassist-intro {
+    margin: .5rem 20px .75rem;
+    color: #475569;
+}
+
+.vl-aiassist-text {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    margin: 0 20px 20px;
+    padding: 14px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #1f2433;
+    font-family: inherit;
+    font-size: .92rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

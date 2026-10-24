@@ -128,6 +128,39 @@ $string['aierr_unusable_audio'] = 'what arrived was not usable audio';
 $string['aierr_unusable_draft'] = 'LMS Labs delivered pages this site could not use, and may have charged for them. Contact LMS Labs support with the reference before asking again.';
 $string['aierr_unusable_image'] = 'what arrived was not a usable picture';
 $string['aierr_waitingprevious'] = 'waiting for the card picture it builds on';
+$string['aiassistant_button'] = 'AI Assistant Instructions';
+$string['aiassistant_close'] = 'Close';
+$string['aiassistant_copied'] = 'Copied';
+$string['aiassistant_copy'] = 'Copy';
+$string['aiassistant_intro'] = 'Copy these instructions into an AI assistant such as ChatGPT, Claude, Gemini or Copilot, then add your topic, your learners and any notes or documents. Paste its answer into "What to teach".';
+$string['aiassistant_prompt'] = 'You are helping a trainer write the "What to teach" text for an AI Visual Learning lesson in Moodle. The lesson turns this text into illustrated slides that are read aloud to the learner.
+
+HOW THE LESSON IS BUILT
+- {pages} slides. Each slide teaches ONE key point.
+- 3 cards per slide: the idea (the key point and why it matters), putting it into action (one specific thing a person does in their work or life), and the outcome (the result of doing it).
+- 2 short sentences per card. Every card is read aloud, so it needs plain spoken language: no bullet points, symbols or unexplained abbreviations.
+- Every card matches a visual. Each card must describe something that can be shown in a picture or animation: a real situation, object or action a learner can see.
+- Every 4 slides end with a recap and one check question about each slide.
+
+YOUR TASK
+1. If I have not already given them below, ask me for the topic, who the learners are (their job, workplace or course, and their level) and any material I have, such as notes, a unit outline, a procedure or a document.
+2. Choose exactly {pages} key points that cover the topic, ordered from the most basic to the most advanced. One key point per slide; never combine two ideas in one point.
+3. Use only my material and accurate, well-established facts. Do not invent laws, standards, figures or procedures.
+4. For each key point, describe in one sentence what the learner sees happening in the picture, so every slide can be illustrated.
+5. Give your answer as plain text in exactly this format, with nothing before or after it, ready to paste:
+
+Topic: (the lesson topic)
+Learners: (who they are and their level)
+Must include: (any rules, standards, terms or safety steps that must appear, or "None")
+1. (Key point) - Picture: (what the learner sees)
+2. (Key point) - Picture: (what the learner sees)
+(continue to {pages})
+
+Keep the whole answer under 10,000 characters.
+
+MY TOPIC, LEARNERS AND MATERIAL:
+';
+$string['aiassistant_title'] = 'AI Assistant Instructions';
 $string['aiinstructions'] = 'Your notes, documents and instructions (optional)';
 $string['aiinstructions_help'] = 'Everything else the AI should use or follow while it writes your pages and draws the pictures and animated diagrams.
 
@@ -746,8 +779,25 @@ $string['sounds'] = 'Sounds';
 $string['sounds_help'] = 'Short, quiet interface sounds: a soft tick on hover, a pop when choosing, a chime for a right answer, a gentle bonk for a wrong one and a fanfare at the end. Learners can mute them; the voiceover is never affected.';
 $string['sounds_label'] = 'Play little sounds for answers, page turns and finishing';
 $string['sourcecontent'] = 'What to teach';
-$string['sourcecontent_help'] = 'The topic and the key points the lesson must teach, in a few sentences or a short list. Put longer notes, outlines, procedures and document text in the box below. Up to 10,000 characters.';
-$string['sourcecontent_placeholder'] = 'For example: How a safety switch (RCD) protects people from electric shock: what it compares, what happens when current leaks to earth, and how quickly it cuts the power.';
+$string['sourcecontent_help'] = 'The topic and the key points the lesson must teach.
+
+How the lesson is built:
+
+* **4, 8 or 12 slides**: choose the number under "Number of pages" below. Every 4 slides end with a recap and a check question about each slide.
+* **One key point per slide**: list one point for each slide you want, most important or most basic first. With fewer points the AI splits the biggest ones into steps; with more, it merges or leaves out the least important.
+* **3 cards per slide, 2 sentences per card**: for example the idea, putting it into action, and the outcome. Every card is read aloud.
+* **Every card matches a visual**: each card describes something that can be shown in the picture or animation, so give key points with a real situation, object or action a learner can see.
+
+Also say who the learners are (their job, workplace or course), and anything that must be included, such as a rule, a standard or a safety step. Put longer notes, outlines, procedures and document text in the box below. Up to 10,000 characters.';
+$string['sourcecontent_placeholder'] = 'The lesson is 4, 8 or 12 slides (choose the number below), 3 cards per slide, 2 sentences per card, and every card matches a visual. Each slide teaches one key point, and every 4 slides end with a recap and a check question.
+
+List one key point per slide, most important first, and say who the learners are. For example:
+
+Topic: Clear instructions for chefs. Learners: new commercial cookery staff.
+1. Speak clearly and use the correct kitchen terms.
+2. Listen, and ask questions when an instruction is unclear.
+3. Repeat the instruction back to confirm it.
+4. Write down instructions that have several steps.';
 $string['speakingrate'] = 'Speaking speed';
 $string['speed_fast'] = 'Faster';
 $string['speed_normal'] = 'Normal';

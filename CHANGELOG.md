@@ -2,6 +2,17 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.8.5] - 2026-10-24
+
+- "What to teach": the box now shows how a lesson is built (4, 8 or 12 slides, 3 cards per slide, 2 sentences per
+  card, every card matching a visual, a recap and check questions every 4 slides) and a worked example: a topic, the learners, and one key point per
+  slide. The help explains the same, and asks for the learners and anything that must be included. The box is taller
+  so the whole example shows.
+- "What to teach": an "AI Assistant Instructions" button opens ready-made instructions for ChatGPT, Claude, Gemini or
+  Copilot, with a Copy button at the top right. The assistant turns a teacher's topic and notes into the right shape
+  (topic, learners, must-include items, then one key point and its picture per slide). The number of slides in the
+  instructions follows the "Number of pages" choice.
+
 ## [1.8.4] - 2026-10-24
 
 - Page slides: the three cards now line up exactly with the picture beside them. The top card's top edge sits on the
