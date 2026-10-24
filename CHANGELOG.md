@@ -2,6 +2,14 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.8.4] - 2026-10-24
+
+- Page slides: the three cards now line up exactly with the picture beside them. The top card's top edge sits on the
+  picture's top edge, the bottom card's bottom edge on the picture's bottom edge, and the gaps between the cards are
+  equal. Spare height is shared equally between the cards, with each card's text centred in it. The cards are
+  measured again once the picture has finished rising into place, and on every resize. Long cards that would not fit
+  beside the picture keep the existing behaviour (tighter type, then top-aligned).
+
 ## [1.8.3] - 2026-10-23
 
 - Fixed: labels in animated scenes ran past their cards, pills and legends ("Oxygen-poor blood" overflowing its

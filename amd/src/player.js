@@ -634,25 +634,46 @@ class Player {
         if (!spread) {
             return;
         }
-        spread.classList.remove('is-dense', 'is-denser');
+        spread.classList.remove('is-dense', 'is-denser', 'is-aligned');
+        spread.style.removeProperty('--pb-cards-top');
+        spread.style.removeProperty('--pb-cards-h');
         if (spread.hidden) {
             return;
         }
         const figure = spread.querySelector('.pb-page-figure');
         const media = figure.querySelector('.vl-svgscene') || figure.querySelector('.is-shown') || figure;
+        // A picture still rising into place is measured once it has settled, not part way through its entrance.
+        const moving = typeof media.getAnimations === 'function' ? media.getAnimations() : [];
+        if (moving.length && !this.fitPending) {
+            this.fitPending = true;
+            Promise.all(moving.map(a => a.finished)).catch(() => null).then(() => {
+                this.fitPending = false;
+                this.fitCards();
+            });
+        }
         this.placeZoomBadge(figure, media);
         if (this.root.classList.contains('is-narrow')) {
             return;
         }
         const text = spread.querySelector('.pb-text');
         const inner = spread.querySelector('.pb-text-inner');
-        const height = media.getBoundingClientRect().height;
+        const m = media.getBoundingClientRect();
+        const height = m.height;
         const target = Math.min(text.clientHeight, height > 120 ? height : text.clientHeight);
         for (const cls of ['is-dense', 'is-denser']) {
             if (inner.scrollHeight <= target + 4) {
                 break;
             }
             spread.classList.add(cls);
+        }
+        // When the cards fit, they span the picture exactly: the first card's top on the picture's top edge, the last
+        // card's bottom on its bottom edge, with the same gap between each card.
+        if (height > 120 && media !== figure && inner.scrollHeight <= height + 1) {
+            const t = text.getBoundingClientRect();
+            const top = m.top - t.top - text.clientTop - parseFloat(getComputedStyle(text).paddingTop || 0) + text.scrollTop;
+            spread.style.setProperty('--pb-cards-top', Math.max(0, top) + 'px');
+            spread.style.setProperty('--pb-cards-h', height + 'px');
+            spread.classList.add('is-aligned');
         }
     }
 

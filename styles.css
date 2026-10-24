@@ -5528,6 +5528,29 @@
     line-height: 1.4;
 }
 
+/* Cards that fit beside the picture span it exactly (set by the player): top card on the picture's top edge, bottom
+   card on its bottom edge, an even gap between each, and any spare height shared equally between the cards. */
+.mod-visuallearning .pb-spread.is-aligned > .pb-text {
+    overflow: visible;
+}
+
+.mod-visuallearning .pb-spread.is-aligned .pb-text-inner {
+    margin: var(--pb-cards-top, 0) 0 0;
+    height: var(--pb-cards-h, auto);
+}
+
+.mod-visuallearning .pb-spread.is-aligned .pb-cards {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.mod-visuallearning .pb-spread.is-aligned .pb-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 /* ---------- Zoom: any picture opens full screen ---------- */
 .mod-visuallearning .vl-zoomable {
     cursor: zoom-in;
