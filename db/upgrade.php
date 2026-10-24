@@ -275,5 +275,14 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026102302, 'visuallearning');
     }
+
+    if ($oldversion < 2026102403) {
+        // 1.8.6: "Explain it" (no people in the pictures unless the topic needs them) is pre-selected for new lessons.
+        // Sites still on the old pre-selection move to it; a site that chose differently keeps its choice.
+        if (get_config('mod_visuallearning', 'defaultapproach') === 'story') {
+            set_config('defaultapproach', \mod_visuallearning\local\approaches::NEW_DEFAULT, 'mod_visuallearning');
+        }
+        upgrade_mod_savepoint(true, 2026102403, 'visuallearning');
+    }
     return true;
 }

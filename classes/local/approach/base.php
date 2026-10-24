@@ -35,6 +35,16 @@ abstract class base {
     abstract public function key(): string;
 
     /**
+     * The approach's name in the page writer's brief: fixed English, so renaming the teacher-facing option or translating
+     * it never changes what the AI is told.
+     *
+     * @return string
+     */
+    public function prompt_name(): string {
+        return get_string('approach_' . $this->key(), 'mod_visuallearning');
+    }
+
+    /**
      * The string with the label of a card.
      *
      * @param string $card concept, action or outcome

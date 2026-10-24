@@ -80,7 +80,7 @@ if ($ADMIN->fulltree) {
             "$component/defaultapproach",
             get_string('settings_defaultapproach', $component),
             get_string('settings_defaultapproach_desc', $component),
-            \mod_visuallearning\local\approaches::DEFAULT,
+            \mod_visuallearning\local\approaches::NEW_DEFAULT,
             \mod_visuallearning\local\approaches::options()
         )
     );

@@ -2,6 +2,16 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.8.6] - 2026-10-24
+
+- Teaching style: "Explain how it works" is now "Explain it", listed first and pre-selected for new lessons. Its card
+  says there are no people in the pictures unless the topic needs them, and that it works with still pictures or
+  animation. The "Tell a workplace story" card now says every picture shows people at work, and that it is best for
+  skills and behaviour. The help explains both. The page writer is still told "Explain how it works", so lessons are
+  written exactly as before.
+- Upgrade: sites still pre-selecting "Tell a workplace story" (the old default) switch to "Explain it". A site that
+  chose differently keeps its choice; existing lessons keep their own teaching style.
+
 ## [1.8.5] - 2026-10-24
 
 - "What to teach": the box now shows how a lesson is built (4, 8 or 12 slides, 3 cards per slide, 2 sentences per

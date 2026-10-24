@@ -35,6 +35,15 @@ class science extends base {
     }
 
     /**
+     * The name the page writer has always been given for this approach (teachers now see "Explain it").
+     *
+     * @return string
+     */
+    public function prompt_name(): string {
+        return 'Explain how it works';
+    }
+
+    /**
      * Pictures carry only the people they name (usually nobody).
      *
      * @return bool

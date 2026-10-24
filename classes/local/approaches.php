@@ -33,10 +33,13 @@ class approaches {
     /** @var string The approach of every lesson made before approaches existed. */
     public const DEFAULT = 'story';
 
+    /** @var string Pre-selected for new lessons: suits most topics, with people in the pictures only when needed. */
+    public const NEW_DEFAULT = 'science';
+
     /** @var array key => class, in the order teachers see them. */
     public const APPROACHES = [
-        'story' => approach\story::class,
         'science' => approach\science::class,
+        'story' => approach\story::class,
     ];
 
     /**

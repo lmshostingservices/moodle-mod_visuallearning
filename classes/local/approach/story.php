@@ -36,6 +36,15 @@ class story extends base {
     }
 
     /**
+     * The name the page writer has always been given for this approach.
+     *
+     * @return string
+     */
+    public function prompt_name(): string {
+        return 'Tell a workplace story';
+    }
+
+    /**
      * The card labels are the original ones (The idea, Put it into action, The outcome).
      *
      * @param string $card

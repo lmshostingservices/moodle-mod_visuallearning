@@ -148,7 +148,7 @@ class prompt_builder {
         $styleline = 'Picture style chosen by the teacher: ' . get_string('visualstyle_' . $visualstyle, 'mod_visuallearning')
             . ". {$style}";
         if ($approach->key() !== approaches::DEFAULT) {
-            $styleline .= "\nTeaching approach: " . get_string('approach_' . $approach->key(), 'mod_visuallearning');
+            $styleline .= "\nTeaching approach: " . $approach->prompt_name();
         }
         if (($level = learner_levels::brief($book, 'text')) !== '') {
             // Who the lesson is for: how every card, question and picture is pitched. Adult learners add nothing.

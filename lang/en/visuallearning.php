@@ -215,11 +215,11 @@ $string['animationpacing_slow'] = 'Slow';
 $string['animationreplay'] = 'Replay complete animation';
 $string['animationservernotready'] = 'The AI server has not enabled the universal animation engine yet. No generation has been started. Try again after the server update, or choose Keep existing visual mode.';
 $string['animationstagereplay'] = 'Replay selected stage';
-$string['approach_science'] = 'Explain how it works';
-$string['approach_science_card'] = 'Three key points that build up how something works.';
+$string['approach_science'] = 'Explain it';
+$string['approach_science_card'] = 'Three key points that explain the idea. No people in the pictures unless the topic needs them. Still pictures or animation.';
 $string['approach_science_desc'] = 'Each page explains how something works in three numbered key points that build in order: the core idea, how it works, and the result. No invented people or workplace stories. The pictures are explanatory diagrams of the mechanism itself (schematics, cutaways, graphs, processes, before-and-after comparisons), with accurate relationships.';
 $string['approach_story'] = 'Tell a workplace story';
-$string['approach_story_card'] = 'A named person puts the idea into action at work.';
+$string['approach_story_card'] = 'A named person puts the idea into action. Every picture shows people at work. Best for skills and behaviour.';
 $string['approach_story_desc'] = 'Each page is a short workplace story: the idea, a named person putting it into action, and the outcome. The pictures show that scene with the lesson\'s recurring characters.';
 $string['autoplay'] = 'Narration start';
 $string['autoplay_help'] = 'Off (recommended): learners press Listen on every page to hear it, so they stay engaged and browsers never block the audio. On: narration starts automatically when a page opens (some browsers will still ask for one tap).';
@@ -820,8 +820,8 @@ $string['task_generatemedia'] = 'Send confirmed AI Visual Learning requests to L
 $string['teachingapproach'] = 'Teaching style';
 $string['teachingapproach_help'] = 'How each page teaches.
 
-* **Explain how it works**: each page explains one idea, process or mechanism step by step. Best for science, technical and safety topics.
-* **Tell a workplace story**: each page follows a worker through a real situation. Best for customer service, teamwork and workplace behaviour.';
+* **Explain it**: each page explains one idea, process or mechanism in three key points that build in order. The pictures show the thing itself (diagrams, cutaways, processes, comparisons), with people only when the topic needs them. Best for science, technical, safety and most other topics. Works with still pictures or animation.
+* **Tell a workplace story**: each page follows a named worker through a real situation, and every picture shows people at work. Best for customer service, teamwork, communication and workplace behaviour.';
 $string['tfanswer'] = 'Correct answer';
 $string['tfattempts'] = 'Answers given';
 $string['tfcorrect'] = 'Questions right';

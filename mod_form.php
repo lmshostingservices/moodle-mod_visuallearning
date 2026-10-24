@@ -83,7 +83,8 @@ class mod_visuallearning_mod_form extends moodleform_mod {
                 'icon' => $key];
         }
         $cards::add($mform, 'teachingapproach', get_string('teachingapproach', 'mod_visuallearning'), $approaches,
-            \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null), 'teachingapproach');
+            \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? \mod_visuallearning\local\approaches::NEW_DEFAULT),
+            'teachingapproach');
 
         // Pages come in groups of four: each group is recapped (four square pictures) and checked together.
         $mform->addElement('select', 'maxpages', get_string('maxpages', 'mod_visuallearning'), visuallearning_page_counts());
