@@ -2,6 +2,14 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.8.7] - 2026-10-28
+
+- Fixed: lessons with still pictures froze the browser tab as soon as a page opened. Lining the cards up with the
+  picture (1.8.4) waited for the picture's entrance animation to finish, then measured again; once that animation had
+  finished it stayed listed with its end state kept, so the player measured again without end and the tab stopped
+  responding. It now waits only for an animation that is still running, and never for one that repeats for ever.
+  Lessons with animated scenes were not affected.
+
 ## [1.8.6] - 2026-10-24
 
 - Teaching style: "Explain how it works" is now "Explain it", listed first and pre-selected for new lessons. Its card

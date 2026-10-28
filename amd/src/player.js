@@ -643,7 +643,13 @@ class Player {
         const figure = spread.querySelector('.pb-page-figure');
         const media = figure.querySelector('.vl-svgscene') || figure.querySelector('.is-shown') || figure;
         // A picture still rising into place is measured once it has settled, not part way through its entrance.
-        const moving = typeof media.getAnimations === 'function' ? media.getAnimations() : [];
+        // Only animations still running count: a finished entrance that keeps its end state ("both") stays listed and
+        // its "finished" promise is already settled, so waiting on it would refit for ever and freeze the page. An
+        // endless animation never finishes, so it is never waited on either.
+        const moving = (typeof media.getAnimations === 'function' ? media.getAnimations() : []).filter((a) => {
+            const timing = a.effect && typeof a.effect.getComputedTiming === 'function' ? a.effect.getComputedTiming() : {};
+            return (a.playState === 'running' || a.pending) && timing.iterations !== Infinity;
+        });
         if (moving.length && !this.fitPending) {
             this.fitPending = true;
             Promise.all(moving.map(a => a.finished)).catch(() => null).then(() => {
