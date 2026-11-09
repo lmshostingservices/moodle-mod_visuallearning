@@ -2,42 +2,52 @@
 
 All notable changes to mod_visuallearning are documented here.
 
-## [1.8.7] - 2026-10-28
+## [1.9.2] - 2026-11-09
 
-- Fixed: lessons with still pictures froze the browser tab as soon as a page opened. Lining the cards up with the
-  picture (1.8.4) waited for the picture's entrance animation to finish, then measured again; once that animation had
-  finished it stayed listed with its end state kept, so the player measured again without end and the tab stopped
-  responding. It now waits only for an animation that is still running, and never for one that repeats for ever.
-  Lessons with animated scenes were not affected.
+- Built on 1.8.14 (AI Course Builder adapter): adds the "Use my own HTML" feature from 1.9.0 and 1.9.1, which that
+  release did not include. Sites on 1.9.1 or 1.8.14 both upgrade to this version. No change to Course Builder.
+- Release review: the three places that handle a teacher's own HTML carry their reviewed justification inline (the
+  raw form field, the sandboxed file response and the opaque-origin message).
 
-## [1.8.6] - 2026-10-24
+## [1.9.0] - 2026-11-09
 
-- Teaching style: "Explain how it works" is now "Explain it", listed first and pre-selected for new lessons. Its card
-  says there are no people in the pictures unless the topic needs them, and that it works with still pictures or
-  animation. The "Tell a workplace story" card now says every picture shows people at work, and that it is best for
-  skills and behaviour. The help explains both. The page writer is still told "Explain how it works", so lessons are
-  written exactly as before.
-- Upgrade: sites still pre-selecting "Tell a workplace story" (the old default) switch to "Explain it". A site that
-  chose differently keeps its choice; existing lessons keep their own teaching style.
+- New: teachers can show their own HTML in place of any page picture, for example an animated chart, numbers that
+  count up or a drill-down made in Claude. On Pictures and voice, open Remake on a page and choose "Use my own HTML…",
+  then upload the .html file or paste it, add a description for screen readers, and preview it.
+- The HTML runs in a sandboxed frame with an origin of its own, and the file is served with a Content-Security-Policy
+  sandbox header, so its scripts cannot reach Moodle, the learner's session or the page around it, even when the file
+  is opened directly. Learners can click and tap inside it, and the magnifier opens it full screen.
+- While the voiceover reads each key point, the player sends the HTML a message (vl:card with the card number and the
+  clip length, vl:finish, vl:pause, vl:reset, plus reducedMotion), so the HTML can count up or highlight in time with
+  the voice. HTML that ignores the messages plays as it was made. The preview has buttons that send the same messages.
+- A ready-made prompt for Claude on the same screen holds the page's key points and the message protocol.
+- The page picture is kept: the recap, the cover, pick-the-picture questions and the Word export still use it, and it
+  comes back when the HTML is removed. "Download all content" adds the HTML files (custom-html/), and backup and restore
+  include them.
+- New capability mod/visuallearning:addcustomhtml (editing teachers and managers) and a site setting, "Teachers can use
+  their own HTML", on by default. When it is off, pages show their pictures again and the HTML is kept.
 
-## [1.8.5] - 2026-10-24
+## [1.8.14] - 2026-11-09
+- Run the native access check before quoting Course Builder lesson generation on sites that have not yet checked free access.
 
-- "What to teach": the box now shows how a lesson is built (4, 8 or 12 slides, 3 cards per slide, 2 sentences per
-  card, every card matching a visual, a recap and check questions every 4 slides) and a worked example: a topic, the learners, and one key point per
-  slide. The help explains the same, and asks for the learners and anything that must be included. The box is taller
-  so the whole example shows.
-- "What to teach": an "AI Assistant Instructions" button opens ready-made instructions for ChatGPT, Claude, Gemini or
-  Copilot, with a Copy button at the top right. The assistant turns a teacher's topic and notes into the right shape
-  (topic, learners, must-include items, then one key point and its picture per slide). The number of slides in the
-  instructions follows the "Number of pages" choice.
+## [1.8.13] - 2026-11-07
+- Load the module library before estimating page counts from scheduled Course Builder tasks.
 
-## [1.8.4] - 2026-10-24
+## [1.8.12] - 2026-11-07
+- Fix Course Builder estimates and saved-page status handling so the quoted page count matches the generated lesson and completed native saves settle the job.
 
-- Page slides: the three cards now line up exactly with the picture beside them. The top card's top edge sits on the
-  picture's top edge, the bottom card's bottom edge on the picture's bottom edge, and the gaps between the cards are
-  equal. Spare height is shared equally between the cards, with each card's text centred in it. The cards are
-  measured again once the picture has finished rising into place, and on every resize. Long cards that would not fit
-  beside the picture keep the existing behaviour (tighter type, then top-aligned).
+## [1.8.11] - 2026-11-07
+- Add the native Course Builder adapter using Visual Learning's existing estimate, quote, confirmation, status, and page-storage flow.
+- Make estimate and generation use the same page-count rule, preserving the teacher-approved price for the content the adapter will create.
+- Derive a stable RFC-4122 UUID idempotency key for the LMS Labs bundle draft endpoint.
+- Persist the activity update in a short transaction, reuse a stable idempotency key, and avoid a second commit after the paid request is queued.
+
+## [1.8.5] - 2026-11-05
+- Complete the AI Course Builder adapter: quote and confirm generated lessons through Visual Learning's existing v2 request queue, poll its durable request record, and verify its native page importer saved the completed result.
+- Use stable idempotency for Course Builder draft requests and do not automatically start a second paid generation after a failed or uncertain request.
+
+## [1.8.4] - 2026-11-05
+- Add the AI Course Builder generator adapter; shared lesson levels and outcomes map to the plugin's existing learner-level and objectives fields.
 
 ## [1.8.3] - 2026-10-23
 

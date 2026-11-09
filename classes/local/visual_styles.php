@@ -54,6 +54,9 @@ class visual_styles {
         'Hand-drawn sketchnote on light grid paper: confident dark ink outlines with slightly uneven, natural '
             . 'strokes, a pale blue and pink colour wash, a yellow highlighter on the key word, red marker arrows '
             . 'for the key point, simple shapes, generous white space.',
+        'Skilled teacher\'s sketchnote: confident black fineliner contours with slightly imperfect hand-drawn lines, '
+            . 'sparse pencil hatching and a few restrained coloured-marker highlights on subtle graph paper; '
+            . 'clearly constructed and uncluttered.',
     ];
 
     /** @var string[] The order teachers see the styles in. */
@@ -121,7 +124,8 @@ class visual_styles {
                 . 'point highlighted.',
             'avoid' => 'fully painted scenes, smooth digital gradients, photorealism, comic-book colouring, messy '
                 . 'handwriting',
-            'render' => 'This must be a hand-drawn SKETCHNOTE: dark ink outlines on light grid paper with pale colour '
+            'render' => 'This must be a hand-drawn SKETCHNOTE: dark ink outlines on plain off-white paper, with no '
+                . 'background grid, ruling or graph-paper pattern, and pale colour '
                 . 'washes, like a teacher\'s notebook; never a photograph, never photorealistic, no 3D rendering.',
         ],
     ];

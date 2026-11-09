@@ -183,12 +183,29 @@ final class approaches_test extends \advanced_testcase {
         $book = $this->book('science', 'whiteboard');
         $prompt = prompt_builder::image_prompt($book, 'A capillary between two tubes, small fragments moving fastest.', 2000);
         $this->assertStringStartsWith('Create a hand-drawn sketchnote', $prompt);
-        $this->assertStringContainsString('graph paper', $prompt);
+        $this->assertStringContainsString('plain off-white paper', $prompt);
+        $this->assertStringContainsString('no background grid, ruling or graph-paper pattern', $prompt);
+        $this->assertStringNotContainsString('on subtle graph paper', $prompt);
         $this->assertLessThanOrEqual(2000, \core_text::strlen($prompt));
         $story = $this->book('story', 'whiteboard');
         $this->assertStringNotContainsString('gouache', prompt_builder::image_prompt($story, 'Maya tests a motor.', 2000));
         $this->assertStringContainsString('Hand-drawn sketch', prompt_builder::writer_prompt($story));
         $this->assertSame('illustration', requests::image_style($book));
+    }
+
+    /**
+     * Saved stock directions adopt the clean-paper default without rewriting teacher-authored directions.
+     */
+    public function test_whiteboard_saved_grid_default_is_replaced(): void {
+        $this->resetAfterTest();
+        $book = $this->book('science', 'whiteboard');
+        foreach (visual_styles::LEGACY_DEFAULTS as $direction) {
+            $book->imagestyle = $direction;
+            $this->assertSame(get_string('visualstyle_whiteboard_direction', 'mod_visuallearning'),
+                visual_styles::direction($book));
+        }
+        $book->imagestyle = 'Use green ink to explain a capillary.';
+        $this->assertSame($book->imagestyle, visual_styles::direction($book));
     }
 
     /**

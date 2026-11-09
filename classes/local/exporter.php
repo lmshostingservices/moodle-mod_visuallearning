@@ -380,6 +380,10 @@ class exporter {
             if ($image = media::image_file($this->context, media::AREA_IMAGE, (int)$page->id)) {
                 $files['pictures/' . $stem . '.' . pathinfo($image->get_filename(), PATHINFO_EXTENSION)] = $image;
             }
+            // The teacher's own HTML that replaces the picture in the lesson.
+            if ($html = media::html_file($this->context, (int)$page->id, true)) {
+                $files['custom-html/' . $stem . '.html'] = $html;
+            }
             // One picture per card: the current picture of each card in the chain.
             foreach (media::card_chain($this->context, $this->book, $page) as $card => $link) {
                 if ($link['file']) {

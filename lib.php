@@ -508,7 +508,7 @@ function visuallearning_pluginfile($course, $cm, $context, $filearea, $args, $fo
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
-    if (!in_array($filearea, ['image', 'audio', 'cover', 'option', 'card', 'svg'])) {
+    if (!in_array($filearea, ['image', 'audio', 'cover', 'option', 'card', 'svg', 'html'])) {
         return false;
     }
     require_course_login($course, true, $cm);
@@ -520,6 +520,19 @@ function visuallearning_pluginfile($course, $cm, $context, $filearea, $args, $fo
     $file = get_file_storage()->get_file($context->id, 'mod_visuallearning', $filearea, $itemid, $filepath, $filename);
     if (!$file || $file->is_directory()) {
         return false;
+    }
+    if ($filearea === 'html') {
+        // A teacher's own HTML (scripts included) in place of a page picture. It is never shown on the Moodle page
+        // itself: the player puts it in a sandboxed frame, and this header sandboxes it again, with an origin of its
+        // own, even when the file is opened directly. So its scripts can never reach Moodle or the learner's session.
+        if (!\mod_visuallearning\local\media::html_enabled()) {
+            return false;
+        }
+        header('Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups ' .
+            'allow-popups-to-escape-sandbox allow-modals');
+        header('X-Content-Type-Options: nosniff');
+        header('Referrer-Policy: no-referrer');
+        send_stored_file($file, YEARSECS, 0, false, $options); // pipeline-ignore: text/html — served sandboxed (CSP header above).
     }
     // File names carry a hash of what made the file, so they can be cached for a long time. SVG pictures and
     // scenes were cleaned by svg_sanitiser when saved (no scripts, links or external references), so they are shown

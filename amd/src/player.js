@@ -36,6 +36,7 @@ import * as Sounds from 'mod_visuallearning/sounds';
 import * as Diagrams from 'mod_visuallearning/diagrams';
 import * as Scenes from 'mod_visuallearning/scene';
 import * as SvgScenes from 'mod_visuallearning/svgscene';
+import * as HtmlEmbed from 'mod_visuallearning/htmlembed';
 
 const HEARTBEAT_MS = 15000;
 const WORDS_PER_SECOND = 2.6;
@@ -634,52 +635,25 @@ class Player {
         if (!spread) {
             return;
         }
-        spread.classList.remove('is-dense', 'is-denser', 'is-aligned');
-        spread.style.removeProperty('--pb-cards-top');
-        spread.style.removeProperty('--pb-cards-h');
+        spread.classList.remove('is-dense', 'is-denser');
         if (spread.hidden) {
             return;
         }
         const figure = spread.querySelector('.pb-page-figure');
         const media = figure.querySelector('.vl-svgscene') || figure.querySelector('.is-shown') || figure;
-        // A picture still rising into place is measured once it has settled, not part way through its entrance.
-        // Only animations still running count: a finished entrance that keeps its end state ("both") stays listed and
-        // its "finished" promise is already settled, so waiting on it would refit for ever and freeze the page. An
-        // endless animation never finishes, so it is never waited on either.
-        const moving = (typeof media.getAnimations === 'function' ? media.getAnimations() : []).filter((a) => {
-            const timing = a.effect && typeof a.effect.getComputedTiming === 'function' ? a.effect.getComputedTiming() : {};
-            return (a.playState === 'running' || a.pending) && timing.iterations !== Infinity;
-        });
-        if (moving.length && !this.fitPending) {
-            this.fitPending = true;
-            Promise.all(moving.map(a => a.finished)).catch(() => null).then(() => {
-                this.fitPending = false;
-                this.fitCards();
-            });
-        }
         this.placeZoomBadge(figure, media);
         if (this.root.classList.contains('is-narrow')) {
             return;
         }
         const text = spread.querySelector('.pb-text');
         const inner = spread.querySelector('.pb-text-inner');
-        const m = media.getBoundingClientRect();
-        const height = m.height;
+        const height = media.getBoundingClientRect().height;
         const target = Math.min(text.clientHeight, height > 120 ? height : text.clientHeight);
         for (const cls of ['is-dense', 'is-denser']) {
             if (inner.scrollHeight <= target + 4) {
                 break;
             }
             spread.classList.add(cls);
-        }
-        // When the cards fit, they span the picture exactly: the first card's top on the picture's top edge, the last
-        // card's bottom on its bottom edge, with the same gap between each card.
-        if (height > 120 && media !== figure && inner.scrollHeight <= height + 1) {
-            const t = text.getBoundingClientRect();
-            const top = m.top - t.top - text.clientTop - parseFloat(getComputedStyle(text).paddingTop || 0) + text.scrollTop;
-            spread.style.setProperty('--pb-cards-top', Math.max(0, top) + 'px');
-            spread.style.setProperty('--pb-cards-h', height + 'px');
-            spread.classList.add('is-aligned');
         }
     }
 
@@ -691,6 +665,12 @@ class Player {
      * @param {string} label
      */
     openZoom(source, label) {
+        if (source.classList && source.classList.contains('is-htmlembed')) {
+            if (this.diagram && this.diagram.expand) {
+                this.diagram.expand();
+            }
+            return;
+        }
         this.closeZoom();
         const overlay = document.createElement('div');
         overlay.className = 'vl-zoom';
@@ -851,6 +831,10 @@ class Player {
             const figure = target.closest('.pb-page-figure, .pb-q-figure');
             if (!figure || target.closest('button')) {
                 return null;
+            }
+            if (figure.querySelector('.is-htmlembed')) {
+                // The teacher's own HTML: it takes its own clicks, and the magnifier opens it full screen.
+                return figure.querySelector('.is-htmlembed');
             }
             return figure.querySelector('.vl-svgscene') || figure.querySelector('.is-shown .dg-svg, .is-shown svg')
                 || figure.querySelector('img.is-shown') || figure.querySelector('.is-shown img')
@@ -1509,13 +1493,13 @@ class Player {
             box.className = 'pb-diagram';
             figure.appendChild(box);
         }
-        const renderer = page.diagram.type === 'animated_scene' ? Scenes
-            : (page.diagram.type === 'svg_scene' ? SvgScenes : Diagrams);
+        const renderers = {'animated_scene': Scenes, 'svg_scene': SvgScenes, 'html_embed': HtmlEmbed};
+        const renderer = renderers[page.diagram.type] || Diagrams;
         this.diagram = renderer.render(box, page.diagram, {
             label: this.str('diagramlabel', page.alt || page.title),
             pacing: (this.data.animationsettings || {}).animationpacing || 'normal',
             strings: {replay: this.str('animationreplay'), stageReplay: this.str('animationstagereplay'),
-                normal: this.str('animationnormal')},
+                normal: this.str('animationnormal'), close: this.str('zoomclose')},
             onReplay: () => {
                 if (Sounds.isMuted()) {
                     this.setMute(false, false);
@@ -1724,8 +1708,8 @@ class Player {
                 el.classList.add('has-picture');
                 el.addEventListener('click', () => this.showCard(i));
             }
-            if (page.diagram && page.diagram.type === 'svg_scene') {
-                // Tapping a card shows its part of the scene at normal speed.
+            if (page.diagram && (page.diagram.type === 'svg_scene' || page.diagram.type === 'html_embed')) {
+                // Tapping a card shows its part of the scene at normal speed (or tells the teacher's HTML to).
                 el.classList.add('has-picture');
                 el.setAttribute('role', 'button');
                 el.setAttribute('tabindex', '0');

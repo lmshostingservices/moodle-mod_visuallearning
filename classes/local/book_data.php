@@ -72,6 +72,12 @@ class book_data {
                 // Cleaned and scoped when it was saved; shown inline so the player can stage and time it.
                 $diagram = ['type' => 'svg_scene', 'svg' => $svgfile->get_content()];
             }
+            if ($htmlfile = media::html_file($context, (int)$page->id)) {
+                // The teacher's own HTML replaces the picture (and any animation) in the page figure. The picture is
+                // still used for the recap, the cover and the downloads.
+                $diagram = ['type' => 'html_embed', 'url' => visuallearning_file_url($htmlfile),
+                    'title' => (string)$page->alttext];
+            }
             $cards = [];
             foreach (VISUALLEARNING_CARDS as $card) {
                 $text = trim((string)$page->{$card . 'text'});

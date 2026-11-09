@@ -74,4 +74,14 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+    'mod/visuallearning:addcustomhtml' => [
+        'riskbitmask' => RISK_XSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'mod/visuallearning:manage',
+    ],
 ];

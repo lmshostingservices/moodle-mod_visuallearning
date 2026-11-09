@@ -88,6 +88,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
         $page->annotate_files('mod_visuallearning', 'option', 'id');
         $page->annotate_files('mod_visuallearning', 'card', 'id');
         $page->annotate_files('mod_visuallearning', 'svg', 'id');
+        $page->annotate_files('mod_visuallearning', 'html', 'id');
 
         return $this->prepare_activity_structure($book);
     }

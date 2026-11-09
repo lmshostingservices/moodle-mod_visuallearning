@@ -1,0 +1,4547 @@
+{
+  "type": "animated_scene",
+  "version": "1.0",
+  "title": "The hidden world beneath our feet",
+  "description": "A detailed soil and rock cutaway distinguishes fast downhill surface runoff, infiltration into pore spaces and much slower groundwater movement through permeable material.",
+  "representation": "schematic",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    720
+  ],
+  "aspectRatio": "meet",
+  "style": {
+    "reference": "The living watershed · illustrated scientific atlas",
+    "artDirection": "Semi-realistic layered vector landscape. Atmospheric mountain facets, sculpted foliage, restrained water highlights and precise scientific magnifications. Colour denotes substance; invisible vapour appears only as explicitly schematic molecules.",
+    "background": "#EAF7FF",
+    "foreground": "#214556",
+    "accent": "#16B9C5",
+    "font": "sans-serif",
+    "fontSize": 16,
+    "strokeWidth": 0
+  },
+  "layers": [
+    {
+      "id": "atmosphere",
+      "label": "atmosphere"
+    },
+    {
+      "id": "distance",
+      "label": "distance"
+    },
+    {
+      "id": "landscape",
+      "label": "landscape"
+    },
+    {
+      "id": "geology",
+      "label": "geology"
+    },
+    {
+      "id": "vegetation",
+      "label": "vegetation"
+    },
+    {
+      "id": "mechanism",
+      "label": "mechanism"
+    },
+    {
+      "id": "detail",
+      "label": "detail"
+    },
+    {
+      "id": "annotation",
+      "label": "annotation"
+    }
+  ],
+  "paths": [
+    {
+      "id": "curve1",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            360,
+            407
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            533,
+            203
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            603,
+            281
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            704,
+            138
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            876,
+            336
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            976,
+            221
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            414
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve2",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            438,
+            413
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            610,
+            244
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            674,
+            316
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            774,
+            205
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            945,
+            409
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve3",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            774,
+            205
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            749,
+            328
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            853,
+            409
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            945,
+            409
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve4",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            704,
+            138
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            651,
+            207
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            685,
+            195
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            705,
+            213
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            721,
+            198
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            753,
+            211
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve5",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            610,
+            244
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            580,
+            274
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            606,
+            266
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            620,
+            278
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            634,
+            273
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve6",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            0,
+            422
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            146,
+            401,
+            333,
+            419
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            466,
+            436,
+            583,
+            432
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            635,
+            554
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            0,
+            572
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve7",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            456,
+            442
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            568,
+            377,
+            711,
+            396
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            823,
+            356,
+            937,
+            379
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1075,
+            335,
+            1200,
+            364
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            555
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            410,
+            555
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve8",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            579,
+            434
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            748,
+            411,
+            877,
+            424
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1042,
+            391,
+            1200,
+            423
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            554
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            408,
+            554
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve9",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            670,
+            409
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            670,
+            394,
+            678,
+            397
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            680,
+            376,
+            691,
+            391
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            698,
+            374,
+            706,
+            391
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            716,
+            370,
+            723,
+            391
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            730,
+            378,
+            736,
+            395
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            743,
+            370,
+            751,
+            390
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            759,
+            366,
+            768,
+            390
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            778,
+            373,
+            784,
+            391
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            795,
+            375,
+            802,
+            396
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            810,
+            377,
+            818,
+            393
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            828,
+            369,
+            837,
+            389
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            847,
+            373,
+            854,
+            394
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            864,
+            413
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            767,
+            421,
+            670,
+            409
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve10",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            1042,
+            401
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1044,
+            374,
+            1055,
+            387
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1065,
+            363,
+            1074,
+            381
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1083,
+            359,
+            1090,
+            378
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1099,
+            353,
+            1109,
+            374
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1118,
+            352,
+            1128,
+            370
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1140,
+            343,
+            1147,
+            366
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1158,
+            345,
+            1169,
+            363
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1183,
+            342,
+            1190,
+            361
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            396
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve11",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            856,
+            407
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            792,
+            444,
+            917,
+            447,
+            845,
+            472
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            790,
+            491,
+            739,
+            470,
+            683,
+            503
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            626,
+            538,
+            533,
+            524,
+            428,
+            555
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            379,
+            555
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            525,
+            508,
+            605,
+            517,
+            650,
+            487
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            718,
+            446,
+            795,
+            479,
+            817,
+            457
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            834,
+            439,
+            784,
+            433,
+            833,
+            405
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve12",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            448,
+            443
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            391,
+            462,
+            432,
+            481
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            463,
+            496,
+            407,
+            517
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            375,
+            532,
+            399,
+            549
+          ]
+        }
+      ]
+    },
+    {
+      "id": "curve13",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            0,
+            467
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            99,
+            456,
+            195,
+            476,
+            292,
+            460
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            347,
+            452,
+            389,
+            463
+          ]
+        }
+      ]
+    },
+    {
+      "id": "curve14",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            41,
+            498
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            142,
+            480,
+            238,
+            494
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            295,
+            499,
+            338,
+            489
+          ]
+        }
+      ]
+    },
+    {
+      "id": "curve15",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            0,
+            552
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            190,
+            558,
+            389,
+            550
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            578,
+            541,
+            760,
+            546
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            974,
+            523,
+            1200,
+            536
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            720
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            0,
+            720
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve16",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            0,
+            590
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            238,
+            613,
+            435,
+            585
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            639,
+            573,
+            839,
+            591
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1048,
+            567,
+            1200,
+            577
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            720
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            0,
+            720
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve17",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            0,
+            652
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            211,
+            632,
+            438,
+            649
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            624,
+            632,
+            801,
+            650
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            1000,
+            619,
+            1200,
+            630
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            720
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            0,
+            720
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve18",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            0,
+            661
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            261,
+            645,
+            438,
+            661
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            718,
+            644,
+            1200,
+            647
+          ]
+        },
+        {
+          "command": "L",
+          "values": [
+            1200,
+            687
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            819,
+            675,
+            492,
+            693
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            218,
+            670,
+            0,
+            692
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve19",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -66,
+            -108,
+            -52,
+            -130,
+            -38,
+            -137
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -43,
+            -160,
+            -26,
+            -183,
+            -4,
+            -185
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            16,
+            -191,
+            41,
+            -173,
+            39,
+            -151
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -145,
+            67,
+            -128,
+            56,
+            -111
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -87,
+            37,
+            -73,
+            12,
+            -75
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -6,
+            -63,
+            -36,
+            -70,
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve20",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -66,
+            -108,
+            -52,
+            -130,
+            -38,
+            -137
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -43,
+            -160,
+            -26,
+            -183,
+            -4,
+            -185
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            16,
+            -191,
+            41,
+            -173,
+            39,
+            -151
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -145,
+            67,
+            -128,
+            56,
+            -111
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -87,
+            37,
+            -73,
+            12,
+            -75
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -6,
+            -63,
+            -36,
+            -70,
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve21",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -66,
+            -108,
+            -52,
+            -130,
+            -38,
+            -137
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -43,
+            -160,
+            -26,
+            -183,
+            -4,
+            -185
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            16,
+            -191,
+            41,
+            -173,
+            39,
+            -151
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -145,
+            67,
+            -128,
+            56,
+            -111
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -87,
+            37,
+            -73,
+            12,
+            -75
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -6,
+            -63,
+            -36,
+            -70,
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve22",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -66,
+            -108,
+            -52,
+            -130,
+            -38,
+            -137
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -43,
+            -160,
+            -26,
+            -183,
+            -4,
+            -185
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            16,
+            -191,
+            41,
+            -173,
+            39,
+            -151
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -145,
+            67,
+            -128,
+            56,
+            -111
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -87,
+            37,
+            -73,
+            12,
+            -75
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -6,
+            -63,
+            -36,
+            -70,
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve23",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -66,
+            -108,
+            -52,
+            -130,
+            -38,
+            -137
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -43,
+            -160,
+            -26,
+            -183,
+            -4,
+            -185
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            16,
+            -191,
+            41,
+            -173,
+            39,
+            -151
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -145,
+            67,
+            -128,
+            56,
+            -111
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            61,
+            -87,
+            37,
+            -73,
+            12,
+            -75
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -6,
+            -63,
+            -36,
+            -70,
+            -52,
+            -92
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve24",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            -103,
+            11
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -119,
+            -12,
+            -88,
+            -35,
+            -62,
+            -29
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -65,
+            -67,
+            -12,
+            -83,
+            15,
+            -55
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            42,
+            -69,
+            74,
+            -50,
+            74,
+            -29
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            117,
+            -34,
+            135,
+            12,
+            94,
+            23
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            39,
+            38,
+            -54,
+            37,
+            -103,
+            11
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve25",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            -103,
+            11
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -119,
+            -12,
+            -88,
+            -35,
+            -62,
+            -29
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            -65,
+            -67,
+            -12,
+            -83,
+            15,
+            -55
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            42,
+            -69,
+            74,
+            -50,
+            74,
+            -29
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            117,
+            -34,
+            135,
+            12,
+            94,
+            23
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            39,
+            38,
+            -54,
+            37,
+            -103,
+            11
+          ]
+        },
+        {
+          "command": "Z",
+          "values": []
+        }
+      ]
+    },
+    {
+      "id": "curve26",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            1135,
+            435
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            990,
+            452,
+            888,
+            468
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            770,
+            469,
+            700,
+            500
+          ]
+        },
+        {
+          "command": "Q",
+          "values": [
+            594,
+            530,
+            433,
+            548
+          ]
+        }
+      ]
+    },
+    {
+      "id": "curve27",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            1030,
+            462
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            1038,
+            502,
+            1001,
+            533,
+            1011,
+            570
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            1028,
+            600,
+            990,
+            615,
+            995,
+            653
+          ]
+        }
+      ]
+    },
+    {
+      "id": "curve28",
+      "segments": [
+        {
+          "command": "M",
+          "values": [
+            995,
+            665
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            909,
+            673,
+            794,
+            662,
+            691,
+            677
+          ]
+        },
+        {
+          "command": "C",
+          "values": [
+            564,
+            688,
+            417,
+            676,
+            301,
+            683
+          ]
+        }
+      ]
+    }
+  ],
+  "gradients": [
+    {
+      "id": "gSky",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#D5EEFB",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#EAF7FF",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#F5FCFF",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gOcean",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#1265B2",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#159DC2",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#16B9C5",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gWater",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#0D86B6",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#16B9C5",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#8AE2DB",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gLeaf",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#237950",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#38A86A",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#61B977",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gCloud",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#A9C3D5",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#EAF4F9",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#F8FCFF",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gCloudShade",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#92B4CC",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#DDEEF6",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#F8FCFF",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gEarth",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#876748",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#A67C52",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#C6A578",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gRock",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#52677E",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#64748B",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#8F9DAB",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gGold",
+      "kind": "radial",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#FFCA45",
+          "opacity": 0.03
+        },
+        {
+          "offset": 0.5,
+          "colour": "#FFCA45",
+          "opacity": 0.24
+        },
+        {
+          "offset": 1,
+          "colour": "#FFCA45",
+          "opacity": 0.02
+        }
+      ]
+    },
+    {
+      "id": "gSun",
+      "kind": "radial",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#FFF0AC",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#FFCA45",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#EDAE39",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "gGlass",
+      "kind": "linear",
+      "stops": [
+        {
+          "offset": 0,
+          "colour": "#F8FCFF",
+          "opacity": 1
+        },
+        {
+          "offset": 0.5,
+          "colour": "#E1F3F9",
+          "opacity": 1
+        },
+        {
+          "offset": 1,
+          "colour": "#C6EAF2",
+          "opacity": 1
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "shape1",
+      "kind": "rect",
+      "role": "draw",
+      "layer": "atmosphere",
+      "label": "",
+      "gradient": "gSky",
+      "geometry": {
+        "width": 1700,
+        "height": 1100
+      },
+      "initial": {
+        "x": -250,
+        "y": -200,
+        "fill": "#EAF7FF",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "sunHalo",
+      "kind": "circle",
+      "role": "draw",
+      "layer": "atmosphere",
+      "label": "",
+      "gradient": "gGold",
+      "geometry": {
+        "radius": 110
+      },
+      "initial": {
+        "x": 175,
+        "y": 133,
+        "fill": "#FFCA45",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "sunDisc",
+      "kind": "circle",
+      "role": "draw",
+      "layer": "atmosphere",
+      "label": "",
+      "gradient": "gSun",
+      "geometry": {
+        "radius": 53
+      },
+      "initial": {
+        "x": 175,
+        "y": 133,
+        "fill": "#FFCA45",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape2",
+      "kind": "circle",
+      "role": "draw",
+      "layer": "atmosphere",
+      "label": "",
+      "geometry": {
+        "radius": 29
+      },
+      "initial": {
+        "x": 160,
+        "y": 118,
+        "fill": "#FFEBA1",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.25
+      }
+    },
+    {
+      "id": "shape3",
+      "kind": "path",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "path": "curve1"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#C0D9E4",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape4",
+      "kind": "path",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "path": "curve2"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#8FB3C5",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape5",
+      "kind": "path",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "path": "curve3"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#6F9BB1",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape6",
+      "kind": "path",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "path": "curve4"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#F0F8FB",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape7",
+      "kind": "path",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "path": "curve5"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#DDEDF3",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape8",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "points": [
+          [
+            533,
+            203
+          ],
+          [
+            520,
+            253
+          ],
+          [
+            546,
+            245
+          ],
+          [
+            560,
+            279
+          ],
+          [
+            579,
+            256
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#DDEDF3",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape9",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "points": [
+          [
+            704,
+            213
+          ],
+          [
+            691,
+            290
+          ],
+          [
+            651,
+            338
+          ],
+          [
+            679,
+            264
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#A7C9D7",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape10",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "points": [
+          [
+            774,
+            205
+          ],
+          [
+            786,
+            271
+          ],
+          [
+            812,
+            299
+          ],
+          [
+            804,
+            254
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#AECBD8",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape11",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {
+        "points": [
+          [
+            610,
+            266
+          ],
+          [
+            592,
+            317
+          ],
+          [
+            567,
+            341
+          ],
+          [
+            598,
+            286
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#B7D3DD",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape12",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "gradient": "gOcean",
+      "geometry": {
+        "path": "curve6"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#1265B2",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape13",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "gradient": "gLeaf",
+      "geometry": {
+        "path": "curve7"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#65A882",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape14",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "path": "curve8"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#88BC8C",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape15",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "path": "curve9"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#3B936B",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape16",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "path": "curve10"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#398D68",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "river",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "gradient": "gWater",
+      "geometry": {
+        "path": "curve11"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#16B9C5",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape17",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "gradient": "gWater",
+      "geometry": {
+        "rx": 86,
+        "ry": 22
+      },
+      "initial": {
+        "x": 692,
+        "y": 502,
+        "fill": "#16B9C5",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape18",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "path": "curve12"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "none",
+        "stroke": "#D1EEE3",
+        "strokeWidth": 4
+      }
+    },
+    {
+      "id": "waveNear",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "path": "curve13"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "none",
+        "stroke": "#80DBE7",
+        "strokeWidth": 2
+      }
+    },
+    {
+      "id": "waveFar",
+      "kind": "path",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "path": "curve14"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "none",
+        "stroke": "#84D9E3",
+        "strokeWidth": 1.4,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape19",
+      "kind": "line",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "x2": 115,
+        "y2": 0
+      },
+      "initial": {
+        "x": 74,
+        "y": 434,
+        "fill": "none",
+        "stroke": "#B9ECED",
+        "strokeWidth": 1.5
+      }
+    },
+    {
+      "id": "shape20",
+      "kind": "line",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "x2": 60,
+        "y2": 0
+      },
+      "initial": {
+        "x": 240,
+        "y": 447,
+        "fill": "none",
+        "stroke": "#B9ECED",
+        "strokeWidth": 1.2
+      }
+    },
+    {
+      "id": "shape21",
+      "kind": "line",
+      "role": "draw",
+      "layer": "landscape",
+      "label": "",
+      "geometry": {
+        "x2": 60,
+        "y2": -3
+      },
+      "initial": {
+        "x": 641,
+        "y": 500,
+        "fill": "none",
+        "stroke": "#B9ECED",
+        "strokeWidth": 1.4
+      }
+    },
+    {
+      "id": "earth",
+      "kind": "path",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "gradient": "gEarth",
+      "geometry": {
+        "path": "curve15"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#A67C52",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape22",
+      "kind": "path",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "path": "curve16"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#C2A37E",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape23",
+      "kind": "path",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "gradient": "gRock",
+      "geometry": {
+        "path": "curve17"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#64748B",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "aquifer",
+      "kind": "path",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "gradient": "gWater",
+      "geometry": {
+        "path": "curve18"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#1265B2",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.62
+      }
+    },
+    {
+      "id": "soilGrains",
+      "kind": "particles",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "points": [
+          [
+            302.814,
+            577.64
+          ],
+          [
+            692.737,
+            586.243
+          ],
+          [
+            450.792,
+            573.642
+          ],
+          [
+            536.738,
+            579.581
+          ],
+          [
+            1048.576,
+            635.657
+          ],
+          [
+            1023.843,
+            603.979
+          ],
+          [
+            770.401,
+            627.133
+          ],
+          [
+            715.764,
+            577.808
+          ],
+          [
+            168.252,
+            632.806
+          ],
+          [
+            1109.467,
+            628.926
+          ],
+          [
+            660.61,
+            583.553
+          ],
+          [
+            660.103,
+            588.574
+          ],
+          [
+            1131.746,
+            624.576
+          ],
+          [
+            186.353,
+            625.081
+          ],
+          [
+            560.307,
+            575.885
+          ],
+          [
+            26.946,
+            606.386
+          ],
+          [
+            995.952,
+            626.101
+          ],
+          [
+            817.102,
+            596.369
+          ],
+          [
+            702.788,
+            616.569
+          ],
+          [
+            853.638,
+            617.992
+          ],
+          [
+            1188.345,
+            600.784
+          ],
+          [
+            117.512,
+            584.262
+          ],
+          [
+            536.854,
+            580.128
+          ],
+          [
+            922.518,
+            609.998
+          ],
+          [
+            965.573,
+            596.922
+          ],
+          [
+            258.923,
+            589.412
+          ],
+          [
+            22.902,
+            589.79
+          ],
+          [
+            400.762,
+            628.503
+          ],
+          [
+            1147.054,
+            584.333
+          ],
+          [
+            1045.561,
+            609.269
+          ],
+          [
+            404.017,
+            592.117
+          ],
+          [
+            155.231,
+            634.718
+          ],
+          [
+            123.567,
+            630.977
+          ],
+          [
+            966.882,
+            599.709
+          ],
+          [
+            852.072,
+            591.627
+          ],
+          [
+            142.312,
+            604.591
+          ],
+          [
+            140.85,
+            587.586
+          ],
+          [
+            724.914,
+            616.661
+          ],
+          [
+            588.816,
+            585.419
+          ],
+          [
+            272.761,
+            616.434
+          ],
+          [
+            1058.186,
+            624.285
+          ],
+          [
+            836.603,
+            625.727
+          ],
+          [
+            481.969,
+            581.802
+          ],
+          [
+            151.548,
+            606.548
+          ],
+          [
+            782.007,
+            635.221
+          ],
+          [
+            511.155,
+            619.81
+          ],
+          [
+            516.317,
+            574.915
+          ],
+          [
+            92.703,
+            624.846
+          ],
+          [
+            1174.477,
+            623.181
+          ],
+          [
+            202.381,
+            596.742
+          ],
+          [
+            339.807,
+            603.353
+          ],
+          [
+            1009.154,
+            630.481
+          ],
+          [
+            237.096,
+            592.226
+          ],
+          [
+            636.041,
+            588.902
+          ],
+          [
+            484.635,
+            572.795
+          ],
+          [
+            777.576,
+            595.468
+          ],
+          [
+            569.285,
+            588.309
+          ],
+          [
+            712.185,
+            616.847
+          ],
+          [
+            663.348,
+            610.628
+          ],
+          [
+            278.233,
+            596.309
+          ]
+        ],
+        "radius": 2.1
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#927451",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.45
+      }
+    },
+    {
+      "id": "rockPores",
+      "kind": "particles",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "points": [
+          [
+            501.986,
+            709.904
+          ],
+          [
+            282.5,
+            708.933
+          ],
+          [
+            1139.931,
+            686.567
+          ],
+          [
+            1109.821,
+            651.623
+          ],
+          [
+            306.251,
+            684.627
+          ],
+          [
+            602.652,
+            710.944
+          ],
+          [
+            1175.903,
+            695.288
+          ],
+          [
+            979.312,
+            669.764
+          ],
+          [
+            676.841,
+            693.868
+          ],
+          [
+            59.632,
+            671.713
+          ],
+          [
+            551.412,
+            699.046
+          ],
+          [
+            1166.798,
+            652.45
+          ],
+          [
+            690.813,
+            669.407
+          ],
+          [
+            774.096,
+            692.749
+          ],
+          [
+            561.328,
+            666.306
+          ],
+          [
+            865.338,
+            682.389
+          ],
+          [
+            41.122,
+            704.046
+          ],
+          [
+            877.71,
+            707.863
+          ],
+          [
+            886.334,
+            684.363
+          ],
+          [
+            1195.793,
+            712.899
+          ],
+          [
+            745.207,
+            700.231
+          ],
+          [
+            65.498,
+            684.791
+          ],
+          [
+            739.025,
+            665.97
+          ],
+          [
+            896.681,
+            651.54
+          ],
+          [
+            1128.589,
+            678.676
+          ],
+          [
+            423.178,
+            686.819
+          ],
+          [
+            684.997,
+            651.96
+          ],
+          [
+            489.011,
+            687.733
+          ],
+          [
+            83.464,
+            658.994
+          ],
+          [
+            129.514,
+            666.41
+          ],
+          [
+            338.944,
+            685.877
+          ],
+          [
+            516.133,
+            712.388
+          ],
+          [
+            802.296,
+            688.312
+          ],
+          [
+            433.652,
+            694.827
+          ],
+          [
+            335.75,
+            708.592
+          ],
+          [
+            1058.58,
+            685.527
+          ],
+          [
+            786.413,
+            697.904
+          ],
+          [
+            707.47,
+            667.76
+          ],
+          [
+            176.582,
+            664.938
+          ],
+          [
+            123.909,
+            671.912
+          ],
+          [
+            529.597,
+            699.815
+          ],
+          [
+            772.919,
+            702.947
+          ],
+          [
+            349.988,
+            694.327
+          ],
+          [
+            511.549,
+            672.669
+          ]
+        ],
+        "radius": 3.2
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#D1DBDF",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.27
+      }
+    },
+    {
+      "id": "shape24",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 16,
+        "ry": 6
+      },
+      "initial": {
+        "x": 65,
+        "y": 610,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": -18,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape25",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 21,
+        "ry": 9
+      },
+      "initial": {
+        "x": 216,
+        "y": 619,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": 0,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape26",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 26,
+        "ry": 6
+      },
+      "initial": {
+        "x": 367,
+        "y": 628,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": 18,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape27",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 16,
+        "ry": 9
+      },
+      "initial": {
+        "x": 518,
+        "y": 610,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": -18,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape28",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 21,
+        "ry": 6
+      },
+      "initial": {
+        "x": 669,
+        "y": 619,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": 0,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape29",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 26,
+        "ry": 9
+      },
+      "initial": {
+        "x": 820,
+        "y": 628,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": 18,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape30",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 16,
+        "ry": 6
+      },
+      "initial": {
+        "x": 971,
+        "y": 610,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": -18,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "shape31",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "geology",
+      "label": "",
+      "geometry": {
+        "rx": 21,
+        "ry": 9
+      },
+      "initial": {
+        "x": 1122,
+        "y": 619,
+        "fill": "#8E8C80",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "rotation": 0,
+        "opacity": 0.65
+      }
+    },
+    {
+      "id": "grove0",
+      "kind": "group",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "geometry": {},
+      "initial": {
+        "x": 563,
+        "y": 431,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.32,
+        "scaleY": 0.32
+      }
+    },
+    {
+      "id": "shape32",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove0",
+      "geometry": {
+        "rx": 43,
+        "ry": 9
+      },
+      "initial": {
+        "x": 0,
+        "y": 5,
+        "fill": "#214F50",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.13
+      }
+    },
+    {
+      "id": "shape33",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove0",
+      "geometry": {
+        "points": [
+          [
+            -8,
+            0
+          ],
+          [
+            -4,
+            -98
+          ],
+          [
+            3,
+            -104
+          ],
+          [
+            10,
+            0
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#6D6453",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape34",
+      "kind": "line",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove0",
+      "geometry": {
+        "x2": -30,
+        "y2": -42
+      },
+      "initial": {
+        "x": 0,
+        "y": -43,
+        "fill": "none",
+        "stroke": "#6D6453",
+        "strokeWidth": 4
+      }
+    },
+    {
+      "id": "shape35",
+      "kind": "path",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove0",
+      "gradient": "gLeaf",
+      "geometry": {
+        "path": "curve19"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#38A86A",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape36",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove0",
+      "geometry": {
+        "rx": 27,
+        "ry": 29
+      },
+      "initial": {
+        "x": -23,
+        "y": -108,
+        "fill": "#237F58",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.32
+      }
+    },
+    {
+      "id": "shape37",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove0",
+      "geometry": {
+        "rx": 22,
+        "ry": 24
+      },
+      "initial": {
+        "x": -12,
+        "y": -154,
+        "fill": "#75C483",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.25
+      }
+    },
+    {
+      "id": "grove1",
+      "kind": "group",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "geometry": {},
+      "initial": {
+        "x": 607,
+        "y": 429,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.4,
+        "scaleY": 0.4
+      }
+    },
+    {
+      "id": "shape38",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove1",
+      "geometry": {
+        "rx": 43,
+        "ry": 9
+      },
+      "initial": {
+        "x": 0,
+        "y": 5,
+        "fill": "#214F50",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.13
+      }
+    },
+    {
+      "id": "shape39",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove1",
+      "geometry": {
+        "points": [
+          [
+            -8,
+            0
+          ],
+          [
+            -4,
+            -98
+          ],
+          [
+            3,
+            -104
+          ],
+          [
+            10,
+            0
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#6D6453",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape40",
+      "kind": "line",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove1",
+      "geometry": {
+        "x2": -30,
+        "y2": -42
+      },
+      "initial": {
+        "x": 0,
+        "y": -43,
+        "fill": "none",
+        "stroke": "#6D6453",
+        "strokeWidth": 4
+      }
+    },
+    {
+      "id": "shape41",
+      "kind": "path",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove1",
+      "gradient": "gLeaf",
+      "geometry": {
+        "path": "curve20"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#38A86A",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape42",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove1",
+      "geometry": {
+        "rx": 27,
+        "ry": 29
+      },
+      "initial": {
+        "x": -23,
+        "y": -108,
+        "fill": "#237F58",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.32
+      }
+    },
+    {
+      "id": "shape43",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove1",
+      "geometry": {
+        "rx": 22,
+        "ry": 24
+      },
+      "initial": {
+        "x": -12,
+        "y": -154,
+        "fill": "#75C483",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.25
+      }
+    },
+    {
+      "id": "grove2",
+      "kind": "group",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "geometry": {},
+      "initial": {
+        "x": 1056,
+        "y": 413,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.52,
+        "scaleY": 0.52
+      }
+    },
+    {
+      "id": "shape44",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove2",
+      "geometry": {
+        "rx": 43,
+        "ry": 9
+      },
+      "initial": {
+        "x": 0,
+        "y": 5,
+        "fill": "#214F50",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.13
+      }
+    },
+    {
+      "id": "shape45",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove2",
+      "geometry": {
+        "points": [
+          [
+            -8,
+            0
+          ],
+          [
+            -4,
+            -98
+          ],
+          [
+            3,
+            -104
+          ],
+          [
+            10,
+            0
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#6D6453",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape46",
+      "kind": "line",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove2",
+      "geometry": {
+        "x2": -30,
+        "y2": -42
+      },
+      "initial": {
+        "x": 0,
+        "y": -43,
+        "fill": "none",
+        "stroke": "#6D6453",
+        "strokeWidth": 4
+      }
+    },
+    {
+      "id": "shape47",
+      "kind": "path",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove2",
+      "gradient": "gLeaf",
+      "geometry": {
+        "path": "curve21"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#38A86A",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape48",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove2",
+      "geometry": {
+        "rx": 27,
+        "ry": 29
+      },
+      "initial": {
+        "x": -23,
+        "y": -108,
+        "fill": "#237F58",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.32
+      }
+    },
+    {
+      "id": "shape49",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove2",
+      "geometry": {
+        "rx": 22,
+        "ry": 24
+      },
+      "initial": {
+        "x": -12,
+        "y": -154,
+        "fill": "#75C483",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.25
+      }
+    },
+    {
+      "id": "grove3",
+      "kind": "group",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "geometry": {},
+      "initial": {
+        "x": 1130,
+        "y": 408,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.65,
+        "scaleY": 0.65
+      }
+    },
+    {
+      "id": "shape50",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove3",
+      "geometry": {
+        "rx": 43,
+        "ry": 9
+      },
+      "initial": {
+        "x": 0,
+        "y": 5,
+        "fill": "#214F50",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.13
+      }
+    },
+    {
+      "id": "shape51",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove3",
+      "geometry": {
+        "points": [
+          [
+            -8,
+            0
+          ],
+          [
+            -4,
+            -98
+          ],
+          [
+            3,
+            -104
+          ],
+          [
+            10,
+            0
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#6D6453",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape52",
+      "kind": "line",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove3",
+      "geometry": {
+        "x2": -30,
+        "y2": -42
+      },
+      "initial": {
+        "x": 0,
+        "y": -43,
+        "fill": "none",
+        "stroke": "#6D6453",
+        "strokeWidth": 4
+      }
+    },
+    {
+      "id": "shape53",
+      "kind": "path",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove3",
+      "gradient": "gLeaf",
+      "geometry": {
+        "path": "curve22"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#38A86A",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape54",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove3",
+      "geometry": {
+        "rx": 27,
+        "ry": 29
+      },
+      "initial": {
+        "x": -23,
+        "y": -108,
+        "fill": "#237F58",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.32
+      }
+    },
+    {
+      "id": "shape55",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "grove3",
+      "geometry": {
+        "rx": 22,
+        "ry": 24
+      },
+      "initial": {
+        "x": -12,
+        "y": -154,
+        "fill": "#75C483",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.25
+      }
+    },
+    {
+      "id": "heroTree",
+      "kind": "group",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "geometry": {},
+      "initial": {
+        "x": 969,
+        "y": 483,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.79,
+        "scaleY": 0.79
+      }
+    },
+    {
+      "id": "shape56",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "heroTree",
+      "geometry": {
+        "rx": 43,
+        "ry": 9
+      },
+      "initial": {
+        "x": 0,
+        "y": 5,
+        "fill": "#214F50",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.13
+      }
+    },
+    {
+      "id": "shape57",
+      "kind": "polygon",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "heroTree",
+      "geometry": {
+        "points": [
+          [
+            -8,
+            0
+          ],
+          [
+            -4,
+            -98
+          ],
+          [
+            3,
+            -104
+          ],
+          [
+            10,
+            0
+          ]
+        ]
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#6D6453",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape58",
+      "kind": "line",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "heroTree",
+      "geometry": {
+        "x2": -30,
+        "y2": -42
+      },
+      "initial": {
+        "x": 0,
+        "y": -43,
+        "fill": "none",
+        "stroke": "#6D6453",
+        "strokeWidth": 4
+      }
+    },
+    {
+      "id": "shape59",
+      "kind": "path",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "heroTree",
+      "gradient": "gLeaf",
+      "geometry": {
+        "path": "curve23"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#38A86A",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape60",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "heroTree",
+      "geometry": {
+        "rx": 27,
+        "ry": 29
+      },
+      "initial": {
+        "x": -23,
+        "y": -108,
+        "fill": "#237F58",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.32
+      }
+    },
+    {
+      "id": "shape61",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "vegetation",
+      "label": "",
+      "parent": "heroTree",
+      "geometry": {
+        "rx": 22,
+        "ry": 24
+      },
+      "initial": {
+        "x": -12,
+        "y": -154,
+        "fill": "#75C483",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.25
+      }
+    },
+    {
+      "id": "cloudWest",
+      "kind": "group",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {},
+      "initial": {
+        "x": 410,
+        "y": 186,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.72,
+        "scaleY": 0.72,
+        "opacity": 0.85
+      }
+    },
+    {
+      "id": "shape62",
+      "kind": "path",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudWest",
+      "gradient": "gCloud",
+      "geometry": {
+        "path": "curve24"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#F8FCFF",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape63",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudWest",
+      "gradient": "gCloudShade",
+      "geometry": {
+        "rx": 91,
+        "ry": 13
+      },
+      "initial": {
+        "x": 3,
+        "y": 19,
+        "fill": "#A9C3D5",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.36
+      }
+    },
+    {
+      "id": "shape64",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudWest",
+      "geometry": {
+        "rx": 33,
+        "ry": 27
+      },
+      "initial": {
+        "x": -19,
+        "y": -33,
+        "fill": "#F8FCFF",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.38
+      }
+    },
+    {
+      "id": "shape65",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudWest",
+      "geometry": {
+        "rx": 32,
+        "ry": 21
+      },
+      "initial": {
+        "x": 49,
+        "y": -17,
+        "fill": "#F8FCFF",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.27
+      }
+    },
+    {
+      "id": "cloudEast",
+      "kind": "group",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "geometry": {},
+      "initial": {
+        "x": 949,
+        "y": 161,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.94,
+        "scaleY": 0.94,
+        "opacity": 0.97
+      }
+    },
+    {
+      "id": "shape66",
+      "kind": "path",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudEast",
+      "gradient": "gCloud",
+      "geometry": {
+        "path": "curve25"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#F8FCFF",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "shape67",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudEast",
+      "gradient": "gCloudShade",
+      "geometry": {
+        "rx": 91,
+        "ry": 13
+      },
+      "initial": {
+        "x": 3,
+        "y": 19,
+        "fill": "#A9C3D5",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.36
+      }
+    },
+    {
+      "id": "shape68",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudEast",
+      "geometry": {
+        "rx": 33,
+        "ry": 27
+      },
+      "initial": {
+        "x": -19,
+        "y": -33,
+        "fill": "#F8FCFF",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.38
+      }
+    },
+    {
+      "id": "shape69",
+      "kind": "ellipse",
+      "role": "draw",
+      "layer": "distance",
+      "label": "",
+      "parent": "cloudEast",
+      "geometry": {
+        "rx": 32,
+        "ry": 21
+      },
+      "initial": {
+        "x": 49,
+        "y": -17,
+        "fill": "#F8FCFF",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0.27
+      }
+    },
+    {
+      "id": "shape70",
+      "kind": "text",
+      "role": "draw",
+      "layer": "annotation",
+      "label": "THE LIVING WATERSHED",
+      "geometry": {},
+      "initial": {
+        "x": 35,
+        "y": 690,
+        "fill": "#D6E9EB",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.68,
+        "scaleY": 0.68
+      }
+    },
+    {
+      "id": "runoffRoute",
+      "kind": "path",
+      "role": "draw",
+      "layer": "mechanism",
+      "label": "",
+      "geometry": {
+        "path": "curve26"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "none",
+        "stroke": "#C3F4ED",
+        "strokeWidth": 3,
+        "drawProgress": 0
+      }
+    },
+    {
+      "id": "infiltrationRoute",
+      "kind": "path",
+      "role": "draw",
+      "layer": "mechanism",
+      "label": "",
+      "geometry": {
+        "path": "curve27"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "none",
+        "stroke": "#8DE7F0",
+        "strokeWidth": 3,
+        "drawProgress": 0
+      }
+    },
+    {
+      "id": "groundRoute",
+      "kind": "path",
+      "role": "draw",
+      "layer": "mechanism",
+      "label": "",
+      "geometry": {
+        "path": "curve28"
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "none",
+        "stroke": "#A5E3E8",
+        "strokeWidth": 2,
+        "drawProgress": 0
+      }
+    },
+    {
+      "id": "shape71",
+      "kind": "text",
+      "role": "draw",
+      "layer": "annotation",
+      "label": "SOIL & PORE SPACES",
+      "geometry": {},
+      "initial": {
+        "x": 43,
+        "y": 577,
+        "fill": "#614D38",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.65,
+        "scaleY": 0.65
+      }
+    },
+    {
+      "id": "shape72",
+      "kind": "text",
+      "role": "draw",
+      "layer": "annotation",
+      "label": "PERMEABLE MATERIAL",
+      "geometry": {},
+      "initial": {
+        "x": 43,
+        "y": 638,
+        "fill": "#614D38",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.65,
+        "scaleY": 0.65
+      }
+    },
+    {
+      "id": "shape73",
+      "kind": "text",
+      "role": "draw",
+      "layer": "annotation",
+      "label": "SATURATED GROUND · SLOW FLOW",
+      "geometry": {},
+      "initial": {
+        "x": 768,
+        "y": 704,
+        "fill": "#D3F0EF",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "scaleX": 0.65,
+        "scaleY": 0.65
+      }
+    },
+    {
+      "id": "slopeRain",
+      "kind": "particles",
+      "role": "draw",
+      "layer": "mechanism",
+      "label": "",
+      "geometry": {
+        "points": [
+          [
+            1070,
+            325
+          ],
+          [
+            1110,
+            300
+          ],
+          [
+            1150,
+            334
+          ],
+          [
+            1030,
+            311
+          ],
+          [
+            990,
+            336
+          ]
+        ],
+        "radius": 2.5
+      },
+      "initial": {
+        "x": 0,
+        "y": 0,
+        "fill": "#1265B2",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "runoffDrop",
+      "kind": "circle",
+      "role": "draw",
+      "layer": "mechanism",
+      "label": "",
+      "geometry": {
+        "radius": 5
+      },
+      "initial": {
+        "x": 1135,
+        "y": 435,
+        "fill": "#8DE7F0",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    },
+    {
+      "id": "poreWater",
+      "kind": "circle",
+      "role": "draw",
+      "layer": "mechanism",
+      "label": "",
+      "geometry": {
+        "radius": 4
+      },
+      "initial": {
+        "x": 1030,
+        "y": 462,
+        "fill": "#8DE7F0",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "opacity": 0
+      }
+    }
+  ],
+  "stages": [
+    {
+      "title": "Rain reaches the hillside",
+      "description": "Rain reaches the sloping hillside. The cutaway exposes soil grains, pores, permeable rock and a groundwater zone.",
+      "durationMs": 6500,
+      "actions": [
+        {
+          "target": "slopeRain",
+          "startMs": 300,
+          "durationMs": 3900,
+          "easing": "ease-in",
+          "operation": {
+            "type": "move",
+            "params": {},
+            "final": {
+              "x": -15,
+              "y": 112
+            }
+          }
+        },
+        {
+          "target": "slopeRain",
+          "startMs": 4400,
+          "durationMs": 900,
+          "easing": "smooth",
+          "operation": {
+            "type": "fade",
+            "params": {},
+            "final": {
+              "opacity": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Follow the downhill route",
+      "description": "Some water runs across the surface into the stream and lake, following the downhill slope rather than climbing terrain.",
+      "durationMs": 6500,
+      "actions": [
+        {
+          "target": "runoffRoute",
+          "startMs": 0,
+          "durationMs": 4000,
+          "easing": "smooth",
+          "operation": {
+            "type": "draw_path",
+            "params": {},
+            "final": {
+              "drawProgress": 1
+            }
+          }
+        },
+        {
+          "target": "runoffDrop",
+          "startMs": 0,
+          "durationMs": 4000,
+          "easing": "smooth",
+          "operation": {
+            "type": "follow_path",
+            "params": {
+              "path": "curve26",
+              "from": 0,
+              "to": 1,
+              "orient": false
+            },
+            "final": {
+              "x": 433,
+              "y": 548,
+              "rotation": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Another route through the ground",
+      "description": "Other water infiltrates soil and percolates through pore spaces. In the saturated zone, groundwater moves far more slowly towards the coast.",
+      "durationMs": 6500,
+      "actions": [
+        {
+          "target": "@camera",
+          "startMs": 0,
+          "durationMs": 3500,
+          "easing": "smooth",
+          "operation": {
+            "type": "zoom",
+            "params": {},
+            "final": {
+              "zoom": 1.07
+            }
+          }
+        },
+        {
+          "target": "@camera",
+          "startMs": 0,
+          "durationMs": 3500,
+          "easing": "smooth",
+          "operation": {
+            "type": "pan",
+            "params": {},
+            "final": {
+              "x": 25,
+              "y": 55
+            }
+          }
+        },
+        {
+          "target": "infiltrationRoute",
+          "startMs": 0,
+          "durationMs": 4500,
+          "easing": "smooth",
+          "operation": {
+            "type": "draw_path",
+            "params": {},
+            "final": {
+              "drawProgress": 1
+            }
+          }
+        },
+        {
+          "target": "groundRoute",
+          "startMs": 3500,
+          "durationMs": 3000,
+          "easing": "smooth",
+          "operation": {
+            "type": "draw_path",
+            "params": {},
+            "final": {
+              "drawProgress": 0.24
+            }
+          }
+        },
+        {
+          "target": "poreWater",
+          "startMs": 0,
+          "durationMs": 400,
+          "easing": "smooth",
+          "operation": {
+            "type": "reveal",
+            "params": {},
+            "final": {
+              "visible": true,
+              "opacity": 1
+            }
+          }
+        },
+        {
+          "target": "poreWater",
+          "startMs": 0,
+          "durationMs": 4500,
+          "easing": "smooth",
+          "operation": {
+            "type": "follow_path",
+            "params": {
+              "path": "curve27",
+              "from": 0,
+              "to": 1,
+              "orient": false
+            },
+            "final": {
+              "x": 995,
+              "y": 653,
+              "rotation": 0
+            }
+          }
+        },
+        {
+          "target": "poreWater",
+          "startMs": 4500,
+          "durationMs": 2000,
+          "easing": "smooth",
+          "operation": {
+            "type": "move",
+            "params": {},
+            "final": {
+              "x": 954,
+              "y": 668
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accessibility": {
+    "summary": "A detailed soil and rock cutaway distinguishes fast downhill surface runoff, infiltration into pore spaces and much slower groundwater movement through permeable material.",
+    "reducedMotion": "stage-final",
+    "stageDescriptions": [
+      "Rain reaches the sloping hillside. The cutaway exposes soil grains, pores, permeable rock and a groundwater zone.",
+      "Some water runs across the surface into the stream and lake, following the downhill slope rather than climbing terrain.",
+      "Other water infiltrates soil and percolates through pore spaces. In the saturated zone, groundwater moves far more slowly towards the coast."
+    ]
+  }
+}

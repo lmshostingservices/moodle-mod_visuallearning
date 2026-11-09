@@ -1,0 +1,121 @@
+{
+  "provenance": "Authored benchmark; not generated-provider acceptance",
+  "errors": [],
+  "captures": 50,
+  "actualLoopPlayback": true,
+  "reducedMotion": true,
+  "results": [
+    {
+      "viewport": 1440,
+      "scene": 1,
+      "fiftySeeksMs": 36,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 1440,
+      "scene": 2,
+      "fiftySeeksMs": 50,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 1440,
+      "scene": 3,
+      "fiftySeeksMs": 46,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 1440,
+      "scene": 4,
+      "fiftySeeksMs": 35,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 1440,
+      "scene": 5,
+      "fiftySeeksMs": 53,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 1440,
+      "scene": 6,
+      "fiftySeeksMs": 42,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 1440,
+      "scene": 7,
+      "fiftySeeksMs": 36,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 1440,
+      "scene": 8,
+      "fiftySeeksMs": 40,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 1,
+      "fiftySeeksMs": 40,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 2,
+      "fiftySeeksMs": 56,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 3,
+      "fiftySeeksMs": 46,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 4,
+      "fiftySeeksMs": 37,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 5,
+      "fiftySeeksMs": 46,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 6,
+      "fiftySeeksMs": 40,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 7,
+      "fiftySeeksMs": 34,
+      "pauseStable": true,
+      "stagesRendered": 3
+    },
+    {
+      "viewport": 820,
+      "scene": 8,
+      "fiftySeeksMs": 51,
+      "pauseStable": true,
+      "stagesRendered": 3
+    }
+  ]
+}

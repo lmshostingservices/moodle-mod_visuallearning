@@ -43,6 +43,7 @@ require_login($course, false, $cm);
 $context = context_module::instance($cm->id);
 require_capability('mod/visuallearning:manage', $context);
 $canai = has_capability('mod/visuallearning:useai', $context);
+$canhtml = media::html_enabled() && has_capability('mod/visuallearning:addcustomhtml', $context);
 
 $baseurl = new moodle_url('/mod/visuallearning/manage.php', ['id' => $cm->id]);
 $PAGE->set_url($baseurl);
@@ -126,6 +127,7 @@ if (in_array($action, ['delete', 'moveup', 'movedown'], true)) {
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'option', $page->id);
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'card', $page->id);
         $fs->delete_area_files($context->id, 'mod_visuallearning', 'svg', $page->id);
+        $fs->delete_area_files($context->id, 'mod_visuallearning', 'html', $page->id);
         $DB->delete_records('visuallearning_progress', ['pageid' => $page->id]);
         $DB->delete_records('visuallearning_pages', ['id' => $page->id]);
         visuallearning_renumber_pages($book->id);
@@ -749,6 +751,21 @@ if ($total) {
         }
         $buttons[] = visuallearning_button($quoteurl('voice', (int)$page->id), get_string('regenaudio', 'mod_visuallearning'),
             'post');
+        // The teacher's own HTML in place of the picture (no credits: nothing is made by LMS Labs).
+        $ownhtml = media::html_file($context, (int)$page->id);
+        if ($ownhtml) {
+            $cardchip .= $chip(get_string('media_customhtml', 'mod_visuallearning'), VISUALLEARNING_MEDIA_READY, 0);
+        }
+        if (!$canai) {
+            $buttons = [];
+        }
+        if ($canhtml) {
+            $buttons[] = visuallearning_button(
+                new moodle_url('/mod/visuallearning/customhtml.php', ['id' => $cm->id, 'pageid' => $page->id]),
+                get_string($ownhtml ? 'customhtml_change' : 'customhtml_use', 'mod_visuallearning'),
+                'get'
+            );
+        }
         $cards .= html_writer::div(
             html_writer::div(
                 $image ? html_writer::empty_tag('img', ['src' => visuallearning_file_url($image), 'alt' => s($page->alttext)])
@@ -764,10 +781,10 @@ if ($total) {
                     $chip(get_string('media_voice', 'mod_visuallearning'), (int)$page->audiostatus, $pend['audio'] ?? 0),
                     'vl-chips'
                 ) .
-                ($canai ? $remake($buttons) : ''),
+                ($buttons ? $remake($buttons) : ''),
                 'vl-media-body'
             ),
-            'vl-media-card'
+            'vl-media-card' . ($ownhtml ? ' has-customhtml' : '')
         );
     }
     echo html_writer::div($cards, 'vl-media-grid vl-media-grid-production');

@@ -128,39 +128,6 @@ $string['aierr_unusable_audio'] = 'what arrived was not usable audio';
 $string['aierr_unusable_draft'] = 'LMS Labs delivered pages this site could not use, and may have charged for them. Contact LMS Labs support with the reference before asking again.';
 $string['aierr_unusable_image'] = 'what arrived was not a usable picture';
 $string['aierr_waitingprevious'] = 'waiting for the card picture it builds on';
-$string['aiassistant_button'] = 'AI Assistant Instructions';
-$string['aiassistant_close'] = 'Close';
-$string['aiassistant_copied'] = 'Copied';
-$string['aiassistant_copy'] = 'Copy';
-$string['aiassistant_intro'] = 'Copy these instructions into an AI assistant such as ChatGPT, Claude, Gemini or Copilot, then add your topic, your learners and any notes or documents. Paste its answer into "What to teach".';
-$string['aiassistant_prompt'] = 'You are helping a trainer write the "What to teach" text for an AI Visual Learning lesson in Moodle. The lesson turns this text into illustrated slides that are read aloud to the learner.
-
-HOW THE LESSON IS BUILT
-- {pages} slides. Each slide teaches ONE key point.
-- 3 cards per slide: the idea (the key point and why it matters), putting it into action (one specific thing a person does in their work or life), and the outcome (the result of doing it).
-- 2 short sentences per card. Every card is read aloud, so it needs plain spoken language: no bullet points, symbols or unexplained abbreviations.
-- Every card matches a visual. Each card must describe something that can be shown in a picture or animation: a real situation, object or action a learner can see.
-- Every 4 slides end with a recap and one check question about each slide.
-
-YOUR TASK
-1. If I have not already given them below, ask me for the topic, who the learners are (their job, workplace or course, and their level) and any material I have, such as notes, a unit outline, a procedure or a document.
-2. Choose exactly {pages} key points that cover the topic, ordered from the most basic to the most advanced. One key point per slide; never combine two ideas in one point.
-3. Use only my material and accurate, well-established facts. Do not invent laws, standards, figures or procedures.
-4. For each key point, describe in one sentence what the learner sees happening in the picture, so every slide can be illustrated.
-5. Give your answer as plain text in exactly this format, with nothing before or after it, ready to paste:
-
-Topic: (the lesson topic)
-Learners: (who they are and their level)
-Must include: (any rules, standards, terms or safety steps that must appear, or "None")
-1. (Key point) - Picture: (what the learner sees)
-2. (Key point) - Picture: (what the learner sees)
-(continue to {pages})
-
-Keep the whole answer under 10,000 characters.
-
-MY TOPIC, LEARNERS AND MATERIAL:
-';
-$string['aiassistant_title'] = 'AI Assistant Instructions';
 $string['aiinstructions'] = 'Your notes, documents and instructions (optional)';
 $string['aiinstructions_help'] = 'Everything else the AI should use or follow while it writes your pages and draws the pictures and animated diagrams.
 
@@ -215,11 +182,11 @@ $string['animationpacing_slow'] = 'Slow';
 $string['animationreplay'] = 'Replay complete animation';
 $string['animationservernotready'] = 'The AI server has not enabled the universal animation engine yet. No generation has been started. Try again after the server update, or choose Keep existing visual mode.';
 $string['animationstagereplay'] = 'Replay selected stage';
-$string['approach_science'] = 'Explain it';
-$string['approach_science_card'] = 'Three key points that explain the idea. No people in the pictures unless the topic needs them. Still pictures or animation.';
+$string['approach_science'] = 'Explain how it works';
+$string['approach_science_card'] = 'Three key points that build up how something works.';
 $string['approach_science_desc'] = 'Each page explains how something works in three numbered key points that build in order: the core idea, how it works, and the result. No invented people or workplace stories. The pictures are explanatory diagrams of the mechanism itself (schematics, cutaways, graphs, processes, before-and-after comparisons), with accurate relationships.';
 $string['approach_story'] = 'Tell a workplace story';
-$string['approach_story_card'] = 'A named person puts the idea into action. Every picture shows people at work. Best for skills and behaviour.';
+$string['approach_story_card'] = 'A named person puts the idea into action at work.';
 $string['approach_story_desc'] = 'Each page is a short workplace story: the idea, a named person putting it into action, and the outcome. The pictures show that scene with the lesson\'s recurring characters.';
 $string['autoplay'] = 'Narration start';
 $string['autoplay_help'] = 'Off (recommended): learners press Listen on every page to hear it, so they stay engaged and browsers never block the audio. On: narration starts automatically when a page opens (some browsers will still ask for one tap).';
@@ -429,6 +396,7 @@ $string['maxpages_help'] = 'Each page teaches one concept, and every four pages 
 $string['maxpagesreached'] = 'A lesson can have at most 20 pages.';
 $string['media_alldone'] = 'Every picture and voiceover clip is ready.';
 $string['media_animation'] = 'Animated scene';
+$string['media_customhtml'] = 'Your own HTML';
 $string['media_attention'] = 'Needs your attention ({$a})';
 $string['media_bypage'] = 'Page by page';
 $string['media_cards'] = 'Card pictures {$a}/3';
@@ -720,6 +688,56 @@ $string['quote_rules'] = 'Nothing is ever charged twice.';
 $string['quote_skipped'] = '{$a} item(s) are left out because an earlier request for them is still unresolved (see "LMS Labs requests to finish").';
 $string['quote_total'] = 'Price: up to {$a->credits} credits (about {$a->usd})';
 $string['regenanimation'] = 'New animated scene';
+$string['customhtml_alt'] = 'Description for screen readers';
+$string['customhtml_alt_help'] = 'One or two sentences saying what the HTML shows, read out by screen readers in place of it. It also becomes the page\'s picture description.';
+$string['customhtml_change'] = 'Change my own HTML…';
+$string['customhtml_disabled'] = 'Your site administrator has switched off teachers\' own HTML.';
+$string['customhtml_done'] = 'Done';
+$string['customhtml_err_empty'] = 'Paste your HTML or upload an HTML file.';
+$string['customhtml_err_nothtml'] = 'This does not look like HTML. Paste the whole file, for example everything Claude gives you from <!doctype html> to </html>.';
+$string['customhtml_err_size'] = 'This HTML is too big. The largest is {$a}: put large pictures on the web, or ask for a lighter version.';
+$string['customhtml_heading'] = 'Your own HTML: {$a}';
+$string['customhtml_intro'] = 'Show your own HTML in place of this page\'s picture: an animated chart, numbers that count up, a drill-down, anything made in Claude or by hand. Learners can click and tap inside it, and the magnifier opens it full screen. The page picture is kept for the recap, the cover and the downloads, and comes back if you remove your HTML. Your HTML runs in a sandboxed frame, so it cannot reach Moodle or your learners\' accounts.';
+$string['customhtml_paste'] = 'Or paste your HTML';
+$string['customhtml_paste_help'] = 'Paste the whole HTML file, with its CSS and JavaScript inside. An uploaded file is used in place of what is pasted here.';
+$string['customhtml_preview'] = 'Preview';
+$string['customhtml_preview_desc'] = 'This is what learners see in place of the picture. The buttons send the same messages the lesson sends while each key point is read aloud.';
+$string['customhtml_prompt'] = 'Make a single self-contained HTML file to show on one page of a narrated Moodle lesson, in place of the page picture.
+
+Page: {$a->title}
+{$a->cards}
+
+What to show: [describe it here, for example an animated bar chart of the figures, with numbers that count up and bars learners can tap to see the detail]
+
+Requirements:
+- One HTML file with its CSS and JavaScript inside. Avoid other files. If you need a chart library, load one exact version from cdnjs.cloudflare.com.
+- It fills a box of about 800 by 560 pixels and resizes to fit any size, with no scrolling. Light background, large readable text.
+- No logins, no forms that send data, no localStorage or cookies, and no calls to other websites.
+- The lesson tells the page which key point is being read aloud with window messages (check event.data.source === "visuallearning"):
+  {type: "vl:card", card: 1, 2 or 3, ms} key point N is being read for ms milliseconds: animate its part over that time.
+  {type: "vl:finish", card: N} show everything up to key point N at once (4 means everything).
+  {type: "vl:reset"} start again from the beginning.
+  {type: "vl:pause", paused: true or false} pause or resume any movement.
+  Every message also has reducedMotion: when it is true, skip the movement and show the end state.
+- If no message arrives within 1.5 seconds (for example when the file is opened on its own), play the key points in order.
+- Learners can click or tap parts of it to see more detail.';
+$string['customhtml_prompt_card'] = '{$a->label}: {$a->text}';
+$string['customhtml_prompt_copied'] = 'Copied';
+$string['customhtml_prompt_copy'] = 'Copy the prompt';
+$string['customhtml_prompt_desc'] = 'Paste this into Claude, describe what you want to see, and save the HTML file it makes. The prompt already holds this page\'s key points and the messages the lesson sends while each one is read.';
+$string['customhtml_prompt_heading'] = 'Make it with Claude: a ready-made prompt';
+$string['customhtml_remove'] = 'Remove my HTML';
+$string['customhtml_remove_confirm'] = 'Remove your HTML from this page? Learners will see the page picture again.';
+$string['customhtml_removed'] = 'Your HTML was removed. The page shows its picture again.';
+$string['customhtml_save'] = 'Save and preview';
+$string['customhtml_saved'] = 'Saved. Learners now see your HTML on this page.';
+$string['customhtml_testall'] = 'Show everything';
+$string['customhtml_testcard'] = 'Read key point {$a}';
+$string['customhtml_testreset'] = 'Start again';
+$string['customhtml_title'] = 'Your own HTML';
+$string['customhtml_upload'] = 'Upload an HTML file';
+$string['customhtml_upload_help'] = 'An .html file, for example one you saved from Claude. Up to 2 MB, with its CSS and JavaScript inside.';
+$string['customhtml_use'] = 'Use my own HTML…';
 $string['regenaudio'] = 'New voiceover';
 $string['regencards'] = 'New card pictures';
 $string['regenerateall'] = 'Make everything again…';
@@ -763,6 +781,8 @@ $string['settings_aiwrite_desc'] = 'Teachers can let AI (Claude, through LMS Lab
 $string['settings_defaultapproach'] = 'Default teaching approach';
 $string['settings_defaultapproach_desc'] = 'Pre-selected for new lessons; teachers can change it per lesson.';
 $string['settings_defaultcallouts'] = 'Callouts on pictures by default';
+$string['settings_allowcustomhtml'] = 'Teachers can use their own HTML';
+$string['settings_allowcustomhtml_desc'] = 'Teachers with the "Use their own HTML in place of page pictures" capability can replace any page picture with their own HTML, for example an animated chart or a count-up made in Claude. It runs in a sandboxed frame with an origin of its own, so its scripts cannot reach Moodle or the learner\'s session. When this is off, pages show their pictures again (the HTML is kept).';
 $string['settings_defaultcallouts_desc'] = 'Pre-ticks "Add labels and a short info card to pictures" for new lessons; teachers can change it per lesson.';
 $string['settings_defaultimagestyle'] = 'Default illustration style';
 $string['settings_defaultimagestyle_desc'] = 'Pre-filled for new lessons; teachers can change it per lesson.';
@@ -779,25 +799,8 @@ $string['sounds'] = 'Sounds';
 $string['sounds_help'] = 'Short, quiet interface sounds: a soft tick on hover, a pop when choosing, a chime for a right answer, a gentle bonk for a wrong one and a fanfare at the end. Learners can mute them; the voiceover is never affected.';
 $string['sounds_label'] = 'Play little sounds for answers, page turns and finishing';
 $string['sourcecontent'] = 'What to teach';
-$string['sourcecontent_help'] = 'The topic and the key points the lesson must teach.
-
-How the lesson is built:
-
-* **4, 8 or 12 slides**: choose the number under "Number of pages" below. Every 4 slides end with a recap and a check question about each slide.
-* **One key point per slide**: list one point for each slide you want, most important or most basic first. With fewer points the AI splits the biggest ones into steps; with more, it merges or leaves out the least important.
-* **3 cards per slide, 2 sentences per card**: for example the idea, putting it into action, and the outcome. Every card is read aloud.
-* **Every card matches a visual**: each card describes something that can be shown in the picture or animation, so give key points with a real situation, object or action a learner can see.
-
-Also say who the learners are (their job, workplace or course), and anything that must be included, such as a rule, a standard or a safety step. Put longer notes, outlines, procedures and document text in the box below. Up to 10,000 characters.';
-$string['sourcecontent_placeholder'] = 'The lesson is 4, 8 or 12 slides (choose the number below), 3 cards per slide, 2 sentences per card, and every card matches a visual. Each slide teaches one key point, and every 4 slides end with a recap and a check question.
-
-List one key point per slide, most important first, and say who the learners are. For example:
-
-Topic: Clear instructions for chefs. Learners: new commercial cookery staff.
-1. Speak clearly and use the correct kitchen terms.
-2. Listen, and ask questions when an instruction is unclear.
-3. Repeat the instruction back to confirm it.
-4. Write down instructions that have several steps.';
+$string['sourcecontent_help'] = 'The topic and the key points the lesson must teach, in a few sentences or a short list. Put longer notes, outlines, procedures and document text in the box below. Up to 10,000 characters.';
+$string['sourcecontent_placeholder'] = 'For example: How a safety switch (RCD) protects people from electric shock: what it compares, what happens when current leaks to earth, and how quickly it cuts the power.';
 $string['speakingrate'] = 'Speaking speed';
 $string['speed_fast'] = 'Faster';
 $string['speed_normal'] = 'Normal';
@@ -820,8 +823,8 @@ $string['task_generatemedia'] = 'Send confirmed AI Visual Learning requests to L
 $string['teachingapproach'] = 'Teaching style';
 $string['teachingapproach_help'] = 'How each page teaches.
 
-* **Explain it**: each page explains one idea, process or mechanism in three key points that build in order. The pictures show the thing itself (diagrams, cutaways, processes, comparisons), with people only when the topic needs them. Best for science, technical, safety and most other topics. Works with still pictures or animation.
-* **Tell a workplace story**: each page follows a named worker through a real situation, and every picture shows people at work. Best for customer service, teamwork, communication and workplace behaviour.';
+* **Explain how it works**: each page explains one idea, process or mechanism step by step. Best for science, technical and safety topics.
+* **Tell a workplace story**: each page follows a worker through a real situation. Best for customer service, teamwork and workplace behaviour.';
 $string['tfanswer'] = 'Correct answer';
 $string['tfattempts'] = 'Answers given';
 $string['tfcorrect'] = 'Questions right';
@@ -835,6 +838,7 @@ $string['unitcode_help'] = 'Optional. A unit of competency or outcome code (for 
 $string['views'] = 'Views';
 $string['visuallearning:addinstance'] = 'Add a new AI Visual Learning activity';
 $string['visuallearning:manage'] = 'Build and edit AI Visual Learning pages';
+$string['visuallearning:addcustomhtml'] = 'Use their own HTML in place of page pictures';
 $string['visuallearning:useai'] = 'Use paid LMS Labs AI in AI Visual Learning (pages, illustrations, voiceover)';
 $string['visuallearning:view'] = 'View AI Visual Learning activities';
 $string['visuallearning:viewreports'] = 'View AI Visual Learning reports';
@@ -851,7 +855,7 @@ $string['visualstyle_help'] = 'How the pictures look.
 * **Photo-realistic**: pictures that look like real photographs.
 * **3D diagram**: highly realistic 3D renders, like a medical or engineering model, with arrows showing how it works.
 * **Technical model**: precise section views and schematics with exact labels and arrows.
-* **Hand-drawn sketch**: a teacher\'s sketchnote on graph paper; animated pages draw themselves line by line.
+* **Hand-drawn sketch**: a teacher\'s sketchnote on plain off-white paper; animated pages draw themselves line by line.
 
 Every picture, in every style, is made by OpenAI GPT Image, with labels spelled exactly as the lesson gives them. Animated diagrams are drawn by Claude.';
 $string['visualstyle_illustration'] = 'Illustration';
@@ -868,9 +872,9 @@ $string['visualstyle_realistic_direction'] = 'Candid documentary photograph: phy
 $string['visualstyle_stillnote'] = 'Animation is on: the animated diagrams on each page have their own clean diagram look. The style you choose here is used for every still picture: the cover, the recap pictures, the picture-question options, and each page\'s picture while its animation is being made. Choose Photo-realistic, for example, for real-looking stills beside the animations.';
 $string['visualstyle_svg'] = 'Animated diagram on each page';
 $string['visualstyle_whiteboard'] = 'Hand-drawn sketch';
-$string['visualstyle_whiteboard_card'] = 'A teacher\'s sketchnote on grid paper.';
-$string['visualstyle_whiteboard_desc'] = 'Friendly marker sketches on grid paper with a pale colour wash, like a teacher drawing at the board.';
-$string['visualstyle_whiteboard_direction'] = 'Skilled teacher\'s sketchnote: confident black fineliner contours with slightly imperfect hand-drawn lines, sparse pencil hatching and a few restrained coloured-marker highlights on subtle graph paper; clearly constructed and uncluttered.';
+$string['visualstyle_whiteboard_card'] = 'A teacher\'s sketchnote on plain off-white paper.';
+$string['visualstyle_whiteboard_desc'] = 'Friendly marker sketches on plain off-white paper with a pale colour wash, like a teacher drawing at the board. No background grid or ruling.';
+$string['visualstyle_whiteboard_direction'] = 'Skilled teacher\'s sketchnote: confident black fineliner contours with slightly imperfect hand-drawn lines, sparse pencil hatching and a few restrained coloured-marker highlights on plain off-white paper; no background grid, ruling or graph-paper pattern; clearly constructed and uncluttered.';
 $string['voice'] = 'Narrator voice';
 $string['voice_help'] = 'The Google Chirp 3 HD voice that reads every page, from the voices LMS Labs offers. Changing the voice later means the voiceover needs making again (priced and confirmed first); the old voiceover keeps playing until then.';
 $string['voiceheader'] = 'Voice';

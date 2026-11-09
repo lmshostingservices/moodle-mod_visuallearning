@@ -99,7 +99,7 @@ SCENE PLAN
   Use the PALETTE and RECURRING rules on every page, and the SUBJECT RULES for accuracy.
 
 HAND-DRAWN LOOK (only when the brief says SCENE LOOK: hand-drawn sketch)
-- Light grid paper (a pattern of thin #dbe4ee lines) on an off-white plate. Dark ink outlines (#1f2937, 3px, round
+- Plain off-white paper, with no background grid, ruling or graph-paper pattern. Dark ink outlines (#1f2937, 3px, round
   caps and joins) roughened with an feTurbulence + feDisplacementMap filter (scale about 3) on the drawing, never
   on the text. Pale colour washes behind the ink (light blue #cfe8f7, light pink #fbd5d5), a yellow highlighter
   stroke behind the key word of the title, red marker arrows (#e11d2e) for the key point.

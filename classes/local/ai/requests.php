@@ -398,7 +398,13 @@ class requests {
      *     'included' => count by operation already paid for in the slide price, 'hold' => reason|null,
      *     'skipped' => already waiting, 'dropped' => option pictures left out, 'droppedhold' => why]
      */
-    public static function quote(stdClass $book, int $userid, array $plans, ?string $result = null): array {
+    public static function quote(
+        stdClass $book,
+        int $userid,
+        array $plans,
+        ?string $result = null,
+        ?string $idempotencykey = null
+    ): array {
         global $DB;
         self::expire_quotes((int)$book->id);
         $batch = \core\uuid::generate();
@@ -508,7 +514,8 @@ class requests {
                 'operation' => $operation,
                 'targetid' => $targetid,
                 'part' => $part,
-                'idemkey' => \core\uuid::generate(),
+                'idemkey' => $operation === self::WRITE && $idempotencykey !== null
+                    ? $idempotencykey : \core\uuid::generate(),
                 'sitehash' => $sitehash,
                 'body' => json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 'maxcredits' => $price,

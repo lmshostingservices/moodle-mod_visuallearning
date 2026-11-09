@@ -53,6 +53,12 @@ class media {
     /** @var string File area of the AI-drawn animated SVG scenes (item: page id; one file, anim-<hash of its brief>.svg). */
     public const AREA_SVG = 'svg';
 
+    /** @var string File area of a teacher's own HTML shown in place of a page picture (item id: page id). */
+    public const AREA_HTML = 'html';
+
+    /** @var int Largest custom HTML file accepted, in bytes. */
+    public const HTML_MAX_BYTES = 2097152;
+
     /** @var string Aspect ratio of page and cover illustrations. */
     public const ASPECT = '4:3';
 
@@ -693,6 +699,86 @@ class media {
             }
         }
         return true;
+    }
+
+    /**
+     * Whether teachers' own HTML may be shown in place of page pictures on this site.
+     *
+     * @return bool
+     */
+    public static function html_enabled(): bool {
+        $value = get_config('mod_visuallearning', 'allowcustomhtml');
+        // On unless an administrator has switched it off.
+        return $value === false || $value === null || (bool)$value;
+    }
+
+    /**
+     * The teacher's own HTML shown in place of the page picture, or null (also null when the site has switched it off).
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param bool $evenifdisabled return it even when the site setting is off (the teacher's own screens)
+     * @return \stored_file|null
+     */
+    public static function html_file(\context $context, int $pageid, bool $evenifdisabled = false): ?\stored_file {
+        if (!$evenifdisabled && !self::html_enabled()) {
+            return null;
+        }
+        return self::image_file($context, self::AREA_HTML, $pageid);
+    }
+
+    /**
+     * Checks a teacher's HTML before it is saved.
+     *
+     * The HTML is not cleaned: it runs in a sandboxed frame with an origin of its own, so its scripts cannot reach
+     * Moodle. It only has to be a single, reasonably sized HTML document.
+     *
+     * @param string $html
+     * @return string|null the language string key of the problem, or null when it can be saved
+     */
+    public static function html_problem(string $html): ?string {
+        if (trim($html) === '') {
+            return 'customhtml_err_empty';
+        }
+        if (strlen($html) > self::HTML_MAX_BYTES) {
+            return 'customhtml_err_size';
+        }
+        if (!preg_match('/<\s*(html|body|div|svg|canvas|script|style|section|main|p|h[1-6]|table|span)\b/i', $html)) {
+            return 'customhtml_err_nothtml';
+        }
+        return null;
+    }
+
+    /**
+     * Saves a teacher's own HTML for a page (replacing any earlier one). The file name carries a hash of the HTML so
+     * browsers never show an old copy.
+     *
+     * @param \context $context
+     * @param int $pageid
+     * @param string $html
+     * @return \stored_file
+     */
+    public static function save_html(\context $context, int $pageid, string $html): \stored_file {
+        // A complete document, so the browser reads it as UTF-8 even when the paste is only a fragment.
+        if (!preg_match('/<!doctype|<html\b/i', $html)) {
+            $html = "<!doctype html>\n<html><head><meta charset=\"utf-8\">" .
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>\n" . $html .
+                "\n</body></html>\n";
+        }
+        $name = 'page-' . substr(sha1($html), 0, 16) . '.html';
+        self::delete_html($context, $pageid);
+        self::save($context, self::AREA_HTML, $pageid, $name, $html, 'text/html');
+        return self::image_file($context, self::AREA_HTML, $pageid);
+    }
+
+    /**
+     * Removes the teacher's own HTML from a page (the page shows its picture again).
+     *
+     * @param \context $context
+     * @param int $pageid
+     */
+    public static function delete_html(\context $context, int $pageid): void {
+        get_file_storage()->delete_area_files($context->id, 'mod_visuallearning', self::AREA_HTML, $pageid);
     }
 
     /**

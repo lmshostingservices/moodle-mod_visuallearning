@@ -80,7 +80,7 @@ if ($ADMIN->fulltree) {
             "$component/defaultapproach",
             get_string('settings_defaultapproach', $component),
             get_string('settings_defaultapproach_desc', $component),
-            \mod_visuallearning\local\approaches::NEW_DEFAULT,
+            \mod_visuallearning\local\approaches::DEFAULT,
             \mod_visuallearning\local\approaches::options()
         )
     );
@@ -100,6 +100,14 @@ if ($ADMIN->fulltree) {
             get_string('settings_defaultpicturemode_desc', $component),
             \mod_visuallearning\local\picture_modes::SINGLE,
             \mod_visuallearning\local\picture_modes::form_options()
+        )
+    );
+    $settings->add(
+        new admin_setting_configcheckbox(
+            "$component/allowcustomhtml",
+            get_string('settings_allowcustomhtml', $component),
+            get_string('settings_allowcustomhtml_desc', $component),
+            1
         )
     );
     $settings->add(

@@ -1,0 +1,51 @@
+[
+  {
+    "file": "01-sun.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true
+  },
+  {
+    "file": "02-evaporation.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true
+  },
+  {
+    "file": "03-transpiration.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true
+  },
+  {
+    "file": "04-rising-air.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true
+  },
+  {
+    "file": "05-condensation.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true
+  },
+  {
+    "file": "06-precipitation.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true
+  },
+  {
+    "file": "07-groundwater.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true
+  },
+  {
+    "file": "08-complete-cycle.json",
+    "javascript": true,
+    "php": true,
+    "stageContinuity": true,
+    "visibleLoopBoundary": true
+  }
+]

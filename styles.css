@@ -5528,29 +5528,6 @@
     line-height: 1.4;
 }
 
-/* Cards that fit beside the picture span it exactly (set by the player): top card on the picture's top edge, bottom
-   card on its bottom edge, an even gap between each, and any spare height shared equally between the cards. */
-.mod-visuallearning .pb-spread.is-aligned > .pb-text {
-    overflow: visible;
-}
-
-.mod-visuallearning .pb-spread.is-aligned .pb-text-inner {
-    margin: var(--pb-cards-top, 0) 0 0;
-    height: var(--pb-cards-h, auto);
-}
-
-.mod-visuallearning .pb-spread.is-aligned .pb-cards {
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-.mod-visuallearning .pb-spread.is-aligned .pb-card {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
 /* ---------- Zoom: any picture opens full screen ---------- */
 .mod-visuallearning .vl-zoomable {
     cursor: zoom-in;
@@ -5784,91 +5761,146 @@ img.vl-zoom-item {
     padding-bottom: 54px;
 }
 
-/* ---------- Settings: "AI Assistant Instructions" pop-up under "What to teach" ---------- */
-.vl-aiassist-open {
-    margin-top: -.25rem;
+/* ---------- A teacher's own HTML in place of the page picture (amd/src/htmlembed.js) ---------- */
+.mod-visuallearning .pb-diagram.is-htmlembed {
+    position: relative;
+    aspect-ratio: 10 / 7;
+    background: #fff;
 }
 
-.vl-aiassist {
-    width: min(760px, calc(100vw - 32px));
-    max-height: calc(100vh - 48px);
-    padding: 0;
+.mod-visuallearning .pb-page-figure.has-diagram .pb-diagram.is-htmlembed {
+    width: min(100cqw, 142.86cqh);
+}
+
+.mod-visuallearning.is-narrow .pb-page-figure.has-diagram .pb-diagram.is-htmlembed {
+    width: 100%;
+}
+
+/* Like an animated scene, the HTML gets most of the width so it stays large enough to read. */
+.mod-visuallearning:not(.is-narrow) .pb-spread:has(.pb-diagram.is-htmlembed) {
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.vl-htmlembed {
+    display: block;
+    width: 100%;
+    height: 100%;
     border: 0;
-    border-radius: 14px;
-    box-shadow: 0 30px 70px -20px rgba(15, 23, 42, .5);
-    color: #1f2433;
+    background: #fff;
 }
 
-.vl-aiassist[open] {
-    display: flex;
-    flex-direction: column;
+/* Full screen: the Fullscreen API where there is one, otherwise the frame fills the window. */
+.is-htmlembed:fullscreen,
+.is-htmlembed.is-expanded {
+    width: 100vw !important;
+    height: 100vh;
+    aspect-ratio: auto;
+    border-radius: 0;
+    background: #fff;
 }
 
-.vl-aiassist::backdrop {
-    background: rgba(15, 23, 42, .55);
+.is-htmlembed.is-expanded:not(:fullscreen) {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
 }
 
-.vl-aiassist-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 16px 20px 0;
+html.vl-htmlembed-open {
+    overflow: hidden;
 }
 
-.vl-aiassist-head h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-
-.vl-aiassist-actions {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    flex-shrink: 0;
-}
-
-.vl-aiassist-copy {
-    min-width: 6rem;
-}
-
-.vl-aiassist-close {
-    width: 36px;
-    height: 36px;
-    padding: 0;
+.vl-htmlembed-close {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    width: 44px;
+    height: 44px;
     border: 0;
     border-radius: 50%;
-    background: transparent;
-    color: #64748b;
-    font-size: 1.6rem;
-    line-height: 1;
+    background: rgba(15, 23, 42, .78);
+    color: #fff;
+    font-size: 28px;
+    line-height: 44px;
+    text-align: center;
+    cursor: pointer;
+    z-index: 2;
 }
 
-.vl-aiassist-close:hover,
-.vl-aiassist-close:focus-visible {
-    background: #f1f5f9;
-    color: #1f2433;
+.vl-htmlembed-close:focus-visible {
+    outline: 3px solid #0e88ff;
+    outline-offset: 2px;
 }
 
-.vl-aiassist-intro {
-    margin: .5rem 20px .75rem;
-    color: #475569;
+/* The teacher's screen: preview, prompt and form. */
+.vl-customhtml {
+    max-width: 1100px;
 }
 
-.vl-aiassist-text {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
-    margin: 0 20px 20px;
-    padding: 14px 16px;
+.vl-customhtml .vl-lead {
+    max-width: 75ch;
+}
+
+.vl-customhtml-preview {
+    margin: 1rem 0 1.5rem;
+}
+
+.vl-customhtml-tests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.vl-customhtml-stage {
+    position: relative;
+    aspect-ratio: 10 / 7;
+    max-width: 900px;
+    margin: 1rem 1.25rem 0;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #f8fafc;
-    color: #1f2433;
-    font-family: inherit;
-    font-size: .92rem;
-    line-height: 1.55;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.vl-customhtml-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.vl-customhtml-actions form {
+    margin: 0;
+}
+
+.vl-customhtml-prompt {
+    margin-bottom: 1.5rem;
+}
+
+.vl-customhtml-prompt summary {
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.vl-customhtml .vl-code,
+.vl-customhtml textarea.vl-code {
+    font-family: SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: .85rem;
+    white-space: pre;
+}
+
+.vl-media-card.has-customhtml .vl-media-thumb {
+    position: relative;
+}
+
+.vl-media-card.has-customhtml .vl-media-thumb::after {
+    content: "</>";
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: #7f10f9;
+    color: #fff;
+    font: 700 11px/1.4 SFMono-Regular, Menlo, Consolas, monospace;
 }

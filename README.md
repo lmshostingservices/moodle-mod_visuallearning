@@ -33,7 +33,7 @@ narration are made automatically.
 | Photo-realistic | OpenAI GPT Image 2.5 Flare | real equipment and settings |
 | 3D diagram | OpenAI GPT Image 2.5 Flare | realistic 3D organs and machines with flow arrows |
 | Technical model | OpenAI GPT Image 2.5 Flare | section views and schematics with exact labels |
-| Hand-drawn sketch | OpenAI GPT Image 2.5 Flare | a teacher's sketchnote on graph paper |
+| Hand-drawn sketch | OpenAI GPT Image 2.5 Flare | a teacher's sketchnote on plain off-white paper, without background grids |
 
 Animated diagrams are drawn by Claude, as SVG.
 
@@ -46,6 +46,22 @@ Animated diagrams are drawn by Claude, as SVG.
   bundled label font (Plus Jakarta Sans), colour that carries meaning, and parts that change shape or move the way
   the real thing does.
 - Every SVG is cleaned by the plugin's safety filter before it is saved or shown.
+
+## Your own HTML in place of a picture (1.9.0)
+
+Any page picture can be replaced with the teacher's own HTML: an animated chart, numbers that count up, a drill-down,
+anything made in Claude or by hand. On **Pictures and voice**, open **Remake…** on a page, choose **Use my own HTML…**,
+upload the .html file (or paste it), add a description for screen readers and preview it.
+
+- The HTML runs in a sandboxed frame with an origin of its own (and the file is served with a CSP sandbox header), so
+  its scripts cannot reach Moodle or the learner's session. Learners can click inside it; the magnifier opens it full
+  screen.
+- While each key point is read aloud, the player posts a message to the frame:
+  `{source: 'visuallearning', type: 'vl:card', card: 1-3, ms}`, then `vl:finish` (card 0-4), `vl:pause` and
+  `vl:reset`, each with `reducedMotion`. The screen has a ready-made Claude prompt with the page's key points and
+  this protocol, and preview buttons that send the same messages.
+- The page picture is kept for the recap, the cover, pick-the-picture questions and the Word export.
+- Capability `mod/visuallearning:addcustomhtml`; site setting **Teachers can use their own HTML** (on by default).
 
 ## Requirements
 

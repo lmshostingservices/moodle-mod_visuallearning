@@ -1,0 +1,85 @@
+{
+  "provenance": "authored-visual-benchmark",
+  "sceneVersions": [
+    "1.0",
+    "1.1"
+  ],
+  "palette": {
+    "sun": "#FFCA45",
+    "ocean": "#1265B2",
+    "water": "#16B9C5",
+    "vapour": "#8DE7F0",
+    "cloud": "#F8FCFF",
+    "shadow": "#A9C3D5",
+    "forest": "#38A86A",
+    "soil": "#A67C52",
+    "rock": "#64748B",
+    "sky": "#EAF7FF"
+  },
+  "scenes": [
+    {
+      "file": "01-sun.json",
+      "version": "1.0",
+      "title": "The Sun powers the water cycle",
+      "objects": 94,
+      "paths": 25,
+      "stages": 3
+    },
+    {
+      "file": "02-evaporation.json",
+      "version": "1.0",
+      "title": "The invisible journey of evaporation",
+      "objects": 148,
+      "paths": 27,
+      "stages": 3
+    },
+    {
+      "file": "03-transpiration.json",
+      "version": "1.0",
+      "title": "Water’s secret journey through a tree",
+      "objects": 121,
+      "paths": 30,
+      "stages": 3
+    },
+    {
+      "file": "04-rising-air.json",
+      "version": "1.0",
+      "title": "Rising air expands and cools",
+      "objects": 104,
+      "paths": 23,
+      "stages": 3
+    },
+    {
+      "file": "05-condensation.json",
+      "version": "1.0",
+      "title": "The birth of a cloud",
+      "objects": 148,
+      "paths": 24,
+      "stages": 3
+    },
+    {
+      "file": "06-precipitation.json",
+      "version": "1.0",
+      "title": "When clouds release rain",
+      "objects": 123,
+      "paths": 25,
+      "stages": 3
+    },
+    {
+      "file": "07-groundwater.json",
+      "version": "1.0",
+      "title": "The hidden world beneath our feet",
+      "objects": 95,
+      "paths": 28,
+      "stages": 3
+    },
+    {
+      "file": "08-complete-cycle.json",
+      "version": "1.1",
+      "title": "One connected, living water cycle",
+      "objects": 129,
+      "paths": 28,
+      "stages": 3
+    }
+  ]
+}
