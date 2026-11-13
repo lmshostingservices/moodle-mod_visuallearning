@@ -2,6 +2,17 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.9.3] - 2026-11-13
+
+- "Make it with Claude" prompt for "Use my own HTML" now asks for:
+  - everything built into the one file, with no libraries, fonts or images loaded from other websites (charts in plain
+    SVG or canvas), so the file keeps working with nothing outside it to break;
+  - accessibility: WCAG 2.2 AA contrast, no meaning by colour alone, full keyboard use with visible focus, real
+    buttons, a role="img" summary label and an aria-live region for changing numbers;
+  - mobile: fits any screen from a phone held upright, with 44 px tap targets;
+  - reduced motion from the browser setting as well as the lesson's message.
+- Language string change only. No database or code changes.
+
 ## [1.9.2] - 2026-11-09
 
 - Built on 1.8.14 (AI Course Builder adapter): adds the "Use my own HTML" feature from 1.9.0 and 1.9.1, which that

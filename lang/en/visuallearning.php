@@ -710,9 +710,11 @@ Page: {$a->title}
 What to show: [describe it here, for example an animated bar chart of the figures, with numbers that count up and bars learners can tap to see the detail]
 
 Requirements:
-- One HTML file with its CSS and JavaScript inside. Avoid other files. If you need a chart library, load one exact version from cdnjs.cloudflare.com.
-- It fills a box of about 800 by 560 pixels and resizes to fit any size, with no scrolling. Light background, large readable text.
-- No logins, no forms that send data, no localStorage or cookies, and no calls to other websites.
+- One HTML file with all its CSS and JavaScript written inside it. Do not load anything from other websites: no libraries, fonts or images from a CDN. Draw charts with plain SVG or canvas, so the file keeps working for years with nothing to break.
+- It fills a box of about 800 by 560 pixels and resizes to fit any size, from a phone held upright to a large screen, with no scrolling. Tap targets are at least 44 by 44 pixels. Light background, large readable text.
+- Accessible: text and important graphics meet WCAG 2.2 AA colour contrast (4.5:1 for text). Never use colour alone to show meaning; add a label, number or pattern. Everything learners can click also works with the keyboard (Tab, Enter and Space) and shows a clear focus outline. Use real buttons for controls. Give the main graphic a role="img" and an aria-label that sums up what it shows, and put changing numbers in an aria-live="polite" region so screen readers announce the result.
+- Respect reduced motion: also check the prefers-reduced-motion media query, and when it is set show the end state without movement.
+- No logins, no forms that send data, no localStorage or cookies, and no network calls of any kind.
 - The lesson tells the page which key point is being read aloud with window messages (check event.data.source === "visuallearning"):
   {type: "vl:card", card: 1, 2 or 3, ms} key point N is being read for ms milliseconds: animate its part over that time.
   {type: "vl:finish", card: N} show everything up to key point N at once (4 means everything).
