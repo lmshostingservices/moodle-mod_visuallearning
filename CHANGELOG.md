@@ -2,6 +2,16 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.9.4] - 2026-11-14
+
+- Every card is now written as exactly two sentences. The writer brief (LMS Labs AI and the ChatGPT prompt file)
+  asked for "1-2 sentences", and its example pages had one-sentence cards, so most cards came back as a single
+  sentence. The brief now asks for exactly two (never one, never three), with the second adding a reason, detail or
+  example, still within the 230-character limit per card. Both example pages (story and science approaches) now show
+  two-sentence cards, and the card help text says "2 short sentences".
+- New test: the writer brief asks for exactly two sentences and no longer says "1-2 sentences".
+- Applies to lessons written from now on. Existing cards are not changed. No database or server route changes.
+
 ## [1.9.3] - 2026-11-13
 
 - "Make it with Claude" prompt for "Use my own HTML" now asks for:

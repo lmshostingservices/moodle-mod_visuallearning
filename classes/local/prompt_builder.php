@@ -257,8 +257,10 @@ STEP 3 - WRITE EACH PAGE (THREE CARDS)
 {$cardsbrief}
 Writing rules for the cards:
 - Plain, warm, confident language. Short sentences (under 25 words each). Active voice.
-- Each card is AT MOST 230 characters, and never more than 250 (the narrator reads one card per clip; a longer
-  card makes the whole lesson fail its delivery check).
+- Each card is EXACTLY TWO sentences: never one, never three. The second sentence adds a reason, a detail or an
+  example that helps the learner; it never just repeats the first. Check every card before you answer.
+- Each card is AT MOST 230 characters for both sentences together, and never more than 250 (the narrator reads
+  one card per clip; a longer card makes the whole lesson fail its delivery check).
 - Written to be READ ALOUD: no bullet points, no brackets, no abbreviations or acronyms without
   saying them in full first, no symbols (write "per cent", not "%"; "and", not "&").
 - Each card must make sense when heard on its own, and the three cards must read as one flowing story.

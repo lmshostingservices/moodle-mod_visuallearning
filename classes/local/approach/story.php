@@ -78,11 +78,11 @@ TXT;
         return <<<TXT
 Every page has:
 - "title": the concept in 2-7 words (shown as the page heading and in the contents page).
-- "concept": Card 1 - THE IDEA. 1-2 sentences stating the concept and why it matters.
-- "action": Card 2 - THE ACTION. 1-2 sentences describing ONE specific, concrete thing a person
+- "concept": Card 1 - THE IDEA. Exactly 2 sentences stating the concept and why it matters.
+- "action": Card 2 - THE ACTION. Exactly 2 sentences describing ONE specific, concrete thing a person
   does in a real {$where} workplace to apply the concept. Use a named character
   from the cast (see Step 5) doing the action. This is exactly what the picture will show.
-- "outcome": Card 3 - THE OUTCOME. 1-2 sentences describing the consequence or positive result of
+- "outcome": Card 3 - THE OUTCOME. Exactly 2 sentences describing the consequence or positive result of
   that action (or, where it teaches better, the negative consequence of NOT doing it).
 
 TXT;
@@ -99,8 +99,8 @@ Example of ONE good page (topic: promoting teamwork, English, Australia):
   title:   "Teams that bond work better"
   concept: "It's important for everyone in a team to get to know each other. People work together
             more easily when they feel connected."
-  action:  "So, supervisor Maya organises a Friday team get-together at the local pub, where everyone
-            relaxes and chats over a drink."
+  action:  "So, supervisor Maya organises a Friday team get-together at the local pub. Everyone relaxes,
+            chats over a drink and swaps stories from the week."
   outcome: "The team gets to know each other better and starts to trust one another. Back at work,
             they share ideas and help each other more."
   summary: "Teams that take time to bond trust each other and work better together."

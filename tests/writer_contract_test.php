@@ -45,6 +45,8 @@ final class writer_contract_test extends \advanced_testcase {
         $this->assertStringNotContainsString('leave "image_prompt" empty', $brief);
         $this->assertStringContainsString('still write a short "image_prompt"', $brief);
         $this->assertStringContainsString('never more than 250', $brief);
+        $this->assertStringContainsString('EXACTLY TWO sentences', $brief);
+        $this->assertStringNotContainsString('1-2 sentences', $brief);
         $this->assertStringContainsString('the characters < or >', $brief);
         $this->assertDoesNotMatchRegularExpression('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', $brief);
         $body = \mod_visuallearning\local\ai\requests::write_body($book);

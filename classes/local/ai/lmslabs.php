@@ -125,7 +125,7 @@ class lmslabs {
         return is_int($max) ? max(self::MAX_PROMPT, min(self::MAX_PROMPT_CEILING, $max)) : self::MAX_PROMPT;
     }
 
-    /** @var int Longest clip, in characters (a card is 1-2 short sentences). */
+    /** @var int Longest clip, in characters (a card is 2 short sentences). */
     public const MAX_CLIP = 300;
 
     /** @var int Longest teaching content sent for a draft, in characters. */

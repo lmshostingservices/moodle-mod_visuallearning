@@ -68,7 +68,7 @@ TXT;
 Every page has:
 - "title": the concept in 2-7 words (shown as the page heading and in the contents page).
 - Three KEY POINTS that build the learner's understanding of this one concept, in order. Each is
-  1-2 sentences and adds ONE new fact or principle; together they explain the concept fully:
+  exactly 2 sentences and adds ONE new fact or principle; together they explain the concept fully:
   - "concept": KEY POINT 1 - the core idea: what it is or what happens.
   - "action": KEY POINT 2 - how it works: the mechanism, the cause, or the next principle that
     builds on point 1. The picture explains this.
@@ -88,12 +88,12 @@ TXT;
         return <<<'TXT'
 Example of ONE good page (topic: alternating current, English, Australia):
   title:   "How alternating current works"
-  concept: "Alternating current keeps reversing direction, flowing one way and then the other, over and
-            over again."
-  action:  "Australia's supply alternates at fifty hertz, which means fifty complete cycles of forward and
+  concept: "Alternating current keeps reversing direction, flowing one way and then the other. It does
+            this over and over again, many times every second."
+  action:  "Australia's supply alternates at fifty hertz. That means fifty complete cycles of forward and
             reverse flow happen every second."
-  outcome: "So each cycle lasts twenty milliseconds: one positive half-cycle followed by one negative
-            half-cycle."
+  outcome: "So each cycle lasts twenty milliseconds. It is made of one positive half-cycle followed by one
+            negative half-cycle."
   summary: "Alternating current reverses fifty times a second in Australia, each cycle taking twenty milliseconds."
   question: {"type": "truefalse", "statement": "At fifty hertz, one complete cycle takes twenty milliseconds.",
             "answer": true, "feedback": "Fifty cycles fit into one second, so each cycle lasts one fiftieth of a
