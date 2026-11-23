@@ -41,10 +41,27 @@ class importer {
                 'visuallearningid' => $book->id, 'pagenum' => $number, 'title' => $page['title'],
                 'concepttext' => $page['concept'], 'actiontext' => $page['action'], 'outcometext' => $page['outcome'],
                 'imageprompt' => $page['image_prompt'], 'alttext' => $page['alt_text'], 'summarytext' => $page['summary'],
+                'outcomes' => self::outcome_field($book, $page),
                 'imagestatus' => VISUALLEARNING_MEDIA_PENDING, 'audiostatus' => VISUALLEARNING_MEDIA_PENDING,
                 'timemodified' => time(),
             ] + self::picture_fields($page)
         ));
+    }
+
+    /**
+     * The stored outcome ids for a parsed page: its codes mapped to the lesson's linked outcomes (unknown codes dropped).
+     *
+     * @param \stdClass $book
+     * @param array $page
+     * @param \stdClass[]|null $linked The lesson's outcomes, when already known
+     * @return string|null
+     */
+    public static function outcome_field(\stdClass $book, array $page, ?array $linked = null): ?string {
+        $codes = $page['outcomes'] ?? [];
+        if (!$codes) {
+            return null;
+        }
+        return outcomes::to_field(outcomes::codes_to_ids($codes, $linked ?? outcomes::for_book($book)));
     }
 
     /**
@@ -124,6 +141,7 @@ class importer {
                 'image_prompt' => self::clean($p['image_prompt'] ?? ''),
                 'alt_text' => self::clean($p['alt_text'] ?? ''),
                 'summary' => self::clean($p['summary'] ?? ''),
+                'outcomes' => outcomes::clean_codes($p['outcomes'] ?? []),
                 'question' => question::from_ai($p),
                 'card_image_prompts' => self::card_prompts($p['card_image_prompts'] ?? null),
                 'diagram' => diagram::clean($p['diagram'] ?? null),
@@ -228,6 +246,7 @@ class importer {
         }
         $DB->update_record('visuallearning', $update);
 
+        $linked = outcomes::for_book($book);
         $n = 1;
         foreach ($data['pages'] as $p) {
             $DB->insert_record(
@@ -242,6 +261,7 @@ class importer {
                     'imageprompt' => $p['image_prompt'],
                     'alttext' => $p['alt_text'],
                     'summarytext' => $p['summary'],
+                    'outcomes' => self::outcome_field($book, $p, $linked),
                     'imagestatus' => VISUALLEARNING_MEDIA_PENDING,
                     'audiostatus' => VISUALLEARNING_MEDIA_PENDING,
                     'timemodified' => time(),

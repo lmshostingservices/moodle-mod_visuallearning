@@ -96,7 +96,7 @@ final class backup_restore_test extends \advanced_testcase {
 
         $newbook = $DB->get_record('visuallearning', ['course' => $target->id], '*', MUST_EXIST);
         $newcm = get_coursemodule_from_instance('visuallearning', $newbook->id);
-        $newpages = $DB->get_records('visuallearning_pages', ['visuallearningid' => $newbook->id]);
+        $newpages = $DB->get_records('visuallearning_pages', ['visuallearningid' => $newbook->id], 'pagenum');
         $this->assertCount(2, $newpages);
         $restored = array_values($newpages);
         $this->assertSame($plan, $restored[0]->sceneplan);

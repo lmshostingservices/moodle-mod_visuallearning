@@ -952,6 +952,17 @@ class Player {
         }
         this.q('.pb-cover-learnheading').textContent = this.str('coverlearn');
 
+        // The Moodle learning outcomes the lesson teaches, when the teacher shows them.
+        const outcomes = Array.isArray(this.data.outcomes) ? this.data.outcomes : [];
+        const outcomesBox = this.q('.pb-cover-outcomes');
+        if (outcomesBox && outcomes.length) {
+            this.q('.pb-cover-outcomesheading').textContent = this.str('coveroutcomes');
+            this.q('.pb-cover-outcomelist').innerHTML = outcomes.map((o) =>
+                '<li class="pb-cover-outcome"><span class="pb-cover-outcome-code">' + esc(o.code) +
+                '</span><span class="pb-cover-outcome-text">' + esc(o.name) + '</span></li>').join('');
+            outcomesBox.hidden = false;
+        }
+
         // How it works: listen, recap, check (only the parts this lesson has).
         const how = [];
         how.push(['is-listen', HEADPHONES_SVG, this.str('steplisten'),

@@ -152,6 +152,20 @@ With **Match the country of the narration language** (the default), the language
 
 Choose **International / neutral** for a mixed, location-neutral cast.
 
+## Learning outcomes (Moodle 5.3)
+
+Tick learning outcomes in the activity's settings (Moodle's Learning outcomes section; outcomes must be enabled for the
+site). AI Visual Learning then:
+
+- writes the lesson to those outcomes and tags each page with the outcomes it teaches;
+- shows coverage on **Check your pages**, warning about any outcome not taught yet (you can tag pages yourself);
+- lists the outcomes on the lesson's opening page (**Show learning outcomes**, on by default);
+- optionally rates scaled outcomes from the check questions (**Rate learning outcomes**, off by default; a teacher's
+  rating is never changed);
+- adds an outcome mapping and Moodle's outcome import file to **Download all content**.
+
+Scale-less outcomes need Moodle 5.3; scaled outcomes work on every supported version.
+
 ## Reusing the content
 
 On the **Ready** step, **Download all content** gives one ZIP (free, nothing is sent to LMS Labs):

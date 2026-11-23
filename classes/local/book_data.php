@@ -142,7 +142,7 @@ class book_data {
             ['start', 'continuefrom', 'startover', 'contents', 'close', 'previous', 'next', 'finish', 'pause',
                 'play', 'replay', 'pageof', 'listenedof', 'taptolisten', 'finishedtitle', 'finishedtext',
                 'readagain', 'backtocourse', 'nextactivity', 'coverabout', 'coveraboutauto', 'coveraboutautoone',
-                'coverhow', 'coverlearn', 'coverpage', 'coverpages', 'coverpart', 'coverpassall', 'coverpasssome',
+                'coverhow', 'coverlearn', 'coveroutcomes', 'coverpage', 'coverpages', 'coverpart', 'coverpassall', 'coverpasssome',
                 'coverquestion', 'coverquestions', 'coverrecap', 'coverthen', 'factminutes', 'factpage', 'factpages',
                 'factquestion', 'factquestions', 'stepcheck', 'stepchecktext', 'steplisten', 'steplistenfree',
                 'steplistenlinear', 'steprecap', 'steprecaptext', 'steprecaponce', 'stepcheckonce',
@@ -188,6 +188,11 @@ class book_data {
             'courseurl' => (new \moodle_url('/course/view.php', ['id' => $cm->course]))->out(false),
             'nextactivity' => self::next_activity($cm, $userid),
             'grade' => self::grade_info($book),
+            // The learning outcomes linked to the activity, shown on the opening page when the teacher chooses.
+            'outcomes' => !isset($book->showoutcomes) || !empty($book->showoutcomes)
+                ? array_values(array_map(fn($o) => ['code' => $o->code,
+                    'name' => format_string($o->name, true, ['context' => $context])], outcomes::for_cm($cm)))
+                : [],
             'strings' => $strings,
         ];
     }

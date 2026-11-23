@@ -2,6 +2,38 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.10.0] - 2026-11-24
+
+### Moodle 5.3 learning outcomes
+- AI Visual Learning now supports Moodle learning outcomes. The Learning outcomes section appears on the activity's
+  settings (it was switched off before), and its links show on Moodle 5.3's course Learning outcomes page.
+  Scale-less outcomes (Moodle 5.3) and scaled outcomes (every version) both work.
+- The lesson is written to the ticked outcomes. They travel in the lesson inputs (so LMS Labs AI and the ChatGPT prompt
+  both see them), and the writer tags every page with the codes of the outcomes it teaches. Unknown codes are dropped.
+- Check your pages shows outcome coverage: each outcome with the pages that teach it, and a warning (never a block) for
+  any outcome not taught yet. Each page shows its outcome tags; teachers can change them on the page editor.
+- Show learning outcomes (on by default): the lesson's opening page lists them for learners.
+- Rate learning outcomes (off by default): scaled outcomes are rated from the check questions once every question on
+  the outcome's pages is right. All right first time gives the top of the scale. A teacher's rating is never changed,
+  and each outcome is rated once.
+- Download all content adds outcomes/mapping.csv (outcome, pages, check questions: evidence for auditors) and
+  outcomes/learning-outcomes-import.csv (Moodle's own import format).
+- Backup and restore keep page tags, pointing at the restored outcomes.
+- Database: showoutcomes and outcomerating on the activity, outcomes on pages (upgrade step 2026112400).
+
+### Moodle Design System look
+- The plugin's colours now come from the Moodle Design System tokens: Moodle blue instead of indigo, MDS neutrals and
+  feedback colours, and MDS radii (8px controls, 12px cards, 16px panels). On Moodle 5.3 it follows the site's brand
+  colour and Boost dark mode; earlier versions get MDS's own values.
+- Premium finish on top: MDS button shapes with a crisp edge and highlight, hairline borders, soft layered shadows,
+  a visible focus halo and 150 ms transitions (none when reduced motion is set).
+- Idea, action and outcome cards keep their colour coding (blue, teal, orange), mixed so they stay readable in dark mode.
+- Animated diagrams, scenes and full-screen viewers keep their own colours.
+
+### Tests
+- New outcomes_test (8 tests). Fixed a backup test that depended on database row order.
+- Full suite on Moodle 5.3.1+ (PHP 8.3, PostgreSQL 16): 127 tests, 1,248 assertions.
+
 ## [1.9.4] - 2026-11-14
 
 - Every card is now written as exactly two sentences. The writer brief (LMS Labs AI and the ChatGPT prompt file)

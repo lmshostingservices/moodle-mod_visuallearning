@@ -167,9 +167,11 @@ if ($action === 'edit' || $action === 'add') {
     if ($action === 'add' && $count >= 20) {
         redirect($baseurl, get_string('maxpagesreached', 'mod_visuallearning'), null, \core\output\notification::NOTIFY_ERROR);
     }
+    $linkedoutcomes = \mod_visuallearning\local\outcomes::for_cm($cm);
     $form = new \mod_visuallearning\form\page_form(
         new moodle_url($baseurl, ['action' => $action, 'pageid' => $pageid]),
-        ['cmid' => $cm->id, 'approach' => $book->teachingapproach ?? null, 'picturemode' => $book->picturemode ?? null]
+        ['cmid' => $cm->id, 'approach' => $book->teachingapproach ?? null, 'picturemode' => $book->picturemode ?? null,
+            'outcomes' => array_map(fn($o) => $o->code . ': ' . $o->name, $linkedoutcomes)]
     );
     if ($form->is_cancelled()) {
         redirect(new moodle_url($baseurl, ['step' => 2]));
@@ -185,6 +187,12 @@ if ($action === 'edit' || $action === 'add') {
             'summarytext' => $data->summarytext,
             'timemodified' => time(),
         ];
+        if ($linkedoutcomes) {
+            // Only the activity's own outcomes can be tagged; anything else on the form is ignored.
+            $chosen = array_values(array_intersect(array_map('intval', (array)($data->outcomeids ?? [])),
+                array_map('intval', array_keys($linkedoutcomes))));
+            $record->outcomes = \mod_visuallearning\local\outcomes::to_field($chosen);
+        }
         // Card picture prompts and the diagram are only on the form in their picture mode; elsewhere they are kept.
         if (property_exists($data, 'cardprompt1')) {
             $cards = importer::card_prompts([$data->cardprompt1, $data->cardprompt2 ?? '', $data->cardprompt3 ?? '']);
@@ -213,6 +221,8 @@ if ($action === 'edit' || $action === 'add') {
                 'title' => $record->title, 'concept' => $record->concepttext, 'action' => $record->actiontext,
                 'outcome' => $record->outcometext, 'image_prompt' => $record->imageprompt,
                 'alt_text' => $record->alttext, 'summary' => $record->summarytext,
+                'outcomes' => array_map(fn($id) => $linkedoutcomes[$id]->code,
+                    \mod_visuallearning\local\outcomes::page_ids($record)),
                 'question' => \mod_visuallearning\local\question::from_form($data),
                 'card_image_prompts' => json_decode((string)($record->cardprompts ?? ''), true) ?: [],
                 'diagram' => \mod_visuallearning\local\diagram::clean($record->diagram ?? null),
@@ -244,6 +254,7 @@ if ($action === 'edit' || $action === 'add') {
                 'actiontext' => $page->actiontext, 'outcometext' => $page->outcometext,
                 'imageprompt' => $page->imageprompt, 'alttext' => $page->alttext,
                 'summarytext' => $page->summarytext,
+                'outcomeids' => \mod_visuallearning\local\outcomes::page_ids($page),
                 'cardprompt1' => \mod_visuallearning\local\picture_modes::card_prompts($page)[0],
                 'cardprompt2' => \mod_visuallearning\local\picture_modes::card_prompts($page)[1],
                 'cardprompt3' => \mod_visuallearning\local\picture_modes::card_prompts($page)[2],
@@ -442,6 +453,35 @@ echo html_writer::end_tag('section');
 echo html_writer::start_tag('section', ['class' => 'vl-slide', 'data-slide' => 2, 'aria-labelledby' => 'vl-slide-2']);
 echo html_writer::tag('h3', get_string('wizard_title_2', 'mod_visuallearning'), ['id' => 'vl-slide-2', 'tabindex' => '-1']);
 echo html_writer::tag('p', get_string('wizard_intro_2', 'mod_visuallearning', $total), ['class' => 'vl-slide-intro']);
+// Learning outcome coverage: which pages teach each outcome linked to the activity (a warning only, never a block).
+$pageoutcomes = \mod_visuallearning\local\outcomes::for_cm($cm);
+if ($pageoutcomes && $total) {
+    $coverage = \mod_visuallearning\local\outcomes::coverage($pageoutcomes, $pages);
+    $missing = count(array_filter($coverage, fn($nums) => !$nums));
+    $chips = '';
+    foreach ($pageoutcomes as $o) {
+        $nums = $coverage[$o->id];
+        $chips .= html_writer::tag('li',
+            html_writer::span(s($o->code), 'vl-outcome-code') .
+            html_writer::span(s($o->name), 'vl-outcome-name') .
+            html_writer::span($nums ? get_string(count($nums) === 1 ? 'outcome_taughtonone' : 'outcome_taughton',
+                'mod_visuallearning', implode(', ', $nums))
+                : get_string('outcome_nottaught', 'mod_visuallearning'), 'vl-outcome-status'),
+            ['class' => 'vl-outcome ' . ($nums ? 'is-covered' : 'is-missing'), 'title' => s($o->text)]);
+    }
+    echo html_writer::div(
+        html_writer::div(
+            html_writer::tag('h4', get_string('outcomes_coverage', 'mod_visuallearning')) .
+            html_writer::span($missing ? get_string('outcomes_missing', 'mod_visuallearning', $missing)
+                : get_string('outcomes_allcovered', 'mod_visuallearning'),
+                'vl-outcomes-summary ' . ($missing ? 'is-missing' : 'is-covered')),
+            'vl-outcomes-head') .
+        html_writer::tag('ul', $chips, ['class' => 'vl-outcomes-list']) .
+        ($missing ? html_writer::tag('p', get_string('outcomes_missinghelp', 'mod_visuallearning'), ['class' => 'vl-outcomes-help'])
+            : ''),
+        'vl-outcomes-coverage'
+    );
+}
 // Page thumbnails: the animated scene when the lesson has scenes and the page's scene is made, else the picture.
 $scenethumbs = \mod_visuallearning\local\picture_modes::of($book) === \mod_visuallearning\local\picture_modes::SVG;
 $thumbfile = function (stdClass $page) use ($context, $scenethumbs): ?stored_file {
@@ -467,6 +507,18 @@ foreach ($pages as $page) {
             html_writer::span(\mod_visuallearning\local\approaches::card_label($book, $card), 'pb-tag pb-tag-' . $card) .
                 s($page->{$card . 'text'}),
         );
+    }
+    if ($pageoutcomes) {
+        $tags = '';
+        foreach (\mod_visuallearning\local\outcomes::page_ids($page) as $oid) {
+            if (isset($pageoutcomes[$oid])) {
+                $tags .= html_writer::span(s($pageoutcomes[$oid]->code), 'vl-outcome-tag',
+                    ['title' => s($pageoutcomes[$oid]->name)]);
+            }
+        }
+        echo html_writer::div($tags !== '' ? $tags
+            : html_writer::span(get_string('pageoutcomes_none', 'mod_visuallearning'), 'vl-outcome-tag is-empty'),
+            'vl-page-outcomes', ['aria-label' => get_string('pageoutcomes', 'mod_visuallearning')]);
     }
     if ($book->enablequiz) {
         echo \mod_visuallearning\local\question::teacher_summary($page, $context, $book);

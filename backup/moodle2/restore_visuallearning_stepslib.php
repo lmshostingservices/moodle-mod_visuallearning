@@ -78,6 +78,15 @@ class restore_visuallearning_activity_structure_step extends restore_activity_st
                 $data->$field = 0;
             }
         }
+        // Learning outcome tags point at the restored outcomes. Ids with no mapping are kept for now and checked
+        // against the activity's linked outcomes once the gradebook is restored (after_restore).
+        if (!empty($data->outcomes)) {
+            $ids = [];
+            foreach (\mod_visuallearning\local\outcomes::page_ids($data) as $id) {
+                $ids[] = (int)($this->get_mappingid('outcome', $id) ?: $id);
+            }
+            $data->outcomes = \mod_visuallearning\local\outcomes::to_field($ids);
+        }
         $newid = $DB->insert_record('visuallearning_pages', $data);
         $this->set_mapping('visuallearning_page', $oldid, $newid, true);
     }
@@ -110,5 +119,28 @@ class restore_visuallearning_activity_structure_step extends restore_activity_st
         $this->add_related_files('mod_visuallearning', 'card', 'visuallearning_page');
         $this->add_related_files('mod_visuallearning', 'svg', 'visuallearning_page');
         $this->add_related_files('mod_visuallearning', 'html', 'visuallearning_page');
+    }
+
+    /**
+     * Keep only page outcome tags for outcomes the restored activity is linked to (the gradebook is restored by now).
+     */
+    protected function after_restore() {
+        global $DB;
+        $bookid = $this->get_new_parentid('visuallearning');
+        $cm = get_coursemodule_from_instance('visuallearning', $bookid, 0, false, IGNORE_MISSING);
+        if (!$cm) {
+            return;
+        }
+        \mod_visuallearning\local\outcomes::reset_cache();
+        $linked = array_map('intval', array_keys(\mod_visuallearning\local\outcomes::for_cm($cm)));
+        $pages = $DB->get_records_select('visuallearning_pages', 'visuallearningid = ? AND outcomes IS NOT NULL',
+            [$bookid], '', 'id, outcomes');
+        foreach ($pages as $page) {
+            $keep = \mod_visuallearning\local\outcomes::to_field(
+                array_intersect(\mod_visuallearning\local\outcomes::page_ids($page), $linked));
+            if ($keep !== $page->outcomes) {
+                $DB->set_field('visuallearning_pages', 'outcomes', $keep, ['id' => $page->id]);
+            }
+        }
     }
 }

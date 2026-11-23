@@ -369,6 +369,13 @@ class exporter {
         $files['lesson/' . $slug . '.docx'] = $this->docx();
         $files['lesson/' . $slug . '.md'] = $this->markdown();
         $files['lesson/pages.csv'] = $this->pages_csv();
+        // Learning outcomes: which pages and check questions cover each one (audit evidence), and Moodle's import file.
+        $cm = get_coursemodule_from_id('visuallearning', $this->context->instanceid, 0, false, IGNORE_MISSING);
+        $linked = $cm ? outcomes::for_cm($cm) : [];
+        if ($linked) {
+            $files['outcomes/mapping.csv'] = self::csv(outcomes::mapping_rows($linked, $this->pages));
+            $files['outcomes/learning-outcomes-import.csv'] = outcomes::import_csv($linked);
+        }
         if ($cover = media::image_file($this->context, media::AREA_COVER, 0)) {
             $files['pictures/cover.' . pathinfo($cover->get_filename(), PATHINFO_EXTENSION)] = $cover;
         }

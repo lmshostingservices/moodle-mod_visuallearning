@@ -318,6 +318,7 @@ JS
         }
 
         $this->standard_coursemodule_elements();
+        $this->add_outcome_settings();
         $this->add_price_estimate();
         $this->add_action_buttons();
     }
@@ -490,6 +491,33 @@ JS
     public function completion_rule_enabled($data) {
         $suffix = $this->get_suffix();
         return !empty($data['completionlistened' . $suffix]) || !empty($data['completionquiz' . $suffix]);
+    }
+
+    /**
+     * The lesson's own learning outcome settings, placed at the end of Moodle's Learning outcomes section.
+     */
+    protected function add_outcome_settings(): void {
+        $mform = $this->_form;
+        if (!$mform->elementExists('modoutcomes')) {
+            return; // Learning outcomes are off for the site, or none are available in this course.
+        }
+        $before = $mform->elementExists('modstandardelshdr') ? 'modstandardelshdr' : null;
+        $add = function ($element) use ($mform, $before) {
+            return $before ? $mform->insertElementBefore($element, $before) : $mform->addElement($element);
+        };
+        $add($mform->createElement('static', 'outcomesintro', '',
+            get_string('outcomes_formintro', 'mod_visuallearning')));
+        $add($mform->createElement('advcheckbox', 'showoutcomes', get_string('showoutcomes', 'mod_visuallearning'),
+            get_string('showoutcomes_label', 'mod_visuallearning')));
+        $mform->setDefault('showoutcomes', 1);
+        $mform->addHelpButton('showoutcomes', 'showoutcomes', 'mod_visuallearning');
+        $add($mform->createElement('advcheckbox', 'outcomerating', get_string('outcomerating', 'mod_visuallearning'),
+            get_string('outcomerating_label', 'mod_visuallearning')));
+        $mform->setDefault('outcomerating', 0);
+        $mform->addHelpButton('outcomerating', 'outcomerating', 'mod_visuallearning');
+        if ($mform->elementExists('enablequiz')) {
+            $mform->disabledIf('outcomerating', 'enablequiz', 'notchecked');
+        }
     }
 
     /**

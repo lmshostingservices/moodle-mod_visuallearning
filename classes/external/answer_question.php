@@ -131,6 +131,8 @@ class answer_question extends external_api {
         if ($newlypassed) {
             visuallearning_update_grades($book, (int)$USER->id);
             visuallearning_update_completion($course, $cm, (int)$USER->id);
+            // Scaled learning outcomes are rated once all their check questions are right (when the lesson asks).
+            \mod_visuallearning\local\outcomes::rate_user($book, $cm, (int)$USER->id);
         }
 
         $feedback = '';

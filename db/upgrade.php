@@ -275,5 +275,26 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026102302, 'visuallearning');
     }
+
+    if ($oldversion < 2026112400) {
+        // 1.10.0: Moodle learning outcomes. Pages are tagged with the outcomes they teach; lessons can show them to
+        // learners and rate scaled outcomes from the check questions.
+        $table = new xmldb_table('visuallearning');
+        $fields = [
+            new xmldb_field('showoutcomes', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'grade'),
+            new xmldb_field('outcomerating', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'showoutcomes'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        $table = new xmldb_table('visuallearning_pages');
+        $field = new xmldb_field('outcomes', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'sceneplan');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026112400, 'visuallearning');
+    }
     return true;
 }

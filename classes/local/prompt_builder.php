@@ -163,6 +163,10 @@ class prompt_builder {
         $extras = trim(self::lesson_extras($book));
         $extras = $extras !== '' ? $extras . "\n" : '';
         $material = self::material_block($book);
+        $outcomesrule = self::outcomes_rule($book);
+        $outcomeskey = $outcomesrule !== '' ? "      \"outcomes\": [\"string - outcome code\"],\n" : '';
+        $outcomescheck = $outcomesrule !== '' ? ' every page has an "outcomes" list using only the given codes, and'
+            . ' every outcome appears on at least one page where the content allows;' : '';
         $title = trim((string)$book->name);
         $place = self::culture($book);
         $quiz = !empty($book->enablequiz);
@@ -244,7 +248,7 @@ STEP 1 - BREAK THE CONTENT INTO CONCEPTS
 - Order the pages so they build logically: foundations first, then application, then the big picture.
 - Stay faithful to the content and the teacher's material. Do not invent facts, laws, figures or procedures
   that are not in them.
-  You may add realistic workplace examples to illustrate the content.
+  You may add realistic workplace examples to illustrate the content.{$outcomesrule}
 
 ------------------------------------------------
 STEP 2 - MAKE IT CULTURALLY RIGHT
@@ -302,7 +306,7 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
       "action": "string",
       "outcome": "string",
       "summary": "string",
-      {$questionexample}
+{$outcomeskey}      {$questionexample}
       "image_prompt": "string",
 {$modekey}      "alt_text": "string"
     }
@@ -310,7 +314,7 @@ You may wrap it in a ```json code block. Use exactly this structure and these ke
 }
 
 Before you answer, silently check: exactly {$max} pages; one concept per page; every page has all
-{$keycount} keys; {$check}{$modecheck} names, places, food and
+{$keycount} keys;{$outcomescheck} {$check}{$modecheck} names, places, food and
 customs fit the learners' country; {$textcheck} every question follows its type's
 exact shape and tests only its own page; no text anywhere contains the characters < or > (write "less than",
 "more than" or "to"; arrows such as → are fine); the JSON is valid (double quotes, no trailing commas).
@@ -834,7 +838,30 @@ SHAPE;
                 $lines[] = $label . ': ' . $text;
             }
         }
+        $outcomes = outcomes::brief_lines(outcomes::for_book($book));
+        if ($outcomes !== '') {
+            $lines[] = $outcomes;
+        }
         return $lines ? implode("\n", $lines) . "\n\n" : '';
+    }
+
+    /**
+     * The writer's rules for the lesson's learning outcomes ('' when it has none).
+     *
+     * @param \stdClass $book
+     * @return string starting with a new line
+     */
+    public static function outcomes_rule(\stdClass $book): string {
+        $list = outcomes::for_book($book);
+        if (!$list) {
+            return '';
+        }
+        $codes = implode(', ', array_map(fn($o) => '"' . $o->code . '"', $list));
+        return "\n- The lesson must teach the learning outcomes listed in the inputs. Give every page an \"outcomes\" list"
+            . " with the codes of the outcomes that page teaches (at least one; only these codes: {$codes}). Across the"
+            . " lesson, every outcome is taught by at least one page where the content allows. Never invent a code, and"
+            . " never pad a page to cover an outcome the content does not support. Each page's check question tests one"
+            . " of that page's outcomes.";
     }
 
     /**

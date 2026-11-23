@@ -66,6 +66,14 @@ class page_form extends \moodleform {
         $mform->addHelpButton('summarytext', 'summarytext', 'mod_visuallearning');
         $mform->addRule('summarytext', get_string('maximumchars', '', $max - 4), 'maxlength', $max - 4, 'client');
 
+        // The Moodle learning outcomes this page teaches (only when the activity is linked to some).
+        $outcomes = $this->_customdata['outcomes'] ?? [];
+        if ($outcomes) {
+            $mform->addElement('autocomplete', 'outcomeids', get_string('pageoutcomes', 'mod_visuallearning'), $outcomes,
+                ['multiple' => true, 'noselectionstring' => get_string('pageoutcomes_none', 'mod_visuallearning')]);
+            $mform->addHelpButton('outcomeids', 'pageoutcomes', 'mod_visuallearning');
+        }
+
         // The check question: one per page, in one of four types.
         $mform->addElement('header', 'questionhdr', get_string('questionhdr', 'mod_visuallearning'));
         $types = ['' => get_string('qtype_none', 'mod_visuallearning')];
