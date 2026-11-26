@@ -21,7 +21,7 @@ namespace mod_visuallearning\local;
  *
  * Adds an IPTC Digital Source Type of "trainedAlgorithmicMedia" with provenance details to every picture, voice clip
  * and animated diagram before it is stored: XMP in PNG, JPEG and WebP, an ID3 tag in MP3, and RDF metadata in SVG.
- * Markings already in a file (for example a signed C2PA manifest or XMP from LMS Labs or the model provider) are never
+ * Markings already in a file (a signed C2PA manifest, or XMP or ID3 from LMS Labs or the model provider) are never
  * removed or replaced: a file that already carries XMP or an ID3 tag is stored unchanged. This metadata layer
  * supports, and does not replace, the signed metadata and watermark layers applied by LMS Labs.
  *
@@ -77,6 +77,10 @@ class ai_marking {
      * @return string
      */
     public static function mark(string $bytes, string $mime, array $provenance): string {
+        if (self::has_c2pa($bytes)) {
+            // A signed C2PA manifest binds the file's bytes: any change would break the signature.
+            return $bytes;
+        }
         try {
             switch ($mime) {
                 case 'image/png':
@@ -105,6 +109,16 @@ class ai_marking {
     public static function is_marked(string $bytes): bool {
         return str_contains($bytes, 'digitalsourcetype/trainedAlgorithmicMedia')
             || str_contains($bytes, 'digitalsourcetype/compositeWithTrainedAlgorithmicMedia');
+    }
+
+    /**
+     * Whether a file carries a C2PA manifest (JUMBF box labelled c2pa, or the PNG caBX / WebP C2PA chunk).
+     *
+     * @param string $bytes
+     * @return bool
+     */
+    public static function has_c2pa(string $bytes): bool {
+        return str_contains($bytes, 'caBX') || str_contains($bytes, 'jumb') || stripos($bytes, 'c2pa') !== false;
     }
 
     /**

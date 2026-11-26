@@ -95,6 +95,12 @@ final class responsible_ai_test extends \advanced_testcase {
             'provider' => 'Other', 'created' => '2026-01-01T00:00:00Z', 'version' => '']);
         $this->assertSame($png, ai_marking::mark($png, 'image/png', ai_marking::provenance('picture')));
         $this->assertStringContainsString('Other tool', $png);
+        // A JPEG signed with C2PA (APP11 JUMBF) and no XMP is left byte-for-byte as it is.
+        $jpeg = $this->image('jpeg');
+        $box = 'JP' . "\0\1" . 'jumb' . 'jumdc2pa';
+        $signed = substr($jpeg, 0, 2) . "\xFF\xEB" . pack('n', strlen($box) + 2) . $box . substr($jpeg, 2);
+        $this->assertTrue(ai_marking::has_c2pa($signed));
+        $this->assertSame($signed, ai_marking::mark($signed, 'image/jpeg', ai_marking::provenance('picture')));
         $mp3 = 'ID3' . "\3\0\0\0\0\0\0" . str_repeat("\xFF\xFB\x90\x00", 8);
         $this->assertSame($mp3, ai_marking::mark($mp3, 'audio/mpeg', ai_marking::provenance('voice')));
     }
