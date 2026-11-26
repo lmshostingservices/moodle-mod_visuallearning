@@ -107,6 +107,24 @@ The slide charge settles when its text is delivered. Included media remains owed
 slide to recover it. Prices are confirmed against the live server before spending. Text editing and reordering existing
 slides are free. New slides use the `bundle-1` contract; existing slides retain their original billing.
 
+## Bring your own AI (1.10.0)
+
+With an LMS Labs "Bring your own AI" licence, set up in AI Grader Central Config (local_aiconfig 1.1.0 or later),
+the site chooses for text (pages and animated scenes), pictures and voice whether each runs on LMS Labs credits,
+Moodle AI or the site's own provider key. Work on the site's own AI:
+
+- runs inside this Moodle site, straight to the provider, and costs no credits (no LMS Labs Site ID, API key or
+  activation is needed for it);
+- uses the LMS Labs service's own logic, ported to PHP: the same writer brief, lesson checks, one repair try, SVG
+  and MP3 checks and answers;
+- shows "Your own AI" and no credits on the lesson form and the confirmation page.
+
+If pages are written on the site's own AI while pictures or voice stay on credits, the pages are bought as imported
+slides, so each slide's first picture and narration stay included. Card pictures 2 and 3 edit the card before and
+need an own OpenAI image key (Moodle AI cannot edit pictures). Illustrated animated scenes are made only at LMS Labs;
+lessons written on the site's own AI use the classic animated diagrams. With Moodle AI or an own key, the teacher's
+content goes to that provider instead of LMS Labs.
+
 ## How a teacher builds a lesson
 
 1. **Add an AI Visual Learning** activity and fill in the short form: the title, what to teach (a grey example shows

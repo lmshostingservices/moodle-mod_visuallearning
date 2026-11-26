@@ -197,15 +197,19 @@ final class unlock {
     }
 
     /**
-     * Whether the plugin may be used on this site: LMS Labs has unlocked it (the one-time credit price, or a recognised Marketplace
-     * purchase), and no later check has said "locked". A check that got no definite answer keeps an unlocked site
-     * usable.
+     * Whether the plugin may be used on this site: LMS Labs has unlocked it (the one-time credit price or a recognised
+     * Marketplace purchase) and no later check has said "locked", or the site runs AI on its own Bring your own AI
+     * licence. A check that got no definite answer keeps an unlocked site usable.
      *
      * @return bool
      */
     public static function active(): bool {
         $state = self::state();
-        return $state['status'] === 'unlocked' || ($state['status'] === 'unknown' && !empty($state['wasunlocked']));
+        if ($state['status'] === 'unlocked' || ($state['status'] === 'unknown' && !empty($state['wasunlocked']))) {
+            return true;
+        }
+        // A site on its own AI holds a paid LMS Labs Bring your own AI licence, which covers this plugin.
+        return \mod_visuallearning\byok::any();
     }
 
     /**

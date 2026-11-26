@@ -85,6 +85,16 @@ class provider implements
             ],
             'privacy:metadata:lmslabs',
         );
+        // Bring your own AI: the same content goes to the AI provider the site administrator chose instead.
+        $collection->add_external_location_link(
+            'byok_aiprovider',
+            [
+                'content' => 'privacy:metadata:lmslabs:content',
+                'prompt' => 'privacy:metadata:lmslabs:prompt',
+                'voicetext' => 'privacy:metadata:lmslabs:voicetext',
+            ],
+            'privacy:metadata:byok_aiprovider',
+        );
         return $collection;
     }
 

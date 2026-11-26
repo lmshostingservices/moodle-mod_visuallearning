@@ -334,16 +334,21 @@ JS
             return;
         }
         $lmslabs = \mod_visuallearning\local\ai\lmslabs::class;
-        $prices = ['page' => $lmslabs::approved_price('page'), 'animation' => $lmslabs::approved_price('animation'),
-            'card' => $lmslabs::approved_price('card'), 'cards' => \mod_visuallearning\local\picture_modes::CARDS,
-            'usd' => $lmslabs::CREDIT_USD];
+        // Work on the site's own AI (Bring your own AI) costs no credits.
+        $byok = \mod_visuallearning\byok::class;
+        $requests = \mod_visuallearning\local\ai\requests::class;
+        $prices = ['page' => $byok::local($requests::WRITE) ? 0 : $lmslabs::approved_price('page'),
+            'animation' => $byok::local($requests::ANIMATION) ? 0 : $lmslabs::approved_price('animation'),
+            'card' => $byok::local($requests::CARD) ? 0 : $lmslabs::approved_price('card'),
+            'cards' => \mod_visuallearning\local\picture_modes::CARDS, 'usd' => $lmslabs::CREDIT_USD];
         $text = get_string('estimate_text', 'mod_visuallearning', (object)['credits' => '{credits}', 'usd' => '{usd}',
             'pages' => '{pages}']);
         $mform->addElement('html', \html_writer::div(
             \html_writer::tag('div', get_string('estimate_heading', 'mod_visuallearning'), ['class' => 'vl-estimate-heading']) .
             \html_writer::tag('div', '', ['class' => 'vl-estimate-text', 'aria-live' => 'polite']) .
             \html_writer::tag('div', get_string('estimate_note', 'mod_visuallearning'), ['class' => 'vl-estimate-note']),
-            'vl-estimate', ['id' => 'vl-estimate', 'data-prices' => json_encode($prices), 'data-text' => $text]
+            'vl-estimate', ['id' => 'vl-estimate', 'data-prices' => json_encode($prices), 'data-text' => $text,
+                'data-ownai' => $byok::any() ? get_string('quote_total_ownai', 'mod_visuallearning') : '']
         ));
         $PAGE->requires->js_init_code(<<<'JS'
 (function () {
@@ -369,7 +374,8 @@ JS
         var each = prices.page + (animated ? prices.animation
             : (cards && cards.checked && value('visualstyle') !== 'animated' ? prices.cards * prices.card : 0));
         var credits = pages * each;
-        box.querySelector('.vl-estimate-text').textContent = box.dataset.text
+        box.querySelector('.vl-estimate-text').textContent = credits === 0 && box.dataset.ownai ? box.dataset.ownai
+            : box.dataset.text
             .replace('{credits}', credits)
             .replace('{usd}', 'US$' + (credits * prices.usd).toFixed(2))
             .replace('{pages}', pages);

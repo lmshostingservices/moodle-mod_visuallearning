@@ -2,6 +2,28 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.10.0] - 2026-11-26
+
+### Bring your own AI
+- With an LMS Labs "Bring your own AI" licence (set up in AI Grader Central Config 1.1.0 or later), lessons,
+  pictures, animated scenes and narration can run on the site's own AI (Moodle AI or the site's own Anthropic,
+  OpenAI, Google or ElevenLabs key) instead of LMS Labs credits. Each kind is chosen separately: text (pages and
+  animated scenes), pictures and voice.
+- Work on the site's own AI runs inside this Moodle site, straight to the provider, and costs no credits. It uses
+  the LMS Labs service's own logic, ported to PHP: the same writer brief word for word, the same checks of every
+  written lesson (with one repair try that names the failing fields), the same SVG and MP3 checks and the same
+  answers. It was compared with the service code on more than 60,000 randomised requests and AI answers.
+- No LMS Labs Site ID, API key or activation is needed for work on the site's own AI.
+- When pages are written on the site's own AI but pictures or voice stay on credits, the pages are written here
+  and then bought as imported slides, so each slide's first picture and narration stay included in its price.
+- Card pictures 2 and 3 edit the card before, which needs an own OpenAI image key (Moodle AI and DALL-E only draw
+  new pictures); without one, card lessons show one picture per page. Lessons written on the site's own AI use the
+  classic animated diagrams instead of illustrated scenes, which are composed only at LMS Labs.
+- Other voices than Google's: OpenAI voices get the closest match to the chosen Chirp 3 HD voice; ElevenLabs uses
+  the voice chosen in Central Config.
+- The price page and the activity form show "Your own AI" and no credits for this work; a failure on the site's own
+  AI is shown as failed (never as an unknown charge) and can be asked for again.
+
 ## [1.9.4] - 2026-11-14
 
 - Every card is now written as exactly two sentences. The writer brief (LMS Labs AI and the ChatGPT prompt file)

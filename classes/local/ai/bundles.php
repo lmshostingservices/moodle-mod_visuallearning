@@ -163,15 +163,29 @@ class bundles {
     /**
      * Open exactly one unpaid bundle, then send the confirmed text request.
      *
+     * Pages written on the site's own AI while pictures or voice stay on credits are written here first (once: the
+     * written pages are kept with the request), then bought as imported slides, so their included media stay included.
+     *
      * @param \stdClass $row Durable local request
      * @param \stdClass $book Activity
+     * @param string|null $ownai The writing request, when the pages are written on the site's own AI
      * @return array HTTP status, headers and response
      */
-    public static function text(\stdClass $row, \stdClass $book): array {
+    public static function text(\stdClass $row, \stdClass $book, ?string $ownai = null): array {
         global $DB;
         $body = json_decode($row->body, true);
         $draft = $row->operation === requests::WRITE;
-        $source = $draft ? 'draft' : ($body['_manual'] ?? false ? 'manual' : 'import');
+        if ($draft && $ownai !== null && !isset($body['_draft'])) {
+            [$status, $headers, $raw] = \mod_visuallearning\byok::send(requests::WRITE, $ownai);
+            if ($status !== 200) {
+                return [$status, $headers, $raw];
+            }
+            $body['_draft'] = json_decode($raw, true)['draft'];
+            $row->body = json_encode($body);
+            $DB->update_record('visuallearning_aireq', $row);
+        }
+        $written = $draft && isset($body['_draft']);
+        $source = $written ? 'import' : ($draft ? 'draft' : ($body['_manual'] ?? false ? 'manual' : 'import'));
         $count = $draft ? $body['maxPages'] : $body['pageCount'];
         $open = ['lessonRef' => hash('sha256', requests::sitehash() . ':' . $book->id . ':' . $row->idemkey),
             'source' => $source, 'slides' => $count, 'maxCredits' => (int)$row->maxcredits];
@@ -191,20 +205,29 @@ class bundles {
             $DB->update_record('visuallearning_aireq', $row);
         }
         $bundle = $body['_bundle'];
-        if ($draft) {
+        $written = $written ? $body['_draft'] : null;
+        if ($draft && $written === null) {
             unset($body['_bundle'], $body['_contract']);
         } else {
-            $pages = json_decode($row->result, true)['pages'];
+            $pages = $written !== null ? $written['pages'] : json_decode($row->result, true)['pages'];
             $body = ['slides' => [], 'maxCredits' => (int)$row->maxcredits];
             foreach ($pages as $i => $page) {
                 $body['slides'][] = ['slideId' => $bundle['slides'][$i]['slideId'], 'title' => $page['title'],
                     'questionType' => $page['question']['type'] ?? 'none'];
             }
         }
-        return lmslabs::post(
+        $result = lmslabs::post(
             self::PREFIX . '/bundles/' . $bundle['bundleId'] . '/' . $source,
             json_encode($body), $row->idemkey, 'application/json', lmslabs::DRAFT_TIMEOUT
         );
+        if ($written !== null && $result[0] === 200) {
+            // The pages bought are the pages written here.
+            $data = json_decode($result[2], true);
+            $data = is_array($data) ? $data : [];
+            $data['draft'] = $written;
+            $result[2] = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        return $result;
     }
 
     /**
