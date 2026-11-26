@@ -75,6 +75,14 @@ class provider implements
             ],
             'privacy:metadata:aireq',
         );
+        $collection->add_database_table(
+            'visuallearning',
+            [
+                'reviewedby' => 'privacy:metadata:visuallearning:reviewedby',
+                'timereviewed' => 'privacy:metadata:visuallearning:timereviewed',
+            ],
+            'privacy:metadata:visuallearning',
+        );
         $collection->add_external_location_link(
             'lmslabs',
             [
@@ -110,6 +118,13 @@ class provider implements
                   JOIN {visuallearning_aireq} rq ON rq.visuallearningid = cm.instance
                  WHERE rq.userid = :userid";
         $contextlist->add_from_sql($sql, ['ctxlevel' => CONTEXT_MODULE, 'userid' => $userid]);
+        $sql = "SELECT ctx.id
+                  FROM {context} ctx
+                  JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :ctxlevel
+                  JOIN {modules} m ON m.id = cm.module AND m.name = 'visuallearning'
+                  JOIN {visuallearning} vl ON vl.id = cm.instance
+                 WHERE vl.reviewedby = :userid";
+        $contextlist->add_from_sql($sql, ['ctxlevel' => CONTEXT_MODULE, 'userid' => $userid]);
         return $contextlist;
     }
 
@@ -135,6 +150,12 @@ class provider implements
                   JOIN {visuallearning_aireq} rq ON rq.visuallearningid = cm.instance
                  WHERE cm.id = :cmid AND rq.userid > 0";
         $userlist->add_from_sql('userid', $sql, ['cmid' => $context->instanceid]);
+        $sql = "SELECT vl.reviewedby
+                  FROM {course_modules} cm
+                  JOIN {modules} m ON m.id = cm.module AND m.name = 'visuallearning'
+                  JOIN {visuallearning} vl ON vl.id = cm.instance
+                 WHERE cm.id = :cmid AND vl.reviewedby > 0";
+        $userlist->add_from_sql('reviewedby', $sql, ['cmid' => $context->instanceid]);
     }
 
     /**
@@ -197,6 +218,10 @@ class provider implements
             if ($requests) {
                 $data->lmslabsrequests = $requests;
             }
+            $book = $DB->get_record('visuallearning', ['id' => $cm->instance], 'id, reviewedby, timereviewed');
+            if ($book && (int)$book->reviewedby === (int)$userid) {
+                $data->checkedlesson = transform::datetime($book->timereviewed);
+            }
             writer::with_context($context)->export_data([], $data);
             helper::export_context_files($context, $contextlist->get_user());
         }
@@ -216,6 +241,8 @@ class provider implements
         if ($cm) {
             $DB->delete_records('visuallearning_progress', ['visuallearningid' => $cm->instance]);
             $DB->set_field('visuallearning_aireq', 'userid', 0, ['visuallearningid' => $cm->instance]);
+            // The lesson stays checked; only who checked it is removed.
+            $DB->set_field('visuallearning', 'reviewedby', 0, ['id' => $cm->instance]);
         }
     }
 
@@ -235,6 +262,7 @@ class provider implements
             if ($cm) {
                 $DB->delete_records('visuallearning_progress', ['visuallearningid' => $cm->instance, 'userid' => $userid]);
                 $DB->set_field('visuallearning_aireq', 'userid', 0, ['visuallearningid' => $cm->instance, 'userid' => $userid]);
+                $DB->set_field('visuallearning', 'reviewedby', 0, ['id' => $cm->instance, 'reviewedby' => $userid]);
             }
         }
     }
@@ -258,5 +286,6 @@ class provider implements
         $params['bookid'] = $cm->instance;
         $DB->delete_records_select('visuallearning_progress', "visuallearningid = :bookid AND userid $insql", $params);
         $DB->set_field_select('visuallearning_aireq', 'userid', 0, "visuallearningid = :bookid AND userid $insql", $params);
+        $DB->set_field_select('visuallearning', 'reviewedby', 0, "id = :bookid AND reviewedby $insql", $params);
     }
 }

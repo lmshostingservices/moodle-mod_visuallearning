@@ -166,6 +166,21 @@ site). AI Visual Learning then:
 
 Scale-less outcomes need Moodle 5.3; scaled outcomes work on every supported version.
 
+## Responsible AI (EU AI Act)
+
+AI Visual Learning is a content generator under Article 50 of the EU AI Act. It is not a high-risk system under
+Annex III as built: check questions are marked by fixed rules, not by AI. Release 1.10.0 adds:
+
+- machine-readable "AI-generated" marking (IPTC `trainedAlgorithmicMedia`) on every picture, voice clip and animated
+  diagram, keeping any existing marking such as C2PA;
+- a "Made with AI" note for learners naming the teacher who checked the lesson;
+- a teacher check on the Ready step (optionally required before learners can open a lesson);
+- a site-wide pause switch, an AI literacy panel for teachers and an `ai-provenance.json` file in downloads.
+
+Settings are under Site administration > Plugins > Activity modules > AI Visual Learning > Responsible AI.
+Read [docs/eu-ai-act.md](docs/eu-ai-act.md) for the full guide and instructions for use. This is technical
+information from the provider, not legal advice.
+
 ## Reusing the content
 
 On the **Ready** step, **Download all content** gives one ZIP (free, nothing is sent to LMS Labs):

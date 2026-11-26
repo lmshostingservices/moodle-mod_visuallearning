@@ -945,6 +945,12 @@ class media {
         if ($old = $fs->get_file($context->id, 'mod_visuallearning', $area, $itemid, '/', $name)) {
             $old->delete();
         }
+        // Everything stored here except the teacher's own HTML is made by LMS Labs AI: mark it as AI-generated in a
+        // machine-readable way (EU AI Act, Article 50(2)), keeping any marking the file already carries.
+        if ($area !== self::AREA_HTML && ai_marking::enabled()) {
+            $kind = ['audio' => 'voice', self::AREA_SVG => 'animation'][$area] ?? 'picture';
+            $content = ai_marking::mark($content, $mime, ai_marking::provenance($kind));
+        }
         $fs->create_file_from_string(
             ['contextid' => $context->id, 'component' => 'mod_visuallearning', 'filearea' => $area, 'itemid' => $itemid,
                 'filepath' => '/', 'filename' => $name, 'mimetype' => $mime],

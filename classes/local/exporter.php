@@ -414,6 +414,15 @@ class exporter {
             $transcript .= "\n";
         }
         $files['voiceover/transcript.txt'] = $transcript;
+        // AI provenance (EU AI Act, Article 50): what AI made, and the teacher check, in a machine-readable record.
+        $aifiles = array_values(array_filter(
+            array_keys($files),
+            fn($path) => preg_match('~^(pictures|voiceover|animations)/~', $path)
+        ));
+        $files['ai-provenance.json'] = json_encode(
+            responsible_ai::provenance_manifest($this->book, $aifiles),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+        );
         return $files + $this->prompts();
     }
 

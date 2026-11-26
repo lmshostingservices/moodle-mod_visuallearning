@@ -30,6 +30,7 @@ use mod_visuallearning\local\ai\lmslabs;
 use mod_visuallearning\local\ai\requests;
 use mod_visuallearning\local\importer;
 use mod_visuallearning\local\media;
+use mod_visuallearning\local\responsible_ai;
 use mod_visuallearning\local\unlock;
 use mod_visuallearning\local\voices;
 
@@ -113,6 +114,19 @@ if (in_array($action, ['quote', 'writequote', 'confirm', 'cancelquote', 'check',
     requests::dismiss($row);
     media::refresh($book, $context);
     redirect(new moodle_url($baseurl, ['step' => 3]));
+}
+
+// The teacher checks the AI-made lesson, or withdraws the check (editorial responsibility, EU AI Act).
+if (in_array($action, ['reviewed', 'unreview'], true)) {
+    require_sesskey();
+    if ($action === 'reviewed') {
+        responsible_ai::mark_reviewed($book, (int)$USER->id);
+        $msg = get_string('review_done', 'mod_visuallearning');
+    } else {
+        responsible_ai::reset_review((int)$book->id);
+        $msg = get_string('review_withdrawn', 'mod_visuallearning');
+    }
+    redirect(new moodle_url($baseurl, ['step' => 4]), $msg, null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
 // Free page actions.
@@ -969,6 +983,42 @@ foreach ($pages as $page) {
 }
 if ($strip !== '') {
     echo html_writer::div($strip, 'vl-filmstrip', ['aria-label' => get_string('wizard_slides', 'mod_visuallearning')]);
+}
+// Teacher check: AI writes the lesson, the teacher answers for it (EU AI Act, editorial responsibility).
+if ($total) {
+    $checked = responsible_ai::is_reviewed($book);
+    $reviewurl = new moodle_url($baseurl, ['action' => $checked ? 'unreview' : 'reviewed', 'sesskey' => sesskey()]);
+    $reviewtext = $checked
+        ? get_string('review_checkedby', 'mod_visuallearning', (object)[
+            'name' => s(responsible_ai::reviewer_name($book) ?: get_string('defaultcourseteacher')),
+            'date' => userdate((int)$book->timereviewed, get_string('strftimedate', 'langconfig')),
+        ])
+        : get_string(responsible_ai::review_required() ? 'review_needed_required' : 'review_needed', 'mod_visuallearning');
+    echo html_writer::div(
+        html_writer::div(
+            html_writer::tag('h4', get_string('review_heading', 'mod_visuallearning'), ['class' => 'vl-sub']) .
+            html_writer::tag('p', $reviewtext)
+        ) .
+        html_writer::link(
+            $reviewurl,
+            get_string($checked ? 'review_withdraw' : 'review_markchecked', 'mod_visuallearning'),
+            ['class' => 'btn ' . ($checked ? 'btn-secondary' : 'btn-primary')]
+        ),
+        'vl-review-card' . ($checked ? ' is-checked' : '')
+    );
+    // AI literacy for the teacher: what AI did, its limits, and their part (EU AI Act, Article 4).
+    echo html_writer::tag(
+        'details',
+        html_writer::tag('summary', get_string('ailiteracy_heading', 'mod_visuallearning')) .
+            html_writer::alist([
+                get_string('ailiteracy_made', 'mod_visuallearning'),
+                get_string('ailiteracy_limits', 'mod_visuallearning'),
+                get_string('ailiteracy_you', 'mod_visuallearning'),
+                get_string('ailiteracy_learners', 'mod_visuallearning'),
+                get_string('ailiteracy_report', 'mod_visuallearning'),
+            ], ['class' => 'vl-checklist']),
+        ['class' => 'vl-ailiteracy']
+    );
 }
 $preview = new moodle_url('/mod/visuallearning/view.php', ['id' => $cm->id]);
 $actions = html_writer::link($preview, get_string('previewbook', 'mod_visuallearning'), ['class' => 'btn btn-primary']);

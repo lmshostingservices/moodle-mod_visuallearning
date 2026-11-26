@@ -364,6 +364,10 @@ class lmslabs {
      * @return string|null string identifier suffix (hold_...), or null
      */
     public static function hold(string $operation): ?string {
+        if (get_config('mod_visuallearning', 'aipaused')) {
+            // An administrator paused all AI generation (EU AI Act, Article 26(5)): manual work carries on.
+            return 'paused';
+        }
         if (!self::is_connected()) {
             return 'nocredentials';
         }

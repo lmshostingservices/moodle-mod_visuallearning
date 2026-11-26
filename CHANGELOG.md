@@ -2,7 +2,23 @@
 
 All notable changes to mod_visuallearning are documented here.
 
-## [1.10.0] - 2026-11-24
+## [1.10.0] - 2026-11-26
+
+### Added: responsible AI (EU AI Act)
+- Every picture, voice clip and animated diagram is marked as AI-generated in a machine-readable way when it is saved:
+  IPTC digital source type `trainedAlgorithmicMedia` with provenance, as XMP in PNG, JPEG and WebP, an ID3 tag in MP3
+  and RDF metadata in SVG (Article 50(2)). Markings already in a file, such as a signed C2PA manifest, are kept.
+- Learners see a "Made with AI" note on the opening page: which parts AI made, the teacher who checked the lesson and
+  when, and to tell their teacher if something looks wrong.
+- Teacher check on the Ready step: the teacher marks the lesson as checked; it is cleared whenever AI writes new pages.
+  Learning outcomes are only rated after the check.
+- "Using AI responsibly" panel for teachers (AI literacy, Article 4).
+- Download all content adds ai-provenance.json.
+- New site settings under Responsible AI (EU AI Act): Pause AI generation, Mark AI media (on), Tell learners about AI
+  (on) and Teacher check before learners (off).
+- Privacy API declares, exports and removes the teacher who checked a lesson.
+- docs/eu-ai-act.md: classification, dates, provider and deployer duties, feature matrix and instructions for use.
+- Database: reviewedby and timereviewed on the activity (upgrade step 2026112600).
 
 ### Moodle 5.3 learning outcomes
 - AI Visual Learning now supports Moodle learning outcomes. The Learning outcomes section appears on the activity's

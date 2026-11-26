@@ -309,5 +309,20 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026112400, 'visuallearning');
     }
+
+    if ($oldversion < 2026112600) {
+        // 1.10.0: responsible AI (EU AI Act). Record the teacher who checked an AI-made lesson.
+        $table = new xmldb_table('visuallearning');
+        $fields = [
+            new xmldb_field('reviewedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'outcomerating'),
+            new xmldb_field('timereviewed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'reviewedby'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_mod_savepoint(true, 2026112600, 'visuallearning');
+    }
     return true;
 }

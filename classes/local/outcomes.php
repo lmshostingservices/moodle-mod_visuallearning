@@ -307,6 +307,10 @@ class outcomes {
         if (empty($book->outcomerating) || empty($book->enablequiz)) {
             return [];
         }
+        // AI wrote the questions: no learning outcome is rated until a teacher has checked the lesson (human oversight).
+        if (!responsible_ai::is_reviewed($book)) {
+            return [];
+        }
         $scaled = array_filter(self::for_cm($cm), fn($o) => $o->scaled && $o->itemnumber !== null && $o->scaleitems > 1);
         if (!$scaled) {
             return [];

@@ -194,6 +194,8 @@ class book_data {
                 ? array_values(array_map(fn($o) => ['code' => $o->code,
                     'name' => format_string($o->name, true, ['context' => $context])], outcomes::for_cm($cm)))
                 : [],
+            // Tells learners which parts AI made and who checked them (EU AI Act, Article 50).
+            'ai' => responsible_ai::player_data($book, $out),
             'strings' => $strings,
         ];
     }

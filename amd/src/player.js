@@ -964,6 +964,8 @@ class Player {
             outcomesBox.hidden = false;
         }
 
+        this.renderCoverAi();
+
         // How it works: listen, recap, check (only the parts this lesson has).
         const how = [];
         how.push(['is-listen', HEADPHONES_SVG, this.str('steplisten'),
@@ -1014,6 +1016,24 @@ class Player {
         const need = Math.min(total, Math.max(1, Math.ceil(fraction * total - 1e-9)));
         return need >= total ? this.str('coverpassall', label)
             : this.str('coverpasssome', {need, total, pass: label});
+    }
+
+    /**
+     * The cover's AI notice: which parts of the lesson AI made, and the teacher who checked it (EU AI Act, Article 50).
+     */
+    renderCoverAi() {
+        const ai = this.data.ai;
+        const aiBox = this.q('.pb-cover-ai');
+        if (!aiBox || !ai || !ai.text) {
+            return;
+        }
+        this.q('.pb-cover-aiheading').textContent = ai.heading;
+        this.q('.pb-cover-aitext').textContent = ai.text;
+        this.q('.pb-cover-aireport').textContent = ai.report;
+        const checked = this.q('.pb-cover-aichecked');
+        checked.textContent = ai.checked || '';
+        checked.hidden = !ai.checked;
+        aiBox.hidden = false;
     }
 
     /**

@@ -247,6 +247,8 @@ final class outcomes_test extends \advanced_testcase {
         $answer($learner->id, 3, 2, 1);
         $this->assertSame([], outcomes::rate_user($book, $this->cm, (int)$learner->id), 'Not every question answered yet.');
         $answer($learner->id, 4, 1, 1);
+        $this->assertSame([], outcomes::rate_user($book, $this->cm, (int)$learner->id), 'Not rated before a teacher check.');
+        \mod_visuallearning\local\responsible_ai::mark_reviewed($book, 2);
         $this->assertSame([(int)$outcome->id => 3], outcomes::rate_user($book, $this->cm, (int)$learner->id));
         $item = \grade_item::fetch(['iteminstance' => $book->id, 'itemmodule' => 'visuallearning', 'itemnumber' => 1000]);
         $this->assertEquals(3, \grade_grade::fetch(['itemid' => $item->id, 'userid' => $learner->id])->finalgrade);

@@ -1251,6 +1251,8 @@ class requests {
         } else {
             importer::import($book, $parsed, $context);
         }
+        // New AI pages need a fresh teacher check.
+        \mod_visuallearning\local\responsible_ai::reset_review((int)$book->id);
         $row->status = 'completed';
         $row->errorcode = null;
         $DB->update_record('visuallearning_aireq', $row);
