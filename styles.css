@@ -6295,7 +6295,7 @@ html.vl-htmlembed-open:has(> body.path-mod-visuallearning) {
     padding: 14px 16px;
     border: 1px solid var(--mds-border-default, #dee2e6);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--mds-surface-default, #fff) 92%, var(--mds-text-default, #1d2125));
+    background: var(--mds-bg-surface-subtle, #f8f9fa);
 }
 
 .path-mod-visuallearning .pb-cover-ai[hidden] {
@@ -6311,7 +6311,7 @@ html.vl-htmlembed-open:has(> body.path-mod-visuallearning) {
     height: 32px;
     border-radius: 8px;
     background: var(--mds-text-default, #1d2125);
-    color: var(--mds-surface-default, #fff);
+    color: var(--mds-text-inverse, #fff);
     font-size: 13px;
     font-weight: 700;
     letter-spacing: .02em;
@@ -6339,12 +6339,12 @@ html.vl-htmlembed-open:has(> body.path-mod-visuallearning) {
     padding: 16px 20px;
     border: 1px solid var(--mds-border-default, #dee2e6);
     border-radius: 12px;
-    background: var(--mds-surface-default, #fff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: var(--vl-shadow-sm, 0 1px 2px rgba(0, 0, 0, .06));
 }
 
 .path-mod-visuallearning .vl-review-card.is-checked {
-    border-color: color-mix(in srgb, var(--mds-success, #357a32) 45%, var(--mds-border-default, #dee2e6));
+    border-color: color-mix(in srgb, var(--mds-border-feedback-success, #357a32) 45%, var(--mds-border-default, #dee2e6));
 }
 
 .path-mod-visuallearning .vl-review-card p {
