@@ -342,7 +342,7 @@ class requests {
             // Until LMS Labs takes the level as a field, its brief travels with the art direction.
             $body['imageStyle'] = trim($body['imageStyle'] . ' ' . $level);
         }
-        if (!empty(lmslabs::capabilities('pages')['writerBrief'])) {
+        if (!empty(lmslabs::capabilities('pages')['writerBrief']) || \mod_visuallearning\byok::uses('text')) {
             // The plugin's own brief, so Claude at LMS Labs writes exactly what this version of the plugin expects.
             $body['writerBrief'] = prompt_builder::writer_prompt($book);
         }
@@ -366,7 +366,9 @@ class requests {
         $engine = in_array($settings['animationmode'], ['automatic', 'animated'], true);
         if ($engine && $mode === \mod_visuallearning\local\picture_modes::ANIMATED) {
             $caps = lmslabs::capabilities('pages');
-            if (in_array('1.0', $caps['animatedSceneVersions'] ?? [], true)) {
+            // Illustrated scenes are composed only at LMS Labs: a lesson written on the site's own AI gets the classic
+            // animated diagrams.
+            if (in_array('1.0', $caps['animatedSceneVersions'] ?? [], true) && !\mod_visuallearning\byok::uses('text')) {
                 return ['pictureMode' => $mode, 'animationMode' => $settings['animationmode'],
                     'animationComplexity' => $settings['animationcomplexity'],
                     'animationPacing' => $settings['animationpacing']];
@@ -411,7 +413,7 @@ class requests {
         $summary = ['batch' => $batch, 'items' => [], 'credits' => 0, 'free' => 0, 'included' => [], 'hold' => null,
             'skipped' => 0,
             'dropped' => 0, 'droppedhold' => null, 'droppedcards' => 0, 'droppedcardshold' => null,
-            'droppedanimations' => 0, 'droppedanimationshold' => null];
+            'droppedanimations' => 0, 'droppedanimationshold' => null, 'ownai' => 0];
         $options = array_filter($plans, fn($p) => $p['operation'] === self::OPTION);
         if ($options && count($options) < count($plans) && ($hold = lmslabs::hold('option')) !== null) {
             // Option pictures cannot be made yet: everything else still can (options show as text cards meanwhile).
@@ -457,7 +459,8 @@ class requests {
             }
             if ($operation === self::VOICE) {
                 $price = lmslabs::VOICE_CREDITS;
-                if ($remakes && time() < $until && empty(bundles::page((int)$book->id, $targetid)->bundleid)) {
+                $quotable = $remakes && time() < $until && !\mod_visuallearning\byok::local(self::VOICE);
+                if ($quotable && empty(bundles::page((int)$book->id, $targetid)->bundleid)) {
                     $quoted = lmslabs::voice_quote(self::clipref($book, $targetid, $part));
                     $price = $quoted ?? lmslabs::VOICE_CREDITS;
                 }
@@ -498,7 +501,13 @@ class requests {
                 $body += self::image_hints($book);
             }
             $included = false;
-            if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD, self::ANIMATION],
+            $ownai = \mod_visuallearning\byok::local($operation);
+            if ($ownai) {
+                // Made on the site's own AI: free, and not part of any LMS Labs slide.
+                $body = \mod_visuallearning\byok::mark($body);
+                $price = 0;
+                $summary['ownai']++;
+            } else if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD, self::ANIMATION],
                     true)) {
                 $listprice = $price;
                 [$body, $price] = bundles::media_quote((int)$book->id, $operation, $targetid, $part, $body);
@@ -506,6 +515,11 @@ class requests {
                 $included = $price === 0 && $listprice > 0;
             } else {
                 $body['_contract'] = 'bundle-1';
+                if ($operation === self::WRITE && \mod_visuallearning\byok::hybrid()) {
+                    // Written on the site's own AI, then bought as imported slides (their media stay included).
+                    $body[\mod_visuallearning\byok::MARKER] = true;
+                    $summary['ownai']++;
+                }
             }
             $DB->insert_record('visuallearning_aireq', (object)[
                 'visuallearningid' => (int)$book->id,
@@ -830,7 +844,10 @@ class requests {
             if (!in_array($row->status, self::CHECKABLE, true)) {
                 return $row;
             }
-            if ($row->sitehash !== '' && $row->sitehash !== self::sitehash()) {
+            $ownai = \mod_visuallearning\byok::marked($row);
+            // Free work on the site's own AI never reaches LMS Labs, so its Site ID does not matter.
+            $free = $ownai && empty(json_decode((string)$row->body, true)['_contract']);
+            if (!$free && $row->sitehash !== '' && $row->sitehash !== self::sitehash()) {
                 // The key belongs to another LMS Labs site: sending it now could start a separately charged request.
                 $row->status = 'uncertain';
                 $row->errorcode = 'sitechanged';
@@ -880,8 +897,10 @@ class requests {
             \core_php_time_limit::raise($timeout + 60);
             try {
                 $sent = json_decode($row->body, true);
-                if (($sent['_contract'] ?? '') === 'bundle-1') {
-                    [$status, $headers, $body] = bundles::text($row, $book);
+                if ($free) {
+                    [$status, $headers, $body] = \mod_visuallearning\byok::send($row->operation, $payload);
+                } else if (($sent['_contract'] ?? '') === 'bundle-1') {
+                    [$status, $headers, $body] = bundles::text($row, $book, $ownai ? $payload : null);
                 } else {
                     $route = empty($sent['bundleId']) || $animation ? $routes[$row->operation] :
                         bundles::PREFIX . ($row->operation === self::VOICE ? '/speech/tts' : '/images');
@@ -902,6 +921,9 @@ class requests {
             }
             $row->retryafter = max(1, min(60, (int)($headers['retry-after'] ?? 5)));
             self::outcome($row, $book, $context, $status, $headers, $body);
+            if ($ownai && $row->status !== 'completed' && ($headers['x-ownai'] ?? '') === '1') {
+                self::ownai_outcome($row, $status, $body);
+            }
             if ($row->status === 'completed' && !in_array($row->operation, [self::WRITE, self::IMPORT], true)) {
                 bundles::media_saved($row, $headers);
             }
@@ -1241,7 +1263,8 @@ class requests {
      * @return int credits
      */
     public static function lesson_price(stdClass $book): int {
-        return (int)$book->maxpages * lmslabs::approved_price('page') + self::autobuild_budget($book);
+        $page = \mod_visuallearning\byok::local(self::WRITE) ? 0 : lmslabs::approved_price('page');
+        return (int)$book->maxpages * $page + self::autobuild_budget($book);
     }
 
     /**
@@ -1255,10 +1278,11 @@ class requests {
         $pages = (int)$book->maxpages;
         $mode = \mod_visuallearning\local\picture_modes::of($book);
         if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
-            return $pages * lmslabs::approved_price('animation');
+            return \mod_visuallearning\byok::local(self::ANIMATION) ? 0 : $pages * lmslabs::approved_price('animation');
         }
         if ($mode === \mod_visuallearning\local\picture_modes::SEQUENCE) {
-            return $pages * \mod_visuallearning\local\picture_modes::CARDS * lmslabs::approved_price('card');
+            return \mod_visuallearning\byok::local(self::CARD) ? 0
+                : $pages * \mod_visuallearning\local\picture_modes::CARDS * lmslabs::approved_price('card');
         }
         return 0;
     }
@@ -1305,6 +1329,33 @@ class requests {
                     array_merge([(int)$book->id, 'quoted'], $params));
                 debugging('Automatic build of ' . $kind . ' stopped: ' . $e->getMessage(), DEBUG_DEVELOPER);
             }
+        }
+    }
+
+    /**
+     * Records why work on the site's own AI did not complete. Nothing was charged and nothing is lost: it failed, and
+     * the teacher can ask for it again (a request the AI is still writing stays pending).
+     *
+     * @param stdClass $row
+     * @param int $status
+     * @param string $body
+     */
+    protected static function ownai_outcome(stdClass $row, int $status, string $body): void {
+        if ($row->status === 'pending') {
+            return;
+        }
+        $row->status = 'failed';
+        $row->charged = 0;
+        $code = self::read_error([], $body)[0];
+        if ($code === 'ownai_off') {
+            $row->errorcode = 'ownai_off';
+        } else if ($code === 'invalid_input' || $code === 'invalid_reference_image' || $code === 'invalid_voice') {
+            $row->errorcode = 'ownai_input';
+        } else if (\mod_visuallearning\byok::$lasterror !== null) {
+            $row->errorcode = 'ownai_failed';
+            $row->result = json_encode(['ownai' => \core_text::substr(\mod_visuallearning\byok::$lasterror, 0, 500)]);
+        } else {
+            $row->errorcode = 'ownai_invalid';
         }
     }
 
