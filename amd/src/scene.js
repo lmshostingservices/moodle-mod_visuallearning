@@ -144,7 +144,9 @@ export const render = (container, input, options = {}) => {
                 lifecycle();
             }
         },
-        retime: () => {},
+        retime: () => {
+            // Static scenes have no timeline to retime.
+        },
         seek: (next, milliseconds) => select(next, milliseconds, true),
         finishStage: () => select(card, duration(), true),
         finish: next => {

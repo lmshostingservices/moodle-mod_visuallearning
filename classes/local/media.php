@@ -298,14 +298,28 @@ class media {
                 return;
             }
             $name = $stem . '.' . pathinfo($file->get_filename(), PATHINFO_EXTENSION);
-            if (!get_file_storage()->file_exists($file->get_contextid(), 'mod_visuallearning', $file->get_filearea(),
-                    $file->get_itemid(), $file->get_filepath(), $name)) {
+            if (
+                !get_file_storage()->file_exists(
+                    $file->get_contextid(),
+                    'mod_visuallearning',
+                    $file->get_filearea(),
+                    $file->get_itemid(),
+                    $file->get_filepath(),
+                    $name
+                )
+            ) {
                 $file->rename($file->get_filepath(), $name);
             }
         };
         $latest = function (string $area, int $itemid, string $prefix) use ($context): ?\stored_file {
-            $files = get_file_storage()->get_area_files($context->id, 'mod_visuallearning', $area, $itemid,
-                'timemodified DESC, id DESC', false);
+            $files = get_file_storage()->get_area_files(
+                $context->id,
+                'mod_visuallearning',
+                $area,
+                $itemid,
+                'timemodified DESC, id DESC',
+                false
+            );
             foreach ($files as $file) {
                 if ($prefix === '' || str_starts_with($file->get_filename(), $prefix)) {
                     return $file;
@@ -317,8 +331,10 @@ class media {
         foreach ($DB->get_records('visuallearning_pages', ['visuallearningid' => $book->id]) as $page) {
             $rename($latest(self::AREA_IMAGE, (int)$page->id, 'image-'), self::image_stem(self::image_prompt($book, $page)));
             foreach (self::option_prompts($book, $page) as $option => $prompt) {
-                $rename($latest(self::AREA_OPTION, (int)$page->id, 'option' . $option . '-'),
-                    self::option_stem((int)$option, $prompt));
+                $rename(
+                    $latest(self::AREA_OPTION, (int)$page->id, 'option' . $option . '-'),
+                    self::option_stem((int)$option, $prompt)
+                );
             }
             $reference = '';
             foreach (self::card_prompts($book, $page) as $card => $prompt) {
@@ -341,8 +357,13 @@ class media {
         if (trim($scene) === '' && $page) {
             $scene = $page->title . '. ' . $page->actiontext;
         }
-        return prompt_builder::image_prompt($book, $scene, lmslabs::max_prompt(), self::ASPECT,
-            $page ? trim((string)$page->title) : '');
+        return prompt_builder::image_prompt(
+            $book,
+            $scene,
+            lmslabs::max_prompt(),
+            self::ASPECT,
+            $page ? trim((string)$page->title) : ''
+        );
     }
 
     /**
@@ -471,8 +492,13 @@ class media {
         }
         $out = [];
         foreach (picture_modes::card_prompts($page) as $i => $scene) {
-            $out[$i + 1] = $i === 0 ? prompt_builder::image_prompt($book, $scene, lmslabs::max_prompt(), self::ASPECT,
-                    trim((string)$page->title))
+            $out[$i + 1] = $i === 0 ? prompt_builder::image_prompt(
+                $book,
+                $scene,
+                lmslabs::max_prompt(),
+                self::ASPECT,
+                trim((string)$page->title)
+            )
                 : prompt_builder::edit_prompt($book, $scene, lmslabs::max_prompt());
         }
         return $out;
@@ -692,8 +718,16 @@ class media {
         }
         $name = 'scene-' . $key . '.svg';
         self::save($context, self::AREA_SVG, $pageid, $name, $clean, 'image/svg+xml');
-        foreach (get_file_storage()->get_area_files($context->id, 'mod_visuallearning', self::AREA_SVG, $pageid, 'id',
-                false) as $file) {
+        foreach (
+            get_file_storage()->get_area_files(
+                $context->id,
+                'mod_visuallearning',
+                self::AREA_SVG,
+                $pageid,
+                'id',
+                false
+            ) as $file
+        ) {
             if ($file->get_filename() !== $name) {
                 $file->delete();
             }

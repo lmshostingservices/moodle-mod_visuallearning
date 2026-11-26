@@ -117,10 +117,13 @@ namespace {
         foreach ($url->params as $name => $value) {
             $inputs .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => $name, 'value' => $value]);
         }
-        return html_writer::div(html_writer::tag('form', $inputs .
+        return html_writer::div(html_writer::tag(
+            'form',
+            $inputs .
             html_writer::tag('button', s($label), ['type' => 'submit',
                 'class' => 'btn ' . ($primary ? 'btn-primary' : 'btn-secondary')]),
-            ['method' => $method, 'action' => '/fixture-no-submission']), 'singlebutton');
+            ['method' => $method, 'action' => '/fixture-no-submission']
+        ), 'singlebutton');
     }
 
     function visuallearning_file_url($file) {

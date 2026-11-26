@@ -26,6 +26,7 @@ require_once($CFG->dirroot . '/mod/visuallearning/lib.php');
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_visuallearning\local\outcomes::class)]
 /**
  * Moodle learning outcomes in AI Visual Learning (1.10.0).
  *
@@ -33,8 +34,8 @@ require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\outcomes
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(\mod_visuallearning\local\outcomes::class)]
 final class outcomes_test extends \advanced_testcase {
     /** @var \stdClass */
     protected $course;
@@ -69,16 +70,22 @@ final class outcomes_test extends \advanced_testcase {
      * @param bool $site A site-wide outcome instead of a course one
      * @return \grade_outcome
      */
-    protected function link_outcome(string $shortname, string $fullname, ?int $scaleid = null,
-            bool $site = false): \grade_outcome {
+    protected function link_outcome(
+        string $shortname,
+        string $fullname,
+        ?int $scaleid = null,
+        bool $site = false
+    ): \grade_outcome {
         global $DB;
         $outcome = new \grade_outcome(['courseid' => $site ? null : $this->course->id, 'shortname' => $shortname,
             'fullname' => $fullname, 'scaleid' => $scaleid]);
         $outcome->insert();
         $outcome->use_in($this->course->id);
         if ($scaleid) {
-            $max = (int)$DB->get_field_sql('SELECT MAX(itemnumber) FROM {grade_items} WHERE itemmodule = ? AND iteminstance = ?',
-                ['visuallearning', $this->book->id]);
+            $max = (int)$DB->get_field_sql(
+                'SELECT MAX(itemnumber) FROM {grade_items} WHERE itemmodule = ? AND iteminstance = ?',
+                ['visuallearning', $this->book->id]
+            );
             $item = new \grade_item(['courseid' => $this->course->id, 'itemtype' => 'mod', 'itemmodule' => 'visuallearning',
                 'iteminstance' => $this->book->id, 'itemnumber' => max(1000, $max + 1), 'itemname' => $fullname,
                 'outcomeid' => $outcome->id, 'gradetype' => GRADE_TYPE_SCALE, 'scaleid' => $scaleid]);
@@ -172,8 +179,10 @@ final class outcomes_test extends \advanced_testcase {
         $this->assertStringContainsString('only these codes: "LO1"', $brief);
         $this->assertStringContainsString('the characters < or >', $brief);
         // The lesson inputs travel in the content sent to LMS Labs, so its own brief sees the outcomes too.
-        $this->assertStringContainsString('- LO1: Identify the temperature danger zone',
-            \mod_visuallearning\local\prompt_builder::lesson_extras($book));
+        $this->assertStringContainsString(
+            '- LO1: Identify the temperature danger zone',
+            \mod_visuallearning\local\prompt_builder::lesson_extras($book)
+        );
     }
 
     /**
@@ -264,13 +273,21 @@ final class outcomes_test extends \advanced_testcase {
         $this->require_scaleless();
         $this->link_outcome('LO1', 'Identify the temperature danger zone');
         $book = $DB->get_record('visuallearning', ['id' => $this->book->id]);
-        $data = \mod_visuallearning\local\book_data::player($book, \cm_info::create($this->cm),
-            \context_module::instance($this->cm->id), (int)get_admin()->id);
+        $data = \mod_visuallearning\local\book_data::player(
+            $book,
+            \cm_info::create($this->cm),
+            \context_module::instance($this->cm->id),
+            (int)get_admin()->id
+        );
         $this->assertSame([['code' => 'LO1', 'name' => 'Identify the temperature danger zone']], $data['outcomes']);
         $this->assertSame('Learning outcomes', $data['strings']['coveroutcomes']);
         $book->showoutcomes = 0;
-        $data = \mod_visuallearning\local\book_data::player($book, \cm_info::create($this->cm),
-            \context_module::instance($this->cm->id), (int)get_admin()->id);
+        $data = \mod_visuallearning\local\book_data::player(
+            $book,
+            \cm_info::create($this->cm),
+            \context_module::instance($this->cm->id),
+            (int)get_admin()->id
+        );
         $this->assertSame([], $data['outcomes']);
     }
 
@@ -285,14 +302,26 @@ final class outcomes_test extends \advanced_testcase {
         $generator->create_page($this->book->id, ['outcomes' => (string)$outcome->id]);
         $generator->create_page($this->book->id, ['outcomes' => (string)($outcome->id + 999)]);
 
-        $bc = new \backup_controller(\backup::TYPE_1COURSE, $this->course->id, \backup::FORMAT_MOODLE,
-            \backup::INTERACTIVE_NO, \backup::MODE_IMPORT, get_admin()->id);
+        $bc = new \backup_controller(
+            \backup::TYPE_1COURSE,
+            $this->course->id,
+            \backup::FORMAT_MOODLE,
+            \backup::INTERACTIVE_NO,
+            \backup::MODE_IMPORT,
+            get_admin()->id
+        );
         $bc->execute_plan();
         $backupid = $bc->get_backupid();
         $bc->destroy();
         $target = $this->getDataGenerator()->create_course();
-        $rc = new \restore_controller($backupid, $target->id, \backup::INTERACTIVE_NO, \backup::MODE_IMPORT,
-            get_admin()->id, \backup::TARGET_EXISTING_ADDING);
+        $rc = new \restore_controller(
+            $backupid,
+            $target->id,
+            \backup::INTERACTIVE_NO,
+            \backup::MODE_IMPORT,
+            get_admin()->id,
+            \backup::TARGET_EXISTING_ADDING
+        );
         $this->assertTrue($rc->execute_precheck());
         $rc->execute_plan();
         $rc->destroy();
@@ -303,8 +332,12 @@ final class outcomes_test extends \advanced_testcase {
         $linked = outcomes::for_cm($newcm);
         $this->assertCount(1, $linked);
         $newid = (int)array_key_first($linked);
-        $tags = $DB->get_records_menu('visuallearning_pages', ['visuallearningid' => $newbook->id], 'pagenum',
-            'pagenum, outcomes');
+        $tags = $DB->get_records_menu(
+            'visuallearning_pages',
+            ['visuallearningid' => $newbook->id],
+            'pagenum',
+            'pagenum, outcomes'
+        );
         $this->assertSame([1 => (string)$newid, 2 => null], $tags, 'Tags point at the restored outcome; others go.');
     }
 }

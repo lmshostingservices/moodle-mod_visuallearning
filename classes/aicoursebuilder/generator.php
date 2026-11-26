@@ -8,15 +8,13 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_visuallearning\aicoursebuilder;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * AI Course Builder adapter for AI Visual Learning.
@@ -26,6 +24,7 @@ defined('MOODLE_INTERNAL') || die();
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class generator {
+    /** @var string This plugin's component, as AI Course Builder knows it. */
     private const COMPONENT = 'mod_visuallearning';
 
     /**
@@ -154,8 +153,10 @@ class generator {
             null,
             $idempotencykey
         );
-        if (!empty($quote['hold']) || ($quote['items'][\mod_visuallearning\local\ai\requests::WRITE] ?? 0) !== 1
-                || (int)$quote['credits'] !== $estimate) {
+        if (
+            !empty($quote['hold']) || ($quote['items'][\mod_visuallearning\local\ai\requests::WRITE] ?? 0) !== 1
+                || (int)$quote['credits'] !== $estimate
+        ) {
             throw new \moodle_exception('generatornotready', 'local_aicoursebuilder', '', 'Visual Learning quote unavailable');
         }
         $confirmed = \mod_visuallearning\local\ai\requests::confirm(
@@ -164,8 +165,10 @@ class generator {
             (int)$USER->id,
             $estimate
         );
-        if (count($confirmed) !== 1 || $confirmed[0]->operation !== \mod_visuallearning\local\ai\requests::WRITE
-                || empty($confirmed[0]->id)) {
+        if (
+            count($confirmed) !== 1 || $confirmed[0]->operation !== \mod_visuallearning\local\ai\requests::WRITE
+                || empty($confirmed[0]->id)
+        ) {
             throw new \moodle_exception('generationfailed', 'local_aicoursebuilder');
         }
         $requestid = (string)$confirmed[0]->id;
@@ -251,19 +254,44 @@ class generator {
         }
     }
 
+    /**
+     * Whether AI Course Builder is installed and can generate lessons for this plugin.
+     *
+     * @return bool
+     */
     public static function is_available(): bool {
         return class_exists('\local_aicoursebuilder\local\generator_runtime')
             && \local_aicoursebuilder\local\generator_runtime::component_available(self::COMPONENT);
     }
 
+    /**
+     * Credits AI Course Builder estimates for a lesson brief.
+     *
+     * @param array $brief Lesson brief
+     * @return int
+     */
     public static function estimate(array $brief): int {
         return \local_aicoursebuilder\local\generator_runtime::estimate(self::COMPONENT, self::prepare_brief($brief));
     }
 
+    /**
+     * Start generating a lesson for an activity.
+     *
+     * @param int $cmid Course module id
+     * @param array $brief Lesson brief
+     * @return string Job id
+     */
     public static function generate(int $cmid, array $brief): string {
         return \local_aicoursebuilder\local\generator_runtime::generate(self::COMPONENT, $cmid, self::prepare_brief($brief));
     }
 
+    /**
+     * The status of a generation job.
+     *
+     * @param int $cmid Course module id
+     * @param string $jobid Job id
+     * @return array
+     */
     public static function status(int $cmid, string $jobid): array {
         return \local_aicoursebuilder\local\generator_runtime::status(self::COMPONENT, $cmid, $jobid);
     }

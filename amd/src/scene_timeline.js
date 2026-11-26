@@ -7,9 +7,21 @@ import {validateScene} from './scene_validator';
 import {clamp, lerp, interpolatePoint, samplePath, colourAt, travelRotation, measurePath} from './scene_geometry';
 
 const clone = value => JSON.parse(JSON.stringify(value));
-const ease = (p, type) => type === 'smooth' ? p * p * (3 - 2 * p) :
-    type === 'ease-in' ? p * p : type === 'ease-out' ? p * (2 - p) : p;
-const lerpPaint = (a, b, p) => a === 'none' || b === 'none' ? (p < 1 ? a : b) : colourAt(a, b, p);
+const ease = (p, type) => {
+    if (type === 'smooth') {
+        return p * p * (3 - 2 * p);
+    }
+    if (type === 'ease-in') {
+        return p * p;
+    }
+    return type === 'ease-out' ? p * (2 - p) : p;
+};
+const lerpPaint = (a, b, p) => {
+    if (a === 'none' || b === 'none') {
+        return p < 1 ? a : b;
+    }
+    return colourAt(a, b, p);
+};
 const toParticles = positions => positions.map(([x, y]) => ({x, y, opacity: 1}));
 
 const initialState = spec => ({
@@ -33,6 +45,7 @@ const initialState = spec => ({
  * @param {number} time
  * @param {Object} paths
  */
+// eslint-disable-next-line complexity -- One branch per animation operation in the published scene contract.
 const apply = (state, plan, time, paths) => {
     const a = plan.action;
     if (time < a.startMs) {

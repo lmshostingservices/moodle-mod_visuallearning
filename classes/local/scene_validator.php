@@ -1,8 +1,20 @@
 <?php
 // This file is part of Moodle - https://moodle.org/
-// Moodle is free software under the GNU General Public License v3 or later.
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace mod_visuallearning\local;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Strict portable scene schema and semantic validation; never repairs scientific geometry.
@@ -12,7 +24,12 @@ defined('MOODLE_INTERNAL') || die();
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class scene_validator {
-    /** Return a validated, JSON-preserving scene, or null for the existing image fallback. */
+    /**
+     * Return a validated, JSON-preserving scene, or null for the existing image fallback.
+     *
+     * @param mixed $input Scene as JSON text or decoded data
+     * @return array|null
+     */
     public static function clean($input): ?array {
         try {
             $json = is_string($input) ? $input : json_encode($input, JSON_THROW_ON_ERROR);
@@ -47,7 +64,14 @@ class scene_validator {
         }
     }
 
-    /** Validate the portable JSON Schema subset used by the published contract. */
+    /**
+     * Validate the portable JSON Schema subset used by the published contract.
+     *
+     * @param mixed $value Value to check
+     * @param array $rule Schema rule
+     * @param array $root Whole schema, for $ref lookups
+     * @return bool
+     */
     private static function matches($value, array $rule, array $root): bool {
         if (isset($rule['$ref'])) {
             $ref = explode('/', $rule['$ref']);
@@ -83,8 +107,10 @@ class scene_validator {
                 }
             }
         } else if ($type === 'array') {
-            if (!is_array($value) || !array_is_list($value) || count($value) < ($rule['minItems'] ?? 0)
-                    || count($value) > ($rule['maxItems'] ?? 40000)) {
+            if (
+                !is_array($value) || !array_is_list($value) || count($value) < ($rule['minItems'] ?? 0)
+                    || count($value) > ($rule['maxItems'] ?? 40000)
+            ) {
                 return false;
             }
             foreach ($value as $entry) {
@@ -97,14 +123,18 @@ class scene_validator {
                 return false;
             }
             $length = preg_match_all('/./us', $value);
-            if ($length < ($rule['minLength'] ?? 0) || $length > ($rule['maxLength'] ?? 262144)
-                    || (isset($rule['pattern']) && !preg_match('~' . str_replace('~', '\\~', $rule['pattern']) . '~uD', $value))) {
+            if (
+                $length < ($rule['minLength'] ?? 0) || $length > ($rule['maxLength'] ?? 262144)
+                    || (isset($rule['pattern']) && !preg_match('~' . str_replace('~', '\\~', $rule['pattern']) . '~uD', $value))
+            ) {
                 return false;
             }
         } else if ($type === 'number' || $type === 'integer') {
-            if ((!is_int($value) && !is_float($value)) || !is_finite((float)$value)
+            if (
+                (!is_int($value) && !is_float($value)) || !is_finite((float)$value)
                     || ($type === 'integer' && floor($value) !== (float)$value)
-                    || $value < ($rule['minimum'] ?? -INF) || $value > ($rule['maximum'] ?? INF)) {
+                    || $value < ($rule['minimum'] ?? -INF) || $value > ($rule['maximum'] ?? INF)
+            ) {
                 return false;
             }
         } else if ($type === 'boolean' && !is_bool($value)) {
@@ -113,7 +143,12 @@ class scene_validator {
         return true;
     }
 
-    /** Identical bounded curve subdivision to the browser's scene_geometry module. */
+    /**
+     * Identical bounded curve subdivision to the browser's scene_geometry module.
+     *
+     * @param array $path Path with segments
+     * @return array Points
+     */
     private static function points(array $path): array {
         $points = [];
         $at = [0, 0];
@@ -148,7 +183,13 @@ class scene_validator {
         return $points;
     }
 
-    /** Arc-length sampling including stable end tangent. */
+    /**
+     * Arc-length sampling including stable end tangent.
+     *
+     * @param array $path Path with segments
+     * @param float $progress 0 to 1 along the path
+     * @return array x, y and rotation
+     */
     private static function sample(array $path, float $progress): array {
         $points = self::points($path);
         $lengths = [];
@@ -169,7 +210,12 @@ class scene_validator {
         return ['x' => $points[0][0], 'y' => $points[0][1], 'rotation' => 0];
     }
 
-    /** Property channels that cannot be written concurrently. */
+    /**
+     * Property channels that cannot be written concurrently.
+     *
+     * @param array $op Operation
+     * @return array Channel names
+     */
     private static function channels(array $op): array {
         $map = ['reveal' => ['visible', 'opacity'], 'hide' => ['visible', 'opacity'],
             'draw_path' => ['dash'], 'flow' => ['dash'], 'emit_particles' => ['particles'],
@@ -177,7 +223,12 @@ class scene_validator {
         return $map[$op['type']] ?? array_keys($op['final']);
     }
 
-    /** Validate relationships, topology, animation targets and resource budgets. */
+    /**
+     * Validate relationships, topology, animation targets and resource budgets.
+     *
+     * @param array $s Decoded scene
+     * @return bool
+     */
     private static function semantics(array $s): bool {
         if ($s['viewBox'][2] < 1 || $s['viewBox'][3] < 1) {
             return false;
@@ -194,9 +245,11 @@ class scene_validator {
         foreach ($paths as $p) {
             foreach ($p['segments'] as $i => $seg) {
                 $command = $seg['command'];
-                if (($i === 0 && $command !== 'M') || ($i > 0 && $command === 'M')
+                if (
+                    ($i === 0 && $command !== 'M') || ($i > 0 && $command === 'M')
                         || ($command === 'Z' && $i !== count($p['segments']) - 1)
-                        || count($seg['values']) !== ['M' => 2, 'L' => 2, 'Q' => 4, 'C' => 6, 'Z' => 0][$command]) {
+                        || count($seg['values']) !== ['M' => 2, 'L' => 2, 'Q' => 4, 'C' => 6, 'Z' => 0][$command]
+                ) {
                     return false;
                 }
                 $coordinates += count($seg['values']);
@@ -233,10 +286,12 @@ class scene_validator {
             $expected = $keys[$o['kind']];
             sort($actual);
             sort($expected);
-            if ($actual !== $expected || !isset($layers[$o['layer']])
+            if (
+                $actual !== $expected || !isset($layers[$o['layer']])
                     || ($o['kind'] === 'polygon' && count($o['geometry']['points']) < 3)
                     || ($o['kind'] === 'path' && !isset($paths[$o['geometry']['path']]))
-                    || (isset($o['gradient']) && !isset($gradients[$o['gradient']]))) {
+                    || (isset($o['gradient']) && !isset($gradients[$o['gradient']]))
+            ) {
                 return false;
             }
             if (isset($o['parent'])) {
@@ -255,9 +310,11 @@ class scene_validator {
                     $edges[$id][] = $o[$key];
                 }
             }
-            foreach (['value' => ['text'], 'connected' => ['connector'],
+            foreach (
+                ['value' => ['text'], 'connected' => ['connector'],
                 'drawProgress' => ['path', 'line', 'arrow', 'polygon', 'connector'],
-                'flowOffset' => ['path', 'line', 'arrow', 'polygon']] as $field => $kinds) {
+                'flowOffset' => ['path', 'line', 'arrow', 'polygon']] as $field => $kinds
+            ) {
                 if (isset($o['initial'][$field]) && !in_array($o['kind'], $kinds, true)) {
                     return false;
                 }
@@ -314,8 +371,10 @@ class scene_validator {
                 $op = $a['operation'];
                 $type = $op['type'];
                 $target = $objects[$a['target']] ?? null;
-                if ($a['startMs'] + $a['durationMs'] > $stage['durationMs']
-                        || (in_array($type, ['zoom', 'pan'], true) ? $a['target'] !== '@camera' : !$target)) {
+                if (
+                    $a['startMs'] + $a['durationMs'] > $stage['durationMs']
+                        || (in_array($type, ['zoom', 'pan'], true) ? $a['target'] !== '@camera' : !$target)
+                ) {
                     return false;
                 }
                 if ($type === 'morph' && ($target['kind'] !== 'path' || !isset($paths[$op['final']['path']]))) {
@@ -330,7 +389,10 @@ class scene_validator {
                         $end['rotation'] += $end['rotation'] > 0 ? -180 : 180;
                     }
                     foreach (['x', 'y', 'rotation'] as $field) {
-                        if (($field !== 'rotation' || $op['params']['orient']) && abs($end[$field] - $op['final'][$field]) > 0.001) {
+                        if (
+                            ($field !== 'rotation' || $op['params']['orient'])
+                            && abs($end[$field] - $op['final'][$field]) > 0.001
+                        ) {
                             return false;
                         }
                     }
@@ -340,10 +402,12 @@ class scene_validator {
                     'connect' => ['connector'], 'disconnect' => ['connector'],
                     'draw_path' => ['path', 'line', 'arrow', 'polygon', 'connector'],
                     'flow' => ['path', 'line', 'arrow', 'polygon']];
-                if ((isset($allowed[$type]) && !in_array($target['kind'], $allowed[$type], true))
+                if (
+                    (isset($allowed[$type]) && !in_array($target['kind'], $allowed[$type], true))
                         || ($type === 'highlight' && $target['kind'] === 'group')
                         || ($type === 'change_colour' && in_array($target['kind'], ['group', 'line', 'arrow', 'connector'], true))
-                        || ($type === 'reveal' && !$op['final']['visible']) || ($type === 'hide' && $op['final']['visible'])) {
+                        || ($type === 'reveal' && !$op['final']['visible']) || ($type === 'hide' && $op['final']['visible'])
+                ) {
                     return false;
                 }
                 if (isset($op['final']['positions'])) {
@@ -354,9 +418,11 @@ class scene_validator {
                     $particles[$a['target']] = max($particles[$a['target']], $n);
                 }
                 foreach (array_slice($stage['actions'], $i + 1) as $b) {
-                    if ($a['target'] === $b['target'] && $a['startMs'] < $b['startMs'] + $b['durationMs']
+                    if (
+                        $a['target'] === $b['target'] && $a['startMs'] < $b['startMs'] + $b['durationMs']
                             && $b['startMs'] < $a['startMs'] + $a['durationMs']
-                            && array_intersect(self::channels($op), self::channels($b['operation']))) {
+                            && array_intersect(self::channels($op), self::channels($b['operation']))
+                    ) {
                         return false;
                     }
                 }

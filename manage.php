@@ -189,8 +189,10 @@ if ($action === 'edit' || $action === 'add') {
         ];
         if ($linkedoutcomes) {
             // Only the activity's own outcomes can be tagged; anything else on the form is ignored.
-            $chosen = array_values(array_intersect(array_map('intval', (array)($data->outcomeids ?? [])),
-                array_map('intval', array_keys($linkedoutcomes))));
+            $chosen = array_values(array_intersect(
+                array_map('intval', (array)($data->outcomeids ?? [])),
+                array_map('intval', array_keys($linkedoutcomes))
+            ));
             $record->outcomes = \mod_visuallearning\local\outcomes::to_field($chosen);
         }
         // Card picture prompts and the diagram are only on the form in their picture mode; elsewhere they are kept.
@@ -221,8 +223,10 @@ if ($action === 'edit' || $action === 'add') {
                 'title' => $record->title, 'concept' => $record->concepttext, 'action' => $record->actiontext,
                 'outcome' => $record->outcometext, 'image_prompt' => $record->imageprompt,
                 'alt_text' => $record->alttext, 'summary' => $record->summarytext,
-                'outcomes' => array_map(fn($id) => $linkedoutcomes[$id]->code,
-                    \mod_visuallearning\local\outcomes::page_ids($record)),
+                'outcomes' => array_map(
+                    fn($id) => $linkedoutcomes[$id]->code,
+                    \mod_visuallearning\local\outcomes::page_ids($record)
+                ),
                 'question' => \mod_visuallearning\local\question::from_form($data),
                 'card_image_prompts' => json_decode((string)($record->cardprompts ?? ''), true) ?: [],
                 'diagram' => \mod_visuallearning\local\diagram::clean($record->diagram ?? null),
@@ -259,7 +263,10 @@ if ($action === 'edit' || $action === 'add') {
                 'cardprompt2' => \mod_visuallearning\local\picture_modes::card_prompts($page)[1],
                 'cardprompt3' => \mod_visuallearning\local\picture_modes::card_prompts($page)[2],
                 'diagram' => (string)($page->diagram ?? '') !== ''
-                    ? json_encode(json_decode($page->diagram), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '',
+                    ? json_encode(
+                        json_decode($page->diagram),
+                        JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                    ) : '',
                 'noscene' => \mod_visuallearning\local\scene_plan::is_none($page) ? 1 : 0,
                 'sceneplan' => \mod_visuallearning\local\scene_plan::is_none($page) ? ''
                     : \mod_visuallearning\local\scene_plan::for_editor($page),
@@ -461,21 +468,29 @@ if ($pageoutcomes && $total) {
     $chips = '';
     foreach ($pageoutcomes as $o) {
         $nums = $coverage[$o->id];
-        $chips .= html_writer::tag('li',
+        $chips .= html_writer::tag(
+            'li',
             html_writer::span(s($o->code), 'vl-outcome-code') .
             html_writer::span(s($o->name), 'vl-outcome-name') .
-            html_writer::span($nums ? get_string(count($nums) === 1 ? 'outcome_taughtonone' : 'outcome_taughton',
-                'mod_visuallearning', implode(', ', $nums))
+            html_writer::span($nums ? get_string(
+                count($nums) === 1 ? 'outcome_taughtonone' : 'outcome_taughton',
+                'mod_visuallearning',
+                implode(', ', $nums)
+            )
                 : get_string('outcome_nottaught', 'mod_visuallearning'), 'vl-outcome-status'),
-            ['class' => 'vl-outcome ' . ($nums ? 'is-covered' : 'is-missing'), 'title' => s($o->text)]);
+            ['class' => 'vl-outcome ' . ($nums ? 'is-covered' : 'is-missing'), 'title' => s($o->text)]
+        );
     }
     echo html_writer::div(
         html_writer::div(
             html_writer::tag('h4', get_string('outcomes_coverage', 'mod_visuallearning')) .
-            html_writer::span($missing ? get_string('outcomes_missing', 'mod_visuallearning', $missing)
+            html_writer::span(
+                $missing ? get_string('outcomes_missing', 'mod_visuallearning', $missing)
                 : get_string('outcomes_allcovered', 'mod_visuallearning'),
-                'vl-outcomes-summary ' . ($missing ? 'is-missing' : 'is-covered')),
-            'vl-outcomes-head') .
+                'vl-outcomes-summary ' . ($missing ? 'is-missing' : 'is-covered')
+            ),
+            'vl-outcomes-head'
+        ) .
         html_writer::tag('ul', $chips, ['class' => 'vl-outcomes-list']) .
         ($missing ? html_writer::tag('p', get_string('outcomes_missinghelp', 'mod_visuallearning'), ['class' => 'vl-outcomes-help'])
             : ''),
@@ -512,13 +527,19 @@ foreach ($pages as $page) {
         $tags = '';
         foreach (\mod_visuallearning\local\outcomes::page_ids($page) as $oid) {
             if (isset($pageoutcomes[$oid])) {
-                $tags .= html_writer::span(s($pageoutcomes[$oid]->code), 'vl-outcome-tag',
-                    ['title' => s($pageoutcomes[$oid]->name)]);
+                $tags .= html_writer::span(
+                    s($pageoutcomes[$oid]->code),
+                    'vl-outcome-tag',
+                    ['title' => s($pageoutcomes[$oid]->name)]
+                );
             }
         }
-        echo html_writer::div($tags !== '' ? $tags
+        echo html_writer::div(
+            $tags !== '' ? $tags
             : html_writer::span(get_string('pageoutcomes_none', 'mod_visuallearning'), 'vl-outcome-tag is-empty'),
-            'vl-page-outcomes', ['aria-label' => get_string('pageoutcomes', 'mod_visuallearning')]);
+            'vl-page-outcomes',
+            ['aria-label' => get_string('pageoutcomes', 'mod_visuallearning')]
+        );
     }
     if ($book->enablequiz) {
         echo \mod_visuallearning\local\question::teacher_summary($page, $context, $book);
@@ -606,8 +627,11 @@ $svgmode = \mod_visuallearning\local\picture_modes::of($book) === \mod_visuallea
 echo $holdnotice(['image' => 'image'] + ($optioncount ? ['option' => 'option'] : []) + ($sequence ? ['card' => 'card'] : [])
     + ($svgmode ? ['animation' => 'animation'] : []) + ['voice' => 'voice']);
 if ($svgmode) {
-    echo html_writer::tag('p', get_string('svgmode_intro', 'mod_visuallearning'),
-        ['class' => 'small text-muted']);
+    echo html_writer::tag(
+        'p',
+        get_string('svgmode_intro', 'mod_visuallearning'),
+        ['class' => 'small text-muted']
+    );
 }
 
 // Open requests, by page: what is being made, and what needs the teacher.
@@ -616,8 +640,10 @@ $problems = [];
 $pendingrows = [];
 foreach ($open as $row) {
     if ($row->status === 'pending') {
-        if (!in_array($row->operation, [requests::IMAGE, requests::COVER, requests::OPTION, requests::VOICE, requests::CARD,
-                requests::ANIMATION], true)) {
+        if (
+            !in_array($row->operation, [requests::IMAGE, requests::COVER, requests::OPTION, requests::VOICE, requests::CARD,
+                requests::ANIMATION], true)
+        ) {
             $pendingrows[] = $row;
             continue;
         }
@@ -689,14 +715,22 @@ if ($total) {
             'vl-stat ' . $class
         );
     };
-    $tiles = $tile(get_string('media_pictures', 'mod_visuallearning'), $ready['image'] . '/' . $total,
-        $ready['image'] === $total ? 'is-ready' : '');
-    $tiles .= $tile(get_string('media_voiceover', 'mod_visuallearning'), $ready['audio'] . '/' . $total,
-        $ready['audio'] === $total ? 'is-ready' : '');
+    $tiles = $tile(
+        get_string('media_pictures', 'mod_visuallearning'),
+        $ready['image'] . '/' . $total,
+        $ready['image'] === $total ? 'is-ready' : ''
+    );
+    $tiles .= $tile(
+        get_string('media_voiceover', 'mod_visuallearning'),
+        $ready['audio'] . '/' . $total,
+        $ready['audio'] === $total ? 'is-ready' : ''
+    );
     if ($hascover) {
-        $tiles .= $tile(get_string('cover', 'mod_visuallearning'), get_string($coverready ? 'status_ready'
+        $tiles .= $tile(get_string('cover', 'mod_visuallearning'), get_string(
+            $coverready ? 'status_ready'
             : ((int)$book->coverstatus === VISUALLEARNING_MEDIA_QUEUED ? 'status_queued' : 'status_pending'),
-            'mod_visuallearning'), $coverready ? 'is-ready' : '');
+            'mod_visuallearning'
+        ), $coverready ? 'is-ready' : '');
     }
     if ($inprogress) {
         $live = html_writer::span('', 'vl-spinner', ['aria-hidden' => 'true']) .
@@ -765,10 +799,16 @@ if ($total) {
             ) .
             html_writer::div(
                 html_writer::div(get_string('cover', 'mod_visuallearning'), 'vl-media-title') .
-                html_writer::div($chip(get_string('media_picture', 'mod_visuallearning'), (int)$book->coverstatus,
-                    $coverpending), 'vl-chips') .
-                ($canai ? $remake([visuallearning_button($quoteurl('cover'), get_string('regenimage', 'mod_visuallearning'),
-                    'post')]) : ''),
+                html_writer::div($chip(
+                    get_string('media_picture', 'mod_visuallearning'),
+                    (int)$book->coverstatus,
+                    $coverpending
+                ), 'vl-chips') .
+                ($canai ? $remake([visuallearning_button(
+                    $quoteurl('cover'),
+                    get_string('regenimage', 'mod_visuallearning'),
+                    'post'
+                )]) : ''),
                 'vl-media-body'
             ),
             'vl-media-card is-cover'
@@ -777,32 +817,52 @@ if ($total) {
     foreach ($pages as $page) {
         $image = $thumbfile($page);
         $pend = $pendingby[(int)$page->id] ?? [];
-        $buttons = [visuallearning_button($quoteurl('image', (int)$page->id), get_string('regenpageimage', 'mod_visuallearning'),
-            'post')];
+        $buttons = [visuallearning_button(
+            $quoteurl('image', (int)$page->id),
+            get_string('regenpageimage', 'mod_visuallearning'),
+            'post'
+        )];
         if (media::option_prompts($book, $page)) {
-            $buttons[] = visuallearning_button($quoteurl('option', (int)$page->id),
-                get_string('regenoptions', 'mod_visuallearning'), 'post');
+            $buttons[] = visuallearning_button(
+                $quoteurl('option', (int)$page->id),
+                get_string('regenoptions', 'mod_visuallearning'),
+                'post'
+            );
         }
         $cardchip = '';
         if ($sequence && !empty($page->bundleid) && media::card_prompts($book, $page)) {
             $made = count(array_filter(array_column(media::card_chain($context, $book, $page), 'file')));
-            $buttons[] = visuallearning_button($quoteurl('card', (int)$page->id),
-                get_string('regencards', 'mod_visuallearning'), 'post');
-            $cardchip = $chip(get_string('media_cards', 'mod_visuallearning', $made),
-                $made === \mod_visuallearning\local\picture_modes::CARDS ? VISUALLEARNING_MEDIA_READY : VISUALLEARNING_MEDIA_PENDING,
-                $pend['card'] ?? 0);
+            $buttons[] = visuallearning_button(
+                $quoteurl('card', (int)$page->id),
+                get_string('regencards', 'mod_visuallearning'),
+                'post'
+            );
+            $cardchip = $chip(
+                get_string('media_cards', 'mod_visuallearning', $made),
+                $made === \mod_visuallearning\local\picture_modes::CARDS
+                    ? VISUALLEARNING_MEDIA_READY : VISUALLEARNING_MEDIA_PENDING,
+                $pend['card'] ?? 0
+            );
         }
         if ($svgmode && ($svgprompt = media::svg_prompt($book, $page)) !== '') {
             $svgready = media::svg_current($context, (int)$page->id, media::svg_key($book, $page));
-            $buttons[] = visuallearning_button($quoteurl('animation', (int)$page->id),
-                get_string('regenanimation', 'mod_visuallearning'), 'post');
-            $cardchip .= $chip(get_string('media_animation', 'mod_visuallearning'),
+            $buttons[] = visuallearning_button(
+                $quoteurl('animation', (int)$page->id),
+                get_string('regenanimation', 'mod_visuallearning'),
+                'post'
+            );
+            $cardchip .= $chip(
+                get_string('media_animation', 'mod_visuallearning'),
                 $svgready ? VISUALLEARNING_MEDIA_READY
                     : VISUALLEARNING_MEDIA_PENDING,
-                $pend['animation'] ?? 0);
+                $pend['animation'] ?? 0
+            );
         }
-        $buttons[] = visuallearning_button($quoteurl('voice', (int)$page->id), get_string('regenaudio', 'mod_visuallearning'),
-            'post');
+        $buttons[] = visuallearning_button(
+            $quoteurl('voice', (int)$page->id),
+            get_string('regenaudio', 'mod_visuallearning'),
+            'post'
+        );
         // The teacher's own HTML in place of the picture (no credits: nothing is made by LMS Labs).
         $ownhtml = media::html_file($context, (int)$page->id);
         if ($ownhtml) {
@@ -825,8 +885,10 @@ if ($total) {
                 'vl-media-thumb'
             ) .
             html_writer::div(
-                html_writer::div((int)$page->pagenum . '. ' . format_string($page->title, true, ['context' => $context]),
-                    'vl-media-title') .
+                html_writer::div(
+                    (int)$page->pagenum . '. ' . format_string($page->title, true, ['context' => $context]),
+                    'vl-media-title'
+                ) .
                 html_writer::div(
                     $chip(get_string('media_picture', 'mod_visuallearning'), (int)$page->imagestatus, $pend['image'] ?? 0) .
                     $cardchip .

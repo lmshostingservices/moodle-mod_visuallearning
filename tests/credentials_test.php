@@ -19,6 +19,7 @@ namespace mod_visuallearning;
 use mod_visuallearning\local\credentials;
 use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(credentials::class)]
 /**
  * LMS Labs credentials: Central Config (local_aiconfig) first, then this plugin's settings, never mixed.
  *
@@ -26,8 +27,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\credentials
  */
-#[CoversClass(credentials::class)]
 final class credentials_test extends \advanced_testcase {
     /**
      * Restores the real Central Config lookup.

@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace mod_visuallearning\local;
 
 /**
@@ -67,6 +68,7 @@ class svg_sanitiser {
         }
         $svg = trim($svg);
         // A model sometimes wraps its answer in a code fence; take what is inside.
+        // phpcs:ignore moodle.Strings.ForbiddenStrings.Found -- Markdown code fences, not shell backticks.
         if (preg_match('/^```[a-z]*\s*(.*?)\s*```$/is', $svg, $m)) {
             $svg = trim($m[1]);
         }
@@ -92,8 +94,10 @@ class svg_sanitiser {
             return null;
         }
         $viewbox = preg_split('/[\s,]+/', trim((string)$root->getAttribute('viewBox')));
-        if (count($viewbox) !== 4 || !is_numeric($viewbox[2]) || !is_numeric($viewbox[3]) || $viewbox[2] <= 0
-                || $viewbox[3] <= 0) {
+        if (
+            count($viewbox) !== 4 || !is_numeric($viewbox[2]) || !is_numeric($viewbox[3]) || $viewbox[2] <= 0
+                || $viewbox[3] <= 0
+        ) {
             return null;
         }
 
@@ -127,8 +131,11 @@ class svg_sanitiser {
                     $list = array_filter(array_map(fn($id) => $ids[$id] ?? null, preg_split('/\s+/', trim($value))));
                     $el->setAttribute($name, implode(' ', $list));
                 } else if ($name === 'begin' || $name === 'end') {
-                    $el->setAttribute($name, preg_replace_callback('/(?<![\w.-])([A-Za-z_][\w-]*)\.(begin|end|repeat)/',
-                        fn($m) => isset($ids[$m[1]]) ? $ids[$m[1]] . '.' . $m[2] : $m[0], $value));
+                    $el->setAttribute($name, preg_replace_callback(
+                        '/(?<![\w.-])([A-Za-z_][\w-]*)\.(begin|end|repeat)/',
+                        fn($m) => isset($ids[$m[1]]) ? $ids[$m[1]] . '.' . $m[2] : $m[0],
+                        $value
+                    ));
                 } else if (str_contains($value, 'url(')) {
                     $el->setAttribute($name, self::scope_urls($value, $ids));
                 }
@@ -155,8 +162,10 @@ class svg_sanitiser {
             $style->appendChild($doc->createTextNode($css));
         }
         foreach ($xpath->query('//*[@style]') as $el) {
-            $inline = self::rename_keyframes(self::scope_urls(self::clean_css((string)$el->getAttribute('style')), $ids),
-                $keyframes);
+            $inline = self::rename_keyframes(
+                self::scope_urls(self::clean_css((string)$el->getAttribute('style')), $ids),
+                $keyframes
+            );
             $el->setAttribute('style', $inline);
         }
 
@@ -288,11 +297,17 @@ class svg_sanitiser {
         if (!$names) {
             return $css;
         }
-        $css = preg_replace_callback('/@((?:-webkit-)?keyframes)\s+([A-Za-z_][\w-]*)/',
-            fn($m) => '@' . $m[1] . ' ' . ($names[$m[2]] ?? $m[2]), $css);
+        $css = preg_replace_callback(
+            '/@((?:-webkit-)?keyframes)\s+([A-Za-z_][\w-]*)/',
+            fn($m) => '@' . $m[1] . ' ' . ($names[$m[2]] ?? $m[2]),
+            $css
+        );
         return preg_replace_callback('/(animation(?:-name)?\s*:)([^;}]*)/i', function ($m) use ($names) {
-            return $m[1] . preg_replace_callback('/(?<![\w-])([A-Za-z_][\w-]*)(?![\w-])/',
-                fn($w) => $names[$w[1]] ?? $w[1], $m[2]);
+            return $m[1] . preg_replace_callback(
+                '/(?<![\w-])([A-Za-z_][\w-]*)(?![\w-])/',
+                fn($w) => $names[$w[1]] ?? $w[1],
+                $m[2]
+            );
         }, $css);
     }
 

@@ -133,11 +133,17 @@ class restore_visuallearning_activity_structure_step extends restore_activity_st
         }
         \mod_visuallearning\local\outcomes::reset_cache();
         $linked = array_map('intval', array_keys(\mod_visuallearning\local\outcomes::for_cm($cm)));
-        $pages = $DB->get_records_select('visuallearning_pages', 'visuallearningid = ? AND outcomes IS NOT NULL',
-            [$bookid], '', 'id, outcomes');
+        $pages = $DB->get_records_select(
+            'visuallearning_pages',
+            'visuallearningid = ? AND outcomes IS NOT NULL',
+            [$bookid],
+            '',
+            'id, outcomes'
+        );
         foreach ($pages as $page) {
             $keep = \mod_visuallearning\local\outcomes::to_field(
-                array_intersect(\mod_visuallearning\local\outcomes::page_ids($page), $linked));
+                array_intersect(\mod_visuallearning\local\outcomes::page_ids($page), $linked)
+            );
             if ($keep !== $page->outcomes) {
                 $DB->set_field('visuallearning_pages', 'outcomes', $keep, ['id' => $page->id]);
             }

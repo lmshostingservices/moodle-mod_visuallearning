@@ -8,11 +8,11 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_visuallearning;
 
@@ -20,6 +20,9 @@ use mod_visuallearning\local\scene_plan;
 use mod_visuallearning\local\prompt_builder;
 use mod_visuallearning\local\importer;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(scene_plan::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(importer::class)]
 /**
  * Scene plans survive the real import, storage and prompt-building paths.
  *
@@ -27,10 +30,10 @@ use mod_visuallearning\local\importer;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\scene_plan
+ * @covers     \mod_visuallearning\local\prompt_builder
+ * @covers     \mod_visuallearning\local\importer
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(scene_plan::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(importer::class)]
 final class scene_plan_test extends \advanced_testcase {
     /**
      * A harmless topic-independent plan (1.8 form).
@@ -86,8 +89,10 @@ final class scene_plan_test extends \advanced_testcase {
         $this->assertArrayNotHasKey('realtime', $legacy);
 
         // The lesson's scene style keeps only known subjects.
-        $this->assertSame(['palette' => 'blue = water', 'recurring' => '', 'subject' => 'earth'],
-            scene_plan::clean_style(['palette' => 'blue = water', 'subject' => 'earth']));
+        $this->assertSame(
+            ['palette' => 'blue = water', 'recurring' => '', 'subject' => 'earth'],
+            scene_plan::clean_style(['palette' => 'blue = water', 'subject' => 'earth'])
+        );
         $this->assertSame('', scene_plan::clean_style(['palette' => 'x', 'subject' => 'astrology'])['subject']);
         $this->assertNull(scene_plan::clean_style(['subject' => 'astrology']));
     }

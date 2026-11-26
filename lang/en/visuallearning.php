@@ -251,6 +251,58 @@ $string['credentials_central'] = 'In use: the Site ID and API key from LMS Labs 
 $string['credentials_centralincomplete'] = 'Not configured: LMS Labs Central Config is missing its Site ID or API key, and the standalone fields below are not both filled in. LMS Labs is not contacted until then.';
 $string['credentials_local'] = 'In use: the standalone Site ID and API key below (LMS Labs Central Config is not installed or does not have both).';
 $string['credentials_none'] = 'Not configured: enter this site\'s LMS Labs Site ID and API key in LMS Labs Central Config (recommended), or both in the standalone fields below. LMS Labs is not contacted until then.';
+$string['customhtml_alt'] = 'Description for screen readers';
+$string['customhtml_alt_help'] = 'One or two sentences saying what the HTML shows, read out by screen readers in place of it. It also becomes the page\'s picture description.';
+$string['customhtml_change'] = 'Change my own HTML…';
+$string['customhtml_disabled'] = 'Your site administrator has switched off teachers\' own HTML.';
+$string['customhtml_done'] = 'Done';
+$string['customhtml_err_empty'] = 'Paste your HTML or upload an HTML file.';
+$string['customhtml_err_nothtml'] = 'This does not look like HTML. Paste the whole file, for example everything Claude gives you from <!doctype html> to </html>.';
+$string['customhtml_err_size'] = 'This HTML is too big. The largest is {$a}: put large pictures on the web, or ask for a lighter version.';
+$string['customhtml_heading'] = 'Your own HTML: {$a}';
+$string['customhtml_intro'] = 'Show your own HTML in place of this page\'s picture: an animated chart, numbers that count up, a drill-down, anything made in Claude or by hand. Learners can click and tap inside it, and the magnifier opens it full screen. The page picture is kept for the recap, the cover and the downloads, and comes back if you remove your HTML. Your HTML runs in a sandboxed frame, so it cannot reach Moodle or your learners\' accounts.';
+$string['customhtml_paste'] = 'Or paste your HTML';
+$string['customhtml_paste_help'] = 'Paste the whole HTML file, with its CSS and JavaScript inside. An uploaded file is used in place of what is pasted here.';
+$string['customhtml_preview'] = 'Preview';
+$string['customhtml_preview_desc'] = 'This is what learners see in place of the picture. The buttons send the same messages the lesson sends while each key point is read aloud.';
+$string['customhtml_prompt'] = 'Make a single self-contained HTML file to show on one page of a narrated Moodle lesson, in place of the page picture.
+
+Page: {$a->title}
+{$a->cards}
+
+What to show: [describe it here, for example an animated bar chart of the figures, with numbers that count up and bars learners can tap to see the detail]
+
+Requirements:
+- One HTML file with all its CSS and JavaScript written inside it. Do not load anything from other websites: no libraries, fonts or images from a CDN. Draw charts with plain SVG or canvas, so the file keeps working for years with nothing to break.
+- It fills a box of about 800 by 560 pixels and resizes to fit any size, from a phone held upright to a large screen, with no scrolling. Tap targets are at least 44 by 44 pixels. Light background, large readable text.
+- Accessible: text and important graphics meet WCAG 2.2 AA colour contrast (4.5:1 for text). Never use colour alone to show meaning; add a label, number or pattern. Everything learners can click also works with the keyboard (Tab, Enter and Space) and shows a clear focus outline. Use real buttons for controls. Give the main graphic a role="img" and an aria-label that sums up what it shows, and put changing numbers in an aria-live="polite" region so screen readers announce the result.
+- Respect reduced motion: also check the prefers-reduced-motion media query, and when it is set show the end state without movement.
+- No logins, no forms that send data, no localStorage or cookies, and no network calls of any kind.
+- The lesson tells the page which key point is being read aloud with window messages (check event.data.source === "visuallearning"):
+  {type: "vl:card", card: 1, 2 or 3, ms} key point N is being read for ms milliseconds: animate its part over that time.
+  {type: "vl:finish", card: N} show everything up to key point N at once (4 means everything).
+  {type: "vl:reset"} start again from the beginning.
+  {type: "vl:pause", paused: true or false} pause or resume any movement.
+  Every message also has reducedMotion: when it is true, skip the movement and show the end state.
+- If no message arrives within 1.5 seconds (for example when the file is opened on its own), play the key points in order.
+- Learners can click or tap parts of it to see more detail.';
+$string['customhtml_prompt_card'] = '{$a->label}: {$a->text}';
+$string['customhtml_prompt_copied'] = 'Copied';
+$string['customhtml_prompt_copy'] = 'Copy the prompt';
+$string['customhtml_prompt_desc'] = 'Paste this into Claude, describe what you want to see, and save the HTML file it makes. The prompt already holds this page\'s key points and the messages the lesson sends while each one is read.';
+$string['customhtml_prompt_heading'] = 'Make it with Claude: a ready-made prompt';
+$string['customhtml_remove'] = 'Remove my HTML';
+$string['customhtml_remove_confirm'] = 'Remove your HTML from this page? Learners will see the page picture again.';
+$string['customhtml_removed'] = 'Your HTML was removed. The page shows its picture again.';
+$string['customhtml_save'] = 'Save and preview';
+$string['customhtml_saved'] = 'Saved. Learners now see your HTML on this page.';
+$string['customhtml_testall'] = 'Show everything';
+$string['customhtml_testcard'] = 'Read key point {$a}';
+$string['customhtml_testreset'] = 'Start again';
+$string['customhtml_title'] = 'Your own HTML';
+$string['customhtml_upload'] = 'Upload an HTML file';
+$string['customhtml_upload_help'] = 'An .html file, for example one you saved from Claude. Up to 2 MB, with its CSS and JavaScript inside.';
+$string['customhtml_use'] = 'Use my own HTML…';
 $string['defaultimagestyle'] = 'Editorial textbook illustration: hand-painted gouache with subtle coloured-pencil texture, confident organic outlines, softly layered pigment, a warm natural palette, simplified but credible forms, gentle natural light and a clean warm-cream background.';
 $string['deletepage_confirm'] = 'Delete this page, its illustration, its voiceover and all learner progress on it?';
 $string['diagramspec'] = 'Animated diagram';
@@ -396,7 +448,6 @@ $string['maxpages_help'] = 'Each page teaches one concept, and every four pages 
 $string['maxpagesreached'] = 'A lesson can have at most 20 pages.';
 $string['media_alldone'] = 'Every picture and voiceover clip is ready.';
 $string['media_animation'] = 'Animated scene';
-$string['media_customhtml'] = 'Your own HTML';
 $string['media_attention'] = 'Needs your attention ({$a})';
 $string['media_bypage'] = 'Page by page';
 $string['media_cards'] = 'Card pictures {$a}/3';
@@ -404,6 +455,7 @@ $string['media_chip_failed'] = 'Problem';
 $string['media_chip_making'] = 'Making';
 $string['media_chip_ready'] = 'Ready';
 $string['media_chip_todo'] = 'Not made';
+$string['media_customhtml'] = 'Your own HTML';
 $string['media_inprogresslist'] = 'Show the {$a} requests LMS Labs is working on';
 $string['media_making'] = 'LMS Labs is making {$a} items. This page refreshes on its own.';
 $string['media_picture'] = 'Picture';
@@ -703,58 +755,6 @@ $string['quote_rules'] = 'Nothing is ever charged twice.';
 $string['quote_skipped'] = '{$a} item(s) are left out because an earlier request for them is still unresolved (see "LMS Labs requests to finish").';
 $string['quote_total'] = 'Price: up to {$a->credits} credits (about {$a->usd})';
 $string['regenanimation'] = 'New animated scene';
-$string['customhtml_alt'] = 'Description for screen readers';
-$string['customhtml_alt_help'] = 'One or two sentences saying what the HTML shows, read out by screen readers in place of it. It also becomes the page\'s picture description.';
-$string['customhtml_change'] = 'Change my own HTML…';
-$string['customhtml_disabled'] = 'Your site administrator has switched off teachers\' own HTML.';
-$string['customhtml_done'] = 'Done';
-$string['customhtml_err_empty'] = 'Paste your HTML or upload an HTML file.';
-$string['customhtml_err_nothtml'] = 'This does not look like HTML. Paste the whole file, for example everything Claude gives you from <!doctype html> to </html>.';
-$string['customhtml_err_size'] = 'This HTML is too big. The largest is {$a}: put large pictures on the web, or ask for a lighter version.';
-$string['customhtml_heading'] = 'Your own HTML: {$a}';
-$string['customhtml_intro'] = 'Show your own HTML in place of this page\'s picture: an animated chart, numbers that count up, a drill-down, anything made in Claude or by hand. Learners can click and tap inside it, and the magnifier opens it full screen. The page picture is kept for the recap, the cover and the downloads, and comes back if you remove your HTML. Your HTML runs in a sandboxed frame, so it cannot reach Moodle or your learners\' accounts.';
-$string['customhtml_paste'] = 'Or paste your HTML';
-$string['customhtml_paste_help'] = 'Paste the whole HTML file, with its CSS and JavaScript inside. An uploaded file is used in place of what is pasted here.';
-$string['customhtml_preview'] = 'Preview';
-$string['customhtml_preview_desc'] = 'This is what learners see in place of the picture. The buttons send the same messages the lesson sends while each key point is read aloud.';
-$string['customhtml_prompt'] = 'Make a single self-contained HTML file to show on one page of a narrated Moodle lesson, in place of the page picture.
-
-Page: {$a->title}
-{$a->cards}
-
-What to show: [describe it here, for example an animated bar chart of the figures, with numbers that count up and bars learners can tap to see the detail]
-
-Requirements:
-- One HTML file with all its CSS and JavaScript written inside it. Do not load anything from other websites: no libraries, fonts or images from a CDN. Draw charts with plain SVG or canvas, so the file keeps working for years with nothing to break.
-- It fills a box of about 800 by 560 pixels and resizes to fit any size, from a phone held upright to a large screen, with no scrolling. Tap targets are at least 44 by 44 pixels. Light background, large readable text.
-- Accessible: text and important graphics meet WCAG 2.2 AA colour contrast (4.5:1 for text). Never use colour alone to show meaning; add a label, number or pattern. Everything learners can click also works with the keyboard (Tab, Enter and Space) and shows a clear focus outline. Use real buttons for controls. Give the main graphic a role="img" and an aria-label that sums up what it shows, and put changing numbers in an aria-live="polite" region so screen readers announce the result.
-- Respect reduced motion: also check the prefers-reduced-motion media query, and when it is set show the end state without movement.
-- No logins, no forms that send data, no localStorage or cookies, and no network calls of any kind.
-- The lesson tells the page which key point is being read aloud with window messages (check event.data.source === "visuallearning"):
-  {type: "vl:card", card: 1, 2 or 3, ms} key point N is being read for ms milliseconds: animate its part over that time.
-  {type: "vl:finish", card: N} show everything up to key point N at once (4 means everything).
-  {type: "vl:reset"} start again from the beginning.
-  {type: "vl:pause", paused: true or false} pause or resume any movement.
-  Every message also has reducedMotion: when it is true, skip the movement and show the end state.
-- If no message arrives within 1.5 seconds (for example when the file is opened on its own), play the key points in order.
-- Learners can click or tap parts of it to see more detail.';
-$string['customhtml_prompt_card'] = '{$a->label}: {$a->text}';
-$string['customhtml_prompt_copied'] = 'Copied';
-$string['customhtml_prompt_copy'] = 'Copy the prompt';
-$string['customhtml_prompt_desc'] = 'Paste this into Claude, describe what you want to see, and save the HTML file it makes. The prompt already holds this page\'s key points and the messages the lesson sends while each one is read.';
-$string['customhtml_prompt_heading'] = 'Make it with Claude: a ready-made prompt';
-$string['customhtml_remove'] = 'Remove my HTML';
-$string['customhtml_remove_confirm'] = 'Remove your HTML from this page? Learners will see the page picture again.';
-$string['customhtml_removed'] = 'Your HTML was removed. The page shows its picture again.';
-$string['customhtml_save'] = 'Save and preview';
-$string['customhtml_saved'] = 'Saved. Learners now see your HTML on this page.';
-$string['customhtml_testall'] = 'Show everything';
-$string['customhtml_testcard'] = 'Read key point {$a}';
-$string['customhtml_testreset'] = 'Start again';
-$string['customhtml_title'] = 'Your own HTML';
-$string['customhtml_upload'] = 'Upload an HTML file';
-$string['customhtml_upload_help'] = 'An .html file, for example one you saved from Claude. Up to 2 MB, with its CSS and JavaScript inside.';
-$string['customhtml_use'] = 'Use my own HTML…';
 $string['regenaudio'] = 'New voiceover';
 $string['regencards'] = 'New card pictures';
 $string['regenerateall'] = 'Make everything again…';
@@ -795,11 +795,11 @@ $string['settings_aivoice'] = 'Voiceover';
 $string['settings_aivoice_desc'] = 'Teachers can create voiceover clips (Google Chirp 3 HD through LMS Labs).';
 $string['settings_aiwrite'] = 'LMS Labs AI writes pages';
 $string['settings_aiwrite_desc'] = 'Teachers can let AI (Claude, through LMS Labs) write the pages from their content. When off, pages can only be typed in one at a time.';
+$string['settings_allowcustomhtml'] = 'Teachers can use their own HTML';
+$string['settings_allowcustomhtml_desc'] = 'Teachers with the "Use their own HTML in place of page pictures" capability can replace any page picture with their own HTML, for example an animated chart or a count-up made in Claude. It runs in a sandboxed frame with an origin of its own, so its scripts cannot reach Moodle or the learner\'s session. When this is off, pages show their pictures again (the HTML is kept).';
 $string['settings_defaultapproach'] = 'Default teaching approach';
 $string['settings_defaultapproach_desc'] = 'Pre-selected for new lessons; teachers can change it per lesson.';
 $string['settings_defaultcallouts'] = 'Callouts on pictures by default';
-$string['settings_allowcustomhtml'] = 'Teachers can use their own HTML';
-$string['settings_allowcustomhtml_desc'] = 'Teachers with the "Use their own HTML in place of page pictures" capability can replace any page picture with their own HTML, for example an animated chart or a count-up made in Claude. It runs in a sandboxed frame with an origin of its own, so its scripts cannot reach Moodle or the learner\'s session. When this is off, pages show their pictures again (the HTML is kept).';
 $string['settings_defaultcallouts_desc'] = 'Pre-ticks "Add labels and a short info card to pictures" for new lessons; teachers can change it per lesson.';
 $string['settings_defaultimagestyle'] = 'Default illustration style';
 $string['settings_defaultimagestyle_desc'] = 'Pre-filled for new lessons; teachers can change it per lesson.';
@@ -856,9 +856,9 @@ $string['true'] = 'True';
 $string['unitcode'] = 'Unit or outcome code';
 $string['unitcode_help'] = 'Optional. A unit of competency or outcome code (for example BSBWHS211), so the lesson matches its wording and requirements.';
 $string['views'] = 'Views';
+$string['visuallearning:addcustomhtml'] = 'Use their own HTML in place of page pictures';
 $string['visuallearning:addinstance'] = 'Add a new AI Visual Learning activity';
 $string['visuallearning:manage'] = 'Build and edit AI Visual Learning pages';
-$string['visuallearning:addcustomhtml'] = 'Use their own HTML in place of page pictures';
 $string['visuallearning:useai'] = 'Use paid LMS Labs AI in AI Visual Learning (pages, illustrations, voiceover)';
 $string['visuallearning:view'] = 'View AI Visual Learning activities';
 $string['visuallearning:viewreports'] = 'View AI Visual Learning reports';

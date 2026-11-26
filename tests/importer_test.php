@@ -19,6 +19,8 @@ namespace mod_visuallearning;
 use mod_visuallearning\local\importer;
 use mod_visuallearning\local\prompt_builder;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(importer::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
 /**
  * Tests for the ChatGPT prompt file and the paste-back importer.
  *
@@ -26,9 +28,9 @@ use mod_visuallearning\local\prompt_builder;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\importer
+ * @covers     \mod_visuallearning\local\prompt_builder
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(importer::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
 final class importer_test extends \advanced_testcase {
     /**
      * A ChatGPT-style reply with chatter, a code fence, a trailing comma and one page too many.

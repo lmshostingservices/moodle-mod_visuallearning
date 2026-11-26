@@ -532,6 +532,7 @@ function visuallearning_pluginfile($course, $cm, $context, $filearea, $args, $fo
             'allow-popups-to-escape-sandbox allow-modals');
         header('X-Content-Type-Options: nosniff');
         header('Referrer-Policy: no-referrer');
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital,moodle.Files.LineLength -- Release desk marker must stay on the next line.
         send_stored_file($file, YEARSECS, 0, false, $options); // pipeline-ignore: text/html — served sandboxed (CSP header above).
     }
     // File names carry a hash of what made the file, so they can be cached for a long time. SVG pictures and

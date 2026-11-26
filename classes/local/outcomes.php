@@ -110,8 +110,11 @@ class outcomes {
             $code = self::code_from((string)$outcome->shortname, $n, $used);
             $used[\core_text::strtolower($code)] = true;
             $name = trim(preg_replace('/\s+/u', ' ', (string)$outcome->fullname));
-            $description = trim(preg_replace('/\s+/u', ' ',
-                content_to_text((string)($outcome->description ?? ''), FORMAT_HTML)));
+            $description = trim(preg_replace(
+                '/\s+/u',
+                ' ',
+                content_to_text((string)($outcome->description ?? ''), FORMAT_HTML)
+            ));
             $text = $description !== '' && \core_text::strpos($description, $name) === false
                 ? $name . '. ' . $description : $name;
             $scaleitems = 0;
@@ -309,9 +312,18 @@ class outcomes {
             return [];
         }
         require_once($CFG->libdir . '/gradelib.php');
-        $pages = $DB->get_records('visuallearning_pages', ['visuallearningid' => $book->id], 'pagenum', 'id, pagenum, outcomes, qtype, tfstatement');
-        $progress = $DB->get_records('visuallearning_progress', ['visuallearningid' => $book->id, 'userid' => $userid],
-            '', 'pageid, tfattempts, tfpassed');
+        $pages = $DB->get_records(
+            'visuallearning_pages',
+            ['visuallearningid' => $book->id],
+            'pagenum',
+            'id, pagenum, outcomes, qtype, tfstatement'
+        );
+        $progress = $DB->get_records(
+            'visuallearning_progress',
+            ['visuallearningid' => $book->id, 'userid' => $userid],
+            '',
+            'pageid, tfattempts, tfpassed'
+        );
         $written = [];
         foreach ($scaled as $o) {
             $asked = 0;
@@ -344,8 +356,17 @@ class outcomes {
                 continue; // Rated before, by a teacher or by an earlier finish: never replaced.
             }
             $value = self::scale_value($firsttry / $asked, (int)$o->scaleitems);
-            if (grade_update_outcomes('mod/visuallearning', $cm->course, 'mod', 'visuallearning', $cm->instance, $userid,
-                    [$o->itemnumber => $value])) {
+            if (
+                grade_update_outcomes(
+                    'mod/visuallearning',
+                    $cm->course,
+                    'mod',
+                    'visuallearning',
+                    $cm->instance,
+                    $userid,
+                    [$o->itemnumber => $value]
+                )
+            ) {
                 $written[(int)$o->id] = $value;
             }
         }

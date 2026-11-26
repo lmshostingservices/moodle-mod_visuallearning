@@ -1,8 +1,20 @@
 <?php
 // This file is part of Moodle - https://moodle.org/
-// Moodle is free software under the GNU General Public License v3 or later.
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace mod_visuallearning\local;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Persistent animation choices. Legacy preserves existing lesson behaviour.
@@ -19,7 +31,12 @@ class animation_settings {
         'animationpacing' => ['normal', 'slow', 'fast'],
     ];
 
-    /** Normalise settings without changing an old lesson's visual mode. */
+    /**
+     * Normalise settings without changing an old lesson's visual mode.
+     *
+     * @param \stdClass $book Lesson record
+     * @return array Setting values
+     */
     public static function values(\stdClass $book): array {
         $out = [];
         foreach (self::OPTIONS as $field => $values) {
@@ -28,7 +45,12 @@ class animation_settings {
         return $out;
     }
 
-    /** Prompt guidance used by both downloaded prompts and fallback old-server requests. */
+    /**
+     * Prompt guidance used by both downloaded prompts and fallback old-server requests.
+     *
+     * @param \stdClass $book Lesson record
+     * @return string
+     */
     public static function brief(\stdClass $book): string {
         $settings = self::values($book);
         if ($settings['animationmode'] === 'legacy') {

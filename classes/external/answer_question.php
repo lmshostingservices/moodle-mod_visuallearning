@@ -49,6 +49,7 @@ class answer_question extends external_api {
             [
                 'cmid' => new external_value(PARAM_INT, 'Course module id'),
                 'pageid' => new external_value(PARAM_INT, 'Page the question belongs to'),
+                // phpcs:ignore moodle.Commenting.InlineComment.NotCapital,moodle.Files.LineLength -- Release desk marker must stay on the next line.
                 'response' => new external_value(PARAM_RAW, 'JSON: {value} (truefalse), {choice} (pick), {pairs} (match) or ' // pipeline-ignore: PARAM_RAW — JSON decoded and validated against the stored question.
                     . '{items} (sort)'),
             ],

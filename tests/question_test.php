@@ -18,6 +18,7 @@ namespace mod_visuallearning;
 
 use mod_visuallearning\local\question;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(question::class)]
 /**
  * Tests for reading, storing and editing check questions.
  *
@@ -25,8 +26,8 @@ use mod_visuallearning\local\question;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\question
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(question::class)]
 final class question_test extends \advanced_testcase {
     /**
      * Questions as AIs write them are read, and unusable ones are refused.

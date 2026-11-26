@@ -25,6 +25,9 @@ global $CFG;
 require_once($CFG->dirroot . '/webservice/tests/helpers.php');
 require_once($CFG->libdir . '/completionlib.php');
 
+#[\PHPUnit\Framework\Attributes\CoversClass(answer_question::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(track_page::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_visuallearning\completion\custom_completion::class)]
 /**
  * Tests for check-question answers (all four types), the listen-again lock and the completion rule.
  *
@@ -32,10 +35,10 @@ require_once($CFG->libdir . '/completionlib.php');
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\external\answer_question
+ * @covers     \mod_visuallearning\external\track_page
+ * @covers     \mod_visuallearning\completion\custom_completion
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(answer_question::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(track_page::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\mod_visuallearning\completion\custom_completion::class)]
 final class answer_question_test extends \externallib_advanced_testcase {
     /**
      * Answers a question.

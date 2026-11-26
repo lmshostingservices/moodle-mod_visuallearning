@@ -71,7 +71,7 @@ class lmslabs {
     // Prices. Teachers buy credits at US$0.10 each, and every price is at least twice what the work costs LMS Labs
     // (provider charges, including an allowance for a retry). At about US$0.10 a credit:
     // - a still picture (OpenAI gpt-image-2.5-flare, medium quality: about 2 to 3 US cents; high about 6 to 9) sells
-    //   for 2 credits;
+    // for 2 credits;
     // - a voice clip (Chirp 3 HD, about 2 US cents) for 2 credits;
     // - an animated scene (Claude, about 5 to 12 US cents, up to about 24 with one retry) for 6 credits.
     // A price change here must match the tariff LMS Labs publishes, or nothing of that kind can be bought.
@@ -193,10 +193,13 @@ class lmslabs {
     public static function post(string $route, string $body, string $key, string $accept, int $timeout = 100): array {
         global $CFG;
         $routes = [self::DRAFT_ROUTE, self::IMPORT_ROUTE, self::IMAGE_ROUTE, self::VOICE_ROUTE, self::VOICE_QUOTE_ROUTE];
-        if (!in_array($route, $routes, true) && !preg_match(
-            '~^/api/moodle/ai-visuallearning/v2/(bundles(?:/[a-f0-9-]{36}(?:/(?:draft|import|manual)|/slides/[a-f0-9-]{36}/slots/[a-z0-9:]+/lost)?)?|images|animations|speech/(?:tts|quote))$~',
-            $route
-        )) {
+        if (
+            !in_array($route, $routes, true) && !preg_match(
+                '~^/api/moodle/ai-visuallearning/v2/(bundles(?:/[a-f0-9-]{36}(?:/(?:draft|import|manual)'
+                    . '|/slides/[a-f0-9-]{36}/slots/[a-z0-9:]+/lost)?)?|images|animations|speech/(?:tts|quote))$~',
+                $route
+            )
+        ) {
             throw new \coding_exception('Unknown LMS Labs route');
         }
         $credentials = credentials::find();
@@ -376,8 +379,13 @@ class lmslabs {
             // Card pictures are made only once LMS Labs says it makes them (they edit the picture before).
             return 'nosequence';
         }
-        if ($operation === 'animation' && !in_array(self::ANIMATION_CONTRACT,
-                (array)(self::capabilities('images')['animations']['contracts'] ?? []), true)) {
+        if (
+            $operation === 'animation' && !in_array(
+                self::ANIMATION_CONTRACT,
+                (array)(self::capabilities('images')['animations']['contracts'] ?? []),
+                true
+            )
+        ) {
             // Animated SVG scenes are made only once LMS Labs says it draws them to this contract.
             return 'noanimation';
         }

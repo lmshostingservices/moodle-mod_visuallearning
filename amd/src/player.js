@@ -399,6 +399,7 @@ class Player {
      *
      * @param {KeyboardEvent} e
      */
+    // eslint-disable-next-line complexity -- One dispatcher per input; splitting it would scatter the slide state machine.
     onKey(e) {
         if (!this.root.isConnected || e.target.closest('input, textarea, select, [contenteditable]')) {
             return;
@@ -1393,7 +1394,8 @@ class Player {
                 let cls = 'is-notyet';
                 if (p.passed) {
                     label = tries === 1 ? this.str('firsttry') : this.str('ntries', tries);
-                    cls = tries === 1 ? 'is-first' : (tries === 2 ? 'is-second' : 'is-more');
+                    const later = tries === 2 ? 'is-second' : 'is-more';
+                    cls = tries === 1 ? 'is-first' : later;
                 }
                 let dots = '';
                 for (let d = 0; d < Math.min(tries, 5); d++) {
@@ -1559,6 +1561,7 @@ class Player {
      *
      * @param {number} index
      */
+    // eslint-disable-next-line complexity -- One dispatcher per input; splitting it would scatter the slide state machine.
     go(index) {
         if (index < 0) {
             this.showCover();
@@ -2248,6 +2251,7 @@ class Player {
      *
      * @param {HTMLElement} [chosen] the true/false button pressed
      */
+    // eslint-disable-next-line complexity -- One dispatcher per input; splitting it would scatter the slide state machine.
     async submit(chosen) {
         const step = this.step();
         if (!step || step.type !== 'question' || this.response === null) {

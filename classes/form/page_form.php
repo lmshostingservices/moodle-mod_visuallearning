@@ -69,8 +69,13 @@ class page_form extends \moodleform {
         // The Moodle learning outcomes this page teaches (only when the activity is linked to some).
         $outcomes = $this->_customdata['outcomes'] ?? [];
         if ($outcomes) {
-            $mform->addElement('autocomplete', 'outcomeids', get_string('pageoutcomes', 'mod_visuallearning'), $outcomes,
-                ['multiple' => true, 'noselectionstring' => get_string('pageoutcomes_none', 'mod_visuallearning')]);
+            $mform->addElement(
+                'autocomplete',
+                'outcomeids',
+                get_string('pageoutcomes', 'mod_visuallearning'),
+                $outcomes,
+                ['multiple' => true, 'noselectionstring' => get_string('pageoutcomes_none', 'mod_visuallearning')]
+            );
             $mform->addHelpButton('outcomeids', 'pageoutcomes', 'mod_visuallearning');
         }
 
@@ -202,17 +207,27 @@ class page_form extends \moodleform {
                 get_string('diagramspec', 'mod_visuallearning'),
                 ['rows' => 8, 'cols' => 70, 'style' => 'width:100%;font-family:monospace']
             );
+            // phpcs:ignore moodle.Commenting.InlineComment.NotCapital,moodle.Files.LineLength -- Release desk marker must stay on the next line.
             $mform->setType('diagram', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON decoded and allowlist-validated by diagram::clean() in validation() and on save.
             $mform->addHelpButton('diagram', 'diagramspec', 'mod_visuallearning');
         }
 
         // Animated diagram: drawn by Claude through LMS Labs (step 3) from the cards and this optional plan.
         if ($mode === \mod_visuallearning\local\picture_modes::SVG) {
-            $mform->addElement('advcheckbox', 'noscene', get_string('noscene', 'mod_visuallearning'),
-                get_string('noscene_label', 'mod_visuallearning'));
+            $mform->addElement(
+                'advcheckbox',
+                'noscene',
+                get_string('noscene', 'mod_visuallearning'),
+                get_string('noscene_label', 'mod_visuallearning')
+            );
             $mform->addHelpButton('noscene', 'noscene', 'mod_visuallearning');
-            $mform->addElement('textarea', 'sceneplan', get_string('sceneplan', 'mod_visuallearning'),
-                ['rows' => 10, 'cols' => 70, 'style' => 'width:100%;font-family:monospace']);
+            $mform->addElement(
+                'textarea',
+                'sceneplan',
+                get_string('sceneplan', 'mod_visuallearning'),
+                ['rows' => 10, 'cols' => 70, 'style' => 'width:100%;font-family:monospace']
+            );
+            // phpcs:ignore moodle.Commenting.InlineComment.NotCapital,moodle.Files.LineLength -- Release desk marker must stay on the next line.
             $mform->setType('sceneplan', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON allowlisted by scene_plan::clean() during validation and save.
             $mform->addHelpButton('sceneplan', 'sceneplan', 'mod_visuallearning');
             $mform->hideIf('sceneplan', 'noscene', 'checked');
@@ -237,13 +252,17 @@ class page_form extends \moodleform {
         if (trim((string)($data['diagram'] ?? '')) !== '' && \mod_visuallearning\local\diagram::clean($data['diagram']) === null) {
             $errors['diagram'] = get_string('diagramspec_invalid', 'mod_visuallearning');
         }
-        if (empty($data['noscene']) && trim((string)($data['sceneplan'] ?? '')) !== ''
-                && \mod_visuallearning\local\scene_plan::clean($data['sceneplan']) === null) {
+        if (
+            empty($data['noscene']) && trim((string)($data['sceneplan'] ?? '')) !== ''
+                && \mod_visuallearning\local\scene_plan::clean($data['sceneplan']) === null
+        ) {
             $errors['sceneplan'] = get_string('sceneplan_invalid', 'mod_visuallearning');
         }
         if (array_key_exists('cardprompt1', $data)) {
-            $filled = array_filter([$data['cardprompt1'] ?? '', $data['cardprompt2'] ?? '', $data['cardprompt3'] ?? ''],
-                fn($t) => trim((string)$t) !== '');
+            $filled = array_filter(
+                [$data['cardprompt1'] ?? '', $data['cardprompt2'] ?? '', $data['cardprompt3'] ?? ''],
+                fn($t) => trim((string)$t) !== ''
+            );
             if ($filled && count($filled) < \mod_visuallearning\local\picture_modes::CARDS) {
                 $errors['cardprompt1'] = get_string('cardprompt_all', 'mod_visuallearning');
             }

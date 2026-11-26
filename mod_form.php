@@ -61,9 +61,16 @@ class mod_visuallearning_mod_form extends moodleform_mod {
         $mform->addRule('sourcecontent', null, 'required', null, 'client');
         $mform->addHelpButton('sourcecontent', 'sourcecontent', 'mod_visuallearning');
 
-        $mform->addElement('textarea', 'aiinstructions', get_string('aiinstructions', 'mod_visuallearning'),
+        $mform->addElement(
+            'textarea',
+            'aiinstructions',
+            get_string('aiinstructions', 'mod_visuallearning'),
             ['rows' => 10, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 50000,
-                'placeholder' => get_string('aiinstructions_placeholder', 'mod_visuallearning')]);
+            'placeholder' => get_string(
+                'aiinstructions_placeholder',
+                'mod_visuallearning'
+            )]
+        );
         $mform->setType('aiinstructions', PARAM_TEXT);
         $mform->addHelpButton('aiinstructions', 'aiinstructions', 'mod_visuallearning');
 
@@ -73,16 +80,28 @@ class mod_visuallearning_mod_form extends moodleform_mod {
             $levels[$key] = ['title' => $name, 'desc' => get_string('learnerlevel_' . $key . '_card', 'mod_visuallearning'),
                 'icon' => $key];
         }
-        $cards::add($mform, 'learnerlevel', get_string('learnerlevel', 'mod_visuallearning'), $levels,
-            \mod_visuallearning\local\learner_levels::clean($config->defaultlearnerlevel ?? null), 'learnerlevel');
+        $cards::add(
+            $mform,
+            'learnerlevel',
+            get_string('learnerlevel', 'mod_visuallearning'),
+            $levels,
+            \mod_visuallearning\local\learner_levels::clean($config->defaultlearnerlevel ?? null),
+            'learnerlevel'
+        );
 
         $approaches = [];
         foreach (\mod_visuallearning\local\approaches::options() as $key => $name) {
             $approaches[$key] = ['title' => $name, 'desc' => get_string('approach_' . $key . '_card', 'mod_visuallearning'),
                 'icon' => $key];
         }
-        $cards::add($mform, 'teachingapproach', get_string('teachingapproach', 'mod_visuallearning'), $approaches,
-            \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null), 'teachingapproach');
+        $cards::add(
+            $mform,
+            'teachingapproach',
+            get_string('teachingapproach', 'mod_visuallearning'),
+            $approaches,
+            \mod_visuallearning\local\approaches::clean($config->defaultapproach ?? null),
+            'teachingapproach'
+        );
 
         // Pages come in groups of four: each group is recapped (four square pictures) and checked together.
         $mform->addElement('select', 'maxpages', get_string('maxpages', 'mod_visuallearning'), visuallearning_page_counts());
@@ -100,8 +119,14 @@ class mod_visuallearning_mod_form extends moodleform_mod {
                 'desc' => get_string('visualstyle_' . $key . '_card', 'mod_visuallearning')];
         }
         $defaultstyle = (string)($config->defaultvisualstyle ?? '');
-        $cards::add($mform, 'visualstyle', get_string('visualstyle', 'mod_visuallearning'), $pictures,
-            isset($styles::options()[$defaultstyle]) ? $defaultstyle : $styles::DEFAULT, 'visualstyle');
+        $cards::add(
+            $mform,
+            'visualstyle',
+            get_string('visualstyle', 'mod_visuallearning'),
+            $pictures,
+            isset($styles::options()[$defaultstyle]) ? $defaultstyle : $styles::DEFAULT,
+            'visualstyle'
+        );
         $mform->setType('visualstyle', PARAM_ALPHANUMEXT);
         // With animation on, this style is for the still pictures only: the animated diagrams have their own look.
         $stillnote = html_writer::div(get_string('visualstyle_stillnote', 'mod_visuallearning'), 'alert alert-info py-2 mb-0');
@@ -165,13 +190,21 @@ JS
         $mform->setExpanded('moreheader', false);
         $this->standard_intro_elements(get_string('lessondescription', 'mod_visuallearning'));
 
-        $mform->addElement('textarea', 'objectives', get_string('objectives', 'mod_visuallearning'),
-            ['rows' => 3, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 600]);
+        $mform->addElement(
+            'textarea',
+            'objectives',
+            get_string('objectives', 'mod_visuallearning'),
+            ['rows' => 3, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 600]
+        );
         $mform->setType('objectives', PARAM_TEXT);
         $mform->addHelpButton('objectives', 'objectives', 'mod_visuallearning');
 
-        $mform->addElement('textarea', 'priorknowledge', get_string('priorknowledge', 'mod_visuallearning'),
-            ['rows' => 2, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 300]);
+        $mform->addElement(
+            'textarea',
+            'priorknowledge',
+            get_string('priorknowledge', 'mod_visuallearning'),
+            ['rows' => 2, 'cols' => 80, 'style' => 'width:100%', 'maxlength' => 300]
+        );
         $mform->setType('priorknowledge', PARAM_TEXT);
         $mform->addHelpButton('priorknowledge', 'priorknowledge', 'mod_visuallearning');
 
@@ -200,14 +233,25 @@ JS
         );
         $mform->addHelpButton('imageculture', 'imageculture', 'mod_visuallearning');
 
-        $mform->addElement('textarea', 'imagestyle', get_string('imagestyle', 'mod_visuallearning'),
+        $mform->addElement(
+            'textarea',
+            'imagestyle',
+            get_string('imagestyle', 'mod_visuallearning'),
             ['rows' => 3, 'cols' => 80, 'style' => 'width:100%',
-                'placeholder' => get_string('imagestyle_placeholder', 'mod_visuallearning')]);
+            'placeholder' => get_string(
+                'imagestyle_placeholder',
+                'mod_visuallearning'
+            )]
+        );
         $mform->setType('imagestyle', PARAM_TEXT);
         $mform->addHelpButton('imagestyle', 'imagestyle', 'mod_visuallearning');
 
-        $mform->addElement('advcheckbox', 'cardpictures', get_string('cardpictures', 'mod_visuallearning'),
-            get_string('cardpictures_label', 'mod_visuallearning'));
+        $mform->addElement(
+            'advcheckbox',
+            'cardpictures',
+            get_string('cardpictures', 'mod_visuallearning'),
+            get_string('cardpictures_label', 'mod_visuallearning')
+        );
         $mform->addHelpButton('cardpictures', 'cardpictures', 'mod_visuallearning');
         $mform->hideIf('cardpictures', 'animate', 'eq', 1);
         $mform->hideIf('cardpictures', 'visualstyle', 'eq', $styles::ANIMATED);
@@ -344,7 +388,8 @@ JS
             \html_writer::tag('div', get_string('estimate_heading', 'mod_visuallearning'), ['class' => 'vl-estimate-heading']) .
             \html_writer::tag('div', '', ['class' => 'vl-estimate-text', 'aria-live' => 'polite']) .
             \html_writer::tag('div', get_string('estimate_note', 'mod_visuallearning'), ['class' => 'vl-estimate-note']),
-            'vl-estimate', ['id' => 'vl-estimate', 'data-prices' => json_encode($prices), 'data-text' => $text]
+            'vl-estimate',
+            ['id' => 'vl-estimate', 'data-prices' => json_encode($prices), 'data-text' => $text]
         ));
         $PAGE->requires->js_init_code(<<<'JS'
 (function () {
@@ -396,8 +441,10 @@ JS
             $defaultvalues['visualstyle'] = \mod_visuallearning\local\visual_styles::ANIMATED;
         }
         // A default art direction is shown as empty (the placeholder explains it); only the teacher's own words show.
-        if (isset($defaultvalues['imagestyle'])
-                && \mod_visuallearning\local\visual_styles::is_default_text((string)$defaultvalues['imagestyle'])) {
+        if (
+            isset($defaultvalues['imagestyle'])
+                && \mod_visuallearning\local\visual_styles::is_default_text((string)$defaultvalues['imagestyle'])
+        ) {
             $defaultvalues['imagestyle'] = '';
         }
         if (isset($defaultvalues['questiontypes'])) {
@@ -433,8 +480,11 @@ JS
             $total += \core_text::strlen(trim((string)($data[$field] ?? '')));
         }
         if ($total > \mod_visuallearning\local\ai\lmslabs::MAX_CONTENT) {
-            $errors['aiinstructions'] = get_string('aiinstructions_toolong', 'mod_visuallearning',
-                \mod_visuallearning\local\ai\lmslabs::MAX_CONTENT);
+            $errors['aiinstructions'] = get_string(
+                'aiinstructions_toolong',
+                'mod_visuallearning',
+                \mod_visuallearning\local\ai\lmslabs::MAX_CONTENT
+            );
         }
         if (!empty($data['enablequiz'])) {
             $any = false;
@@ -505,14 +555,26 @@ JS
         $add = function ($element) use ($mform, $before) {
             return $before ? $mform->insertElementBefore($element, $before) : $mform->addElement($element);
         };
-        $add($mform->createElement('static', 'outcomesintro', '',
-            get_string('outcomes_formintro', 'mod_visuallearning')));
-        $add($mform->createElement('advcheckbox', 'showoutcomes', get_string('showoutcomes', 'mod_visuallearning'),
-            get_string('showoutcomes_label', 'mod_visuallearning')));
+        $add($mform->createElement(
+            'static',
+            'outcomesintro',
+            '',
+            get_string('outcomes_formintro', 'mod_visuallearning')
+        ));
+        $add($mform->createElement(
+            'advcheckbox',
+            'showoutcomes',
+            get_string('showoutcomes', 'mod_visuallearning'),
+            get_string('showoutcomes_label', 'mod_visuallearning')
+        ));
         $mform->setDefault('showoutcomes', 1);
         $mform->addHelpButton('showoutcomes', 'showoutcomes', 'mod_visuallearning');
-        $add($mform->createElement('advcheckbox', 'outcomerating', get_string('outcomerating', 'mod_visuallearning'),
-            get_string('outcomerating_label', 'mod_visuallearning')));
+        $add($mform->createElement(
+            'advcheckbox',
+            'outcomerating',
+            get_string('outcomerating', 'mod_visuallearning'),
+            get_string('outcomerating_label', 'mod_visuallearning')
+        ));
         $mform->setDefault('outcomerating', 0);
         $mform->addHelpButton('outcomerating', 'outcomerating', 'mod_visuallearning');
         if ($mform->elementExists('enablequiz')) {

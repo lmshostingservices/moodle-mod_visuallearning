@@ -20,6 +20,9 @@ use mod_visuallearning\local\ai\lmslabs;
 use mod_visuallearning\local\ai\requests;
 use mod_visuallearning\local\media;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(requests::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(lmslabs::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
 /**
  * Tests for paid LMS Labs requests: price first, stored before sending, never sent twice, fail closed.
  *
@@ -29,10 +32,10 @@ use mod_visuallearning\local\media;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\ai\requests
+ * @covers     \mod_visuallearning\local\ai\lmslabs
+ * @covers     \mod_visuallearning\local\media
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(requests::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(lmslabs::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
 final class requests_test extends \advanced_testcase {
     /** @var array Calls made to the fake LMS Labs: [url, headers, body]. */
     protected $calls = [];
@@ -265,9 +268,13 @@ final class requests_test extends \advanced_testcase {
         $parsed = ['pages' => [['title' => 'Manual', 'concept' => 'C.', 'action' => 'A.', 'outcome' => 'O.',
             'image_prompt' => 'A concrete scene.', 'alt_text' => 'A scene', 'summary' => 'Summary',
             'question' => null]]];
-        $quote = requests::quote($book, $teacher->id, [['operation' => requests::IMPORT,
+        $quote = requests::quote(
+            $book,
+            $teacher->id,
+            [['operation' => requests::IMPORT,
             'body' => ['_manual' => true, 'pageCount' => 1, 'titles' => ['Manual'], 'maxCredits' => 10]]],
-            json_encode($parsed));
+            json_encode($parsed)
+        );
         $this->assertSame(10, $quote['credits']);
         $this->assertSame(1, $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]));
         $this->answers['/pages/import'] = [[200, [], '{"creditsCharged":10}']];
@@ -289,7 +296,10 @@ final class requests_test extends \advanced_testcase {
         $this->bundleslots = ['clip:concept' => ['state' => 'awaiting-retry']];
         $this->answers['/speech/quote'] = [[200, [], '{"credits":0}']];
         [$body, $price] = \mod_visuallearning\local\ai\bundles::media_quote(
-            $book->id, requests::VOICE, $page->id, 'concept',
+            $book->id,
+            requests::VOICE,
+            $page->id,
+            'concept',
             ['text' => 'A short concept.', 'locale' => 'en-AU', 'voice' => 'Aoede', 'speed' => 'normal',
                 'clipRef' => 'old-reference', 'maxCredits' => 2]
         );
@@ -643,12 +653,16 @@ final class requests_test extends \advanced_testcase {
             global $DB;
             if (preg_match('~/v2/bundles/([a-f0-9-]+)$~', $url, $m)) {
                 $slots = [];
-                foreach (['picture', 'cover', 'clip:concept', 'clip:action', 'clip:outcome', 'clip:summary', 'clip:question',
-                        'clip:feedback'] as $slot) {
+                foreach (
+                    ['picture', 'cover', 'clip:concept', 'clip:action', 'clip:outcome', 'clip:summary', 'clip:question',
+                        'clip:feedback'] as $slot
+                ) {
                     $slots[$slot] = ['state' => 'awaiting-retry'];
                 }
-                $slides = array_map(fn($p) => ['slideId' => $p->slideid, 'slots' => $slots],
-                    array_values($DB->get_records('visuallearning_pages', ['bundleid' => $m[1]])));
+                $slides = array_map(
+                    fn($p) => ['slideId' => $p->slideid, 'slots' => $slots],
+                    array_values($DB->get_records('visuallearning_pages', ['bundleid' => $m[1]]))
+                );
                 return [200, json_encode(['slides' => $slides])];
             }
             return $base($url, $headers);

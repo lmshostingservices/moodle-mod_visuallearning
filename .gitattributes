@@ -1,0 +1,10 @@
+# Excluded from release archives (git archive): development and CI files, never needed on a Moodle site.
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.moodle-plugin-ci.yml export-ignore
+/tests/fixtures/media_gallery.php export-ignore
+/tests/fixtures/media-gallery.md export-ignore
+/tests/media_gallery.test.cjs export-ignore
+/tests/scene_engine.test.cjs export-ignore
+/examples/water-cycle/generated-artifacts export-ignore

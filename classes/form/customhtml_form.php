@@ -56,6 +56,7 @@ class customhtml_form extends \moodleform {
             ['rows' => 14, 'cols' => 80, 'class' => 'vl-code', 'spellcheck' => 'false', 'wrap' => 'off']
         );
         // Raw on purpose: the HTML is never shown on a Moodle page, only in a sandboxed frame (see media::save_html()).
+        // phpcs:ignore moodle.Commenting.InlineComment.NotCapital,moodle.Files.LineLength -- Release desk marker must stay on the next line.
         $mform->setType('html', PARAM_RAW); // pipeline-ignore: PARAM_RAW — stored as a file, only ever served with a CSP sandbox header into a sandboxed iframe.
         $mform->addHelpButton('html', 'customhtml_paste', 'mod_visuallearning');
 

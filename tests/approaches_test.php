@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace mod_visuallearning;
 
 use mod_visuallearning\local\ai\requests;
@@ -20,6 +21,9 @@ use mod_visuallearning\local\approaches;
 use mod_visuallearning\local\prompt_builder;
 use mod_visuallearning\local\visual_styles;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(approaches::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(visual_styles::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
 /**
  * Tests for teaching approaches and visual styles.
  *
@@ -27,10 +31,10 @@ use mod_visuallearning\local\visual_styles;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\approaches
+ * @covers     \mod_visuallearning\local\visual_styles
+ * @covers     \mod_visuallearning\local\prompt_builder
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(approaches::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(visual_styles::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
 final class approaches_test extends \advanced_testcase {
     /**
      * A lesson about inductance.
@@ -201,8 +205,10 @@ final class approaches_test extends \advanced_testcase {
         $book = $this->book('science', 'whiteboard');
         foreach (visual_styles::LEGACY_DEFAULTS as $direction) {
             $book->imagestyle = $direction;
-            $this->assertSame(get_string('visualstyle_whiteboard_direction', 'mod_visuallearning'),
-                visual_styles::direction($book));
+            $this->assertSame(
+                get_string('visualstyle_whiteboard_direction', 'mod_visuallearning'),
+                visual_styles::direction($book)
+            );
         }
         $book->imagestyle = 'Use green ink to explain a capillary.';
         $this->assertSame($book->imagestyle, visual_styles::direction($book));

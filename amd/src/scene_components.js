@@ -71,12 +71,17 @@ export const buildScene = (host, spec) => {
     });
     const nodes = new Map();
     const objects = new Map(spec.objects.map(o => [o.id, o]));
+    // eslint-disable-next-line complexity -- One branch per scene object kind, mirrored by scene_validator.php.
     const build = o => {
         if (nodes.has(o.id)) {
             return nodes.get(o.id);
         }
-        const parent = o.parent ? build(objects.get(o.parent)).wrapper :
-            o.role === 'draw' ? layers.get(o.layer) : resourceRoots.get(o.id);
+        let parent;
+        if (o.parent) {
+            parent = build(objects.get(o.parent)).wrapper;
+        } else {
+            parent = o.role === 'draw' ? layers.get(o.layer) : resourceRoots.get(o.id);
+        }
         const wrapper = element('g', {'data-scene-object': o.id}, parent);
         if (o.clip) {
             wrapper.setAttribute('clip-path', 'url(#' + prefix + o.clip + ')');

@@ -13,10 +13,12 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace mod_visuallearning;
 
 use mod_visuallearning\local\prompt_builder;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
 /**
  * The writer's brief and the draft request match what LMS Labs' delivery check accepts.
  *
@@ -24,8 +26,8 @@ use mod_visuallearning\local\prompt_builder;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\prompt_builder
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
 final class writer_contract_test extends \advanced_testcase {
     public function test_pasted_breaks_become_line_breaks(): void {
         $this->assertSame("Slide 1\nline two\npage\n\nx", prompt_builder::plain_text("Slide 1\vline two\fpage\r\n\r\n\x01x"));

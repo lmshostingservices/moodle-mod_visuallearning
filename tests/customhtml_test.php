@@ -20,14 +20,15 @@ use mod_visuallearning\local\book_data;
 use mod_visuallearning\local\exporter;
 use mod_visuallearning\local\media;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
 /**
  * A teacher's own HTML in place of a page picture (1.9.0).
  *
  * @package    mod_visuallearning
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\media
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
 final class customhtml_test extends \advanced_testcase {
     /**
      * A lesson with one page.

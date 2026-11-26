@@ -23,6 +23,9 @@ use mod_visuallearning\local\picture_modes;
 use mod_visuallearning\local\prompt_builder;
 use mod_visuallearning\local\svg_sanitiser;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(svg_sanitiser::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(requests::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
 /**
  * Animated SVG scenes: the safety filter, the picture mode, the brief and the paid request through LMS Labs.
  *
@@ -30,10 +33,10 @@ use mod_visuallearning\local\svg_sanitiser;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\svg_sanitiser
+ * @covers     \mod_visuallearning\local\ai\requests
+ * @covers     \mod_visuallearning\local\media
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(svg_sanitiser::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(requests::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
 final class svg_animation_test extends \advanced_testcase {
     /** @var array POSTs made to the fake LMS Labs: [url, body]. */
     protected $posts = [];
@@ -125,8 +128,10 @@ final class svg_animation_test extends \advanced_testcase {
             . '<animate attributeName="onclick" to="x"/><text>ok</text></svg>';
         $out = svg_sanitiser::clean($evil, 'vls1');
         $this->assertNotNull($out);
-        foreach (['script', 'onload', 'onclick', 'javascript', 'foreignObject', '<image', '<a ', 'http://x', 'http://e',
-                'evil', '@import', '<set', 'attributeName="onclick"'] as $bad) {
+        foreach (
+            ['script', 'onload', 'onclick', 'javascript', 'foreignObject', '<image', '<a ', 'http://x', 'http://e',
+                'evil', '@import', '<set', 'attributeName="onclick"'] as $bad
+        ) {
             $this->assertStringNotContainsString($bad, $out);
         }
         $this->assertStringContainsString('<use href="#vls1-r"/>', $out);
@@ -139,6 +144,7 @@ final class svg_animation_test extends \advanced_testcase {
     }
 
     public function test_sanitiser_keeps_the_animation_and_scopes_it(): void {
+        // phpcs:ignore moodle.Strings.ForbiddenStrings.Found -- Markdown code fences, not shell backticks.
         $out = svg_sanitiser::clean("```svg\n" . self::SCENE . "\n```", 'vls7');
         $this->assertNotNull($out);
         $this->assertStringContainsString('id="vls7"', $out);
@@ -156,14 +162,23 @@ final class svg_animation_test extends \advanced_testcase {
     }
 
     public function test_picture_lessons_are_never_turned_into_animated_ones(): void {
-        $this->assertSame(picture_modes::SINGLE,
-            picture_modes::of((object)['picturemode' => 'single', 'animationmode' => 'automatic']));
-        $this->assertSame(picture_modes::SEQUENCE,
-            picture_modes::of((object)['picturemode' => 'sequence', 'animationmode' => 'animated']));
+        $this->assertSame(
+            picture_modes::SINGLE,
+            picture_modes::of((object)['picturemode' => 'single', 'animationmode' => 'automatic'])
+        );
+        $this->assertSame(
+            picture_modes::SEQUENCE,
+            picture_modes::of((object)['picturemode' => 'sequence', 'animationmode' => 'animated'])
+        );
         $this->assertSame(picture_modes::SVG, picture_modes::of((object)['picturemode' => 'svg', 'animationmode' => 'automatic']));
-        $this->assertSame(picture_modes::ANIMATED,
-            picture_modes::of((object)['picturemode' => 'animated', 'animationmode' => 'automatic']));
-        $this->assertSame(picture_modes::SINGLE, picture_modes::of((object)['picturemode' => 'animated', 'animationmode' => 'static']));
+        $this->assertSame(
+            picture_modes::ANIMATED,
+            picture_modes::of((object)['picturemode' => 'animated', 'animationmode' => 'automatic'])
+        );
+        $this->assertSame(
+            picture_modes::SINGLE,
+            picture_modes::of((object)['picturemode' => 'animated', 'animationmode' => 'static'])
+        );
     }
 
     public function test_page_writing_is_not_blocked_while_the_scene_engine_is_not_live(): void {

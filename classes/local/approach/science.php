@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace mod_visuallearning\local\approach;
 
 /**
@@ -250,7 +251,8 @@ TXT;
      */
     public function draft_hint(): string {
         return 'Teaching approach: scientific and technical explanation. The three cards are key points 1, 2 and 3 '
-            . 'that build the concept in order, with no invented people or workplace stories. Each image_prompt describes an accurate explanatory diagram of the '
+            . 'that build the concept in order, with no invented people or workplace stories. '
+            . 'Each image_prompt describes an accurate explanatory diagram of the '
             . 'mechanism (schematic, cutaway, graph, process or comparison), not people at work; characters optional.';
     }
 

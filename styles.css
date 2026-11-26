@@ -4,7 +4,7 @@
     --pb-avail: 620px;
     --pb-ink: var(--mds-text-default, #1d2125);
     --pb-muted: var(--mds-text-muted, #6a737b);
-    --pb-paper: var(--mds-bg-surface-default, #ffffff);
+    --pb-paper: var(--mds-bg-surface-default, #fff);
     --pb-line: var(--mds-border-default, #dee2e6);
     --pb-accent: var(--mds-bg-interactive-primary-default, #0f6cbf);
     --pb-accent-dark: var(--mds-bg-interactive-primary-hover, #0c5699);
@@ -114,7 +114,7 @@
     gap: .45rem;
     border-radius: 99px;
     border: 1px solid var(--pb-line);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     padding: .45rem 1rem;
     font-weight: 600;
     box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
@@ -339,7 +339,7 @@
 
 .mod-visuallearning .pb-part {
     border-radius: var(--mds-border-radius-xl, 1rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 1px var(--mds-border-default, #dee2e6), 0 10px 22px -18px rgba(16, 24, 40, .35);
     padding: 10px 10px 10px;
     display: flex;
@@ -551,7 +551,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     color: var(--pb-ink);
     font-size: .68rem;
     font-weight: 800;
@@ -919,7 +919,7 @@
     justify-content: center;
     gap: .45rem;
     border: 1px solid var(--pb-line);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     color: var(--pb-ink);
     border-radius: 99px;
     padding: .6rem 1.2rem;
@@ -1047,7 +1047,7 @@
     bottom: 0;
     width: 420px;
     max-width: 92vw;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     z-index: 1045;
     box-shadow: -24px 0 48px -24px rgba(20, 22, 32, .45);
     transform: translateX(105%);
@@ -1279,7 +1279,12 @@
     font-weight: 800;
     font-size: .98rem;
     color: var(--mds-text-inverse, #f8f9fa);
-    background: linear-gradient(135deg, var(--mds-bg-feedback-success-default, #357a32), var(--mds-bg-feedback-success-default, #357a32));
+    background:
+        linear-gradient(
+            135deg,
+            var(--mds-bg-feedback-success-default, #357a32),
+            var(--mds-bg-feedback-success-default, #357a32)
+        );
     box-shadow: 0 10px 22px -12px rgba(22, 131, 86, .9);
     cursor: pointer;
     transition: transform .25s var(--pb-ease), box-shadow .25s var(--pb-ease), background .3s;
@@ -1312,7 +1317,7 @@
     width: 3px;
     height: 35%;
     border-radius: 2px;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
 }
 
 .mod-visuallearning .pb-listen[data-state="playing"] .pb-listen-icon {
@@ -1325,7 +1330,7 @@
 
 .mod-visuallearning .pb-listen[data-state="done"],
 .mod-visuallearning .pb-listen[data-state="paused"] {
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     color: var(--mds-text-feedback-success, #153114);
     box-shadow: inset 0 0 0 1.5px rgba(22, 131, 86, .5);
 }
@@ -1441,7 +1446,7 @@
     justify-content: center;
     font-weight: 800;
     font-size: .9rem;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     color: var(--pb-ink);
     box-shadow: 0 4px 10px rgba(0, 0, 0, .15);
 }
@@ -1461,7 +1466,12 @@
     align-items: flex-start;
     border-radius: var(--mds-border-radius-xl, 1rem);
     padding: 12px 16px;
-    background: linear-gradient(160deg, var(--mds-bg-surface-subtle, #f8f9fa) 0%, var(--mds-bg-interactive-primary-default-light, #e7f0f9) 100%);
+    background:
+        linear-gradient(
+            160deg,
+            var(--mds-bg-surface-subtle, #f8f9fa) 0%,
+            var(--mds-bg-interactive-primary-default-light, #e7f0f9) 100%
+        );
     border: 1.5px solid rgba(15, 108, 191, .3);
     transition:
         transform .55s var(--pb-ease),
@@ -1678,7 +1688,7 @@
     grid-template-columns: auto 1fr auto;
     position: sticky;
     bottom: var(--pb-footer, 0);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 -8px 18px -12px rgba(31, 36, 51, .25);
     margin-left: -12px;
     margin-right: -12px;
@@ -1800,7 +1810,7 @@
     border: 1px solid rgba(0, 0, 0, .1);
     border-radius: var(--mds-border-radius-xl, 1rem);
     padding: 1.1rem 1.2rem;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
 }
 
 .path-mod-visuallearning .pb-step h4 {
@@ -1831,7 +1841,7 @@
     border: 1px solid rgba(0, 0, 0, .1);
     border-radius: var(--mds-border-radius-xl, 1rem);
     overflow: hidden;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     display: flex;
     flex-direction: column;
 }
@@ -1928,7 +1938,7 @@
     padding: .6rem .75rem;
     border: 1px solid rgba(0, 0, 0, .12);
     border-radius: 999px;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     color: var(--mds-text-subtle, #495057);
     font-weight: 600;
     font-size: .9rem;
@@ -1988,7 +1998,7 @@
     border: 1px solid rgba(0, 0, 0, .1);
     border-radius: var(--mds-border-radius-xl, 1rem);
     padding: 1.4rem 1.5rem 1.2rem;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     margin-bottom: 1rem;
 }
 
@@ -2164,7 +2174,7 @@
     height: 42px;
     border-radius: var(--mds-border-radius-md, .5rem);
     border: 1px solid var(--pb-line);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     color: var(--mds-text-subtle, #495057);
     display: inline-flex;
     align-items: center;
@@ -2252,7 +2262,7 @@
 }
 
 .mod-visuallearning .pb-banner.is-ready .pb-banner-back {
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     color: var(--mds-text-feedback-primary, #062b4c);
     animation: pb-pulse 1.2s var(--pb-ease) 1;
 }
@@ -2427,6 +2437,7 @@
 
 .mod-visuallearning .pb-q-prompt {
     margin: 0;
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     font-size: clamp(1.1rem, 1.45vw, 1.35rem);
     line-height: 1.3;
     font-weight: 800;
@@ -2523,12 +2534,22 @@
 }
 
 .mod-visuallearning .pb-tf--true {
-    background: linear-gradient(165deg, var(--mds-bg-surface-subtle, #f8f9fa) 0%, var(--mds-bg-feedback-success-subtle, #d7e4d6) 100%);
+    background:
+        linear-gradient(
+            165deg,
+            var(--mds-bg-surface-subtle, #f8f9fa) 0%,
+            var(--mds-bg-feedback-success-subtle, #d7e4d6) 100%
+        );
     box-shadow: 0 0 0 1px var(--mds-border-feedback-success, #aecaad), 0 12px 24px -18px rgba(6, 118, 71, .45);
 }
 
 .mod-visuallearning .pb-tf--false {
-    background: linear-gradient(165deg, var(--mds-bg-surface-subtle, #f8f9fa) 0%, var(--mds-bg-feedback-danger-light, #faeae9) 100%);
+    background:
+        linear-gradient(
+            165deg,
+            var(--mds-bg-surface-subtle, #f8f9fa) 0%,
+            var(--mds-bg-feedback-danger-light, #faeae9) 100%
+        );
     box-shadow: 0 0 0 1px var(--mds-border-feedback-danger, #eaada6), 0 12px 24px -18px rgba(180, 35, 24, .4);
 }
 
@@ -2585,7 +2606,12 @@
 }
 
 .mod-visuallearning .pb-q-body--pick.is-text .pb-pick {
-    background: linear-gradient(165deg, var(--mds-bg-surface-subtle, #f8f9fa) 0%, var(--mds-bg-interactive-primary-default-light, #e7f0f9) 100%);
+    background:
+        linear-gradient(
+            165deg,
+            var(--mds-bg-surface-subtle, #f8f9fa) 0%,
+            var(--mds-bg-interactive-primary-default-light, #e7f0f9) 100%
+        );
     box-shadow: 0 0 0 1px var(--mds-border-feedback-primary, #9fc4e5), 0 12px 24px -18px rgba(15, 108, 191, .4);
 }
 
@@ -2828,7 +2854,7 @@
     padding: 8px 16px 8px 10px;
     border-radius: var(--mds-border-radius-lg, .75rem);
     border: 0;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 1px var(--mds-border-interactive-secondary-default, #ced4da), 0 4px 8px -4px rgba(16, 24, 40, .25);
     display: inline-flex;
     align-items: center;
@@ -2969,7 +2995,7 @@
     gap: 10px;
     padding: 10px;
     border-radius: var(--mds-border-radius-lg, .75rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 1px var(--mds-border-subtle, #e9ecef);
     font-size: .85rem;
 }
@@ -3177,7 +3203,12 @@
 }
 
 .mod-visuallearning .pb-end-grade.is-passed {
-    background: linear-gradient(165deg, var(--mds-bg-feedback-success-light, #ebf2ea) 0%, var(--mds-bg-feedback-success-subtle, #d7e4d6) 100%);
+    background:
+        linear-gradient(
+            165deg,
+            var(--mds-bg-feedback-success-light, #ebf2ea) 0%,
+            var(--mds-bg-feedback-success-subtle, #d7e4d6) 100%
+        );
     box-shadow: 0 0 0 1.5px var(--mds-bg-feedback-success-default, #357a32), 0 18px 36px -24px rgba(6, 118, 71, .55);
     color: var(--mds-text-feedback-success, #153114);
 }
@@ -3187,7 +3218,12 @@
 }
 
 .mod-visuallearning .pb-end-grade.is-notyet {
-    background: linear-gradient(165deg, var(--mds-bg-feedback-warning-light, #fdf7ed) 0%, var(--mds-bg-feedback-warning-subtle, #fcefdc) 100%);
+    background:
+        linear-gradient(
+            165deg,
+            var(--mds-bg-feedback-warning-light, #fdf7ed) 0%,
+            var(--mds-bg-feedback-warning-subtle, #fcefdc) 100%
+        );
     box-shadow: 0 0 0 1.5px var(--mds-bg-feedback-warning-default, #f0ad4e), 0 18px 36px -24px rgba(181, 71, 8, .5);
     color: var(--mds-text-feedback-danger, #51140d);
 }
@@ -3280,7 +3316,7 @@
 
 .mod-visuallearning .pb-end-results {
     border-radius: var(--mds-border-radius-xl, 1rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 1px var(--mds-border-default, #dee2e6), 0 24px 48px -28px rgba(16, 24, 40, .3);
     overflow: hidden;
     max-height: var(--pb-avail);
@@ -3544,7 +3580,7 @@
     border: 1px solid var(--vl-line, var(--mds-border-default, #dee2e6));
     border-radius: var(--mds-border-radius-xl, 1rem);
     padding: 1.1rem 1.25rem;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
     margin-bottom: 1.5rem;
 }
@@ -3643,6 +3679,7 @@
 /* Page cards */
 .path-mod-visuallearning .vl-media-grid {
     display: grid;
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
     gap: .9rem;
 }
@@ -3652,7 +3689,7 @@
     border: 1px solid var(--vl-line, var(--mds-border-default, #dee2e6));
     border-radius: var(--mds-border-radius-lg, .75rem);
     overflow: hidden;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     display: flex;
     flex-direction: column;
 }
@@ -3684,7 +3721,13 @@
 }
 
 .path-mod-visuallearning .vl-media-thumb .vl-shimmer {
-    background: linear-gradient(100deg, var(--mds-bg-surface-strong, #e9ecef) 30%, var(--mds-bg-surface-subtle, #f8f9fa) 50%, var(--mds-bg-surface-strong, #e9ecef) 70%);
+    background:
+        linear-gradient(
+            100deg,
+            var(--mds-bg-surface-strong, #e9ecef) 30%,
+            var(--mds-bg-surface-subtle, #f8f9fa) 50%,
+            var(--mds-bg-surface-strong, #e9ecef) 70%
+        );
     background-size: 300% 100%;
     animation: vl-shimmer 1.6s ease-in-out infinite;
 }
@@ -3818,7 +3861,7 @@
     border: 1px solid var(--vl-line, var(--mds-border-default, #dee2e6));
     border-radius: var(--mds-border-radius-lg, .75rem);
     overflow: hidden;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
 }
 
 .path-mod-visuallearning .vl-req-list.is-problems {
@@ -3932,7 +3975,7 @@
 .path-mod-visuallearning .vl-wizard .btn-secondary,
 .path-mod-visuallearning .vl-export .btn-secondary,
 .path-mod-visuallearning .vl-report .btn-secondary {
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     border: 1px solid var(--mds-border-interactive-secondary-default, #ced4da);
     color: var(--vl-ink);
 }
@@ -3987,13 +4030,13 @@
 .path-mod-visuallearning .vl-wizard .vl-choice {
     border: 0;
     border-radius: var(--mds-border-radius-xl, 1rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 1px var(--vl-line);
     padding: 1.2rem 1.3rem;
 }
 
 .path-mod-visuallearning .vl-wizard .vl-choice:first-child {
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 2px var(--vl-accent);
 }
 
@@ -4011,7 +4054,7 @@
     margin: .4rem 0 .6rem;
     padding: .7rem .9rem;
     border-radius: var(--mds-border-radius-lg, .75rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: inset 0 0 0 1px var(--mds-border-feedback-primary, #9fc4e5);
 }
 
@@ -4147,7 +4190,7 @@
 .path-mod-visuallearning .vl-export {
     max-width: 920px;
     margin: 0 auto 2rem;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     border-radius: var(--mds-border-radius-xl, 1rem);
     box-shadow: 0 0 0 1px var(--vl-line), 0 24px 48px -32px rgba(16, 24, 40, .4);
     overflow: hidden;
@@ -4287,7 +4330,7 @@
     margin-top: 1.2rem;
     padding: 1rem 1.8rem;
     border-top: 1px solid var(--vl-line);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
 }
 
 .path-mod-visuallearning .vl-export-free {
@@ -4310,7 +4353,7 @@
     gap: .25rem;
     padding: 1rem 1.1rem;
     border-radius: var(--mds-border-radius-xl, 1rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 1px var(--vl-line);
 }
 
@@ -4329,7 +4372,7 @@
     margin-top: 1.5rem;
     padding: 1.1rem 0 .5rem;
     border-radius: var(--mds-border-radius-xl, 1rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 0 0 1px var(--vl-line);
 }
 
@@ -4567,11 +4610,13 @@
 }
 
 .mod-visuallearning .pb-page-figure.has-diagram {
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     container-type: size;
 }
 
 /* The largest 4:3 diagram that fits the figure. */
 .mod-visuallearning .pb-page-figure.has-diagram .pb-diagram {
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     width: min(100cqw, 133.33cqh);
     max-height: none;
 }
@@ -4590,10 +4635,12 @@
 
 /* Phones: the figure takes its height from what it shows, so the diagram sizes from the width. */
 .mod-visuallearning.is-narrow .pb-page-figure.has-diagram {
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     container-type: normal;
 }
 
 .mod-visuallearning.is-narrow .pb-page-figure.has-diagram .pb-diagram {
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     width: min(100%, 61vh);
 }
 
@@ -4640,6 +4687,7 @@
 }
 
 .mod-visuallearning .pb-page-figure.has-diagram .pb-diagram.is-svgscene {
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     width: min(100cqw, calc((100cqh - 54px) * 1.4286));
 }
 
@@ -4676,7 +4724,7 @@
     font-size: .95rem;
     line-height: 1.2;
     color: #fff;
-    background: #0f172a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 3l8 5-8 5z' fill='%23fff'/%3E%3C/svg%3E") no-repeat 1rem center / .85rem;
+    background: #0f172a url([[pix:mod_visuallearning|playglyph]]) no-repeat 1rem center / .85rem;
     box-shadow: 0 10px 24px -12px rgba(15, 23, 42, .6);
     cursor: pointer;
     animation: vl-svgscene-in .45s ease both;
@@ -4711,7 +4759,7 @@
     --vl-work-ink: var(--mds-text-default, #1d2125);
     --vl-work-muted: var(--mds-text-muted, #6a737b);
     --vl-work-paper: var(--mds-bg-surface-subtle, #f8f9fa);
-    --vl-work-card: var(--mds-bg-surface-default, #ffffff);
+    --vl-work-card: var(--mds-bg-surface-default, #fff);
     --vl-work-line: var(--mds-border-default, #dee2e6);
     --vl-work-accent: var(--mds-bg-feedback-info-default, #006778);
     --vl-work-accent-soft: var(--mds-bg-surface-strong, #e9ecef);
@@ -4761,7 +4809,13 @@
 }
 
 .path-mod-visuallearning .vl-media-thumb .vl-shimmer {
-    background: linear-gradient(100deg, var(--mds-bg-surface-strong, #e9ecef) 25%, var(--mds-bg-surface-subtle, #f8f9fa) 50%, var(--mds-bg-surface-strong, #e9ecef) 75%);
+    background:
+        linear-gradient(
+            100deg,
+            var(--mds-bg-surface-strong, #e9ecef) 25%,
+            var(--mds-bg-surface-subtle, #f8f9fa) 50%,
+            var(--mds-bg-surface-strong, #e9ecef) 75%
+        );
     background-size: 240% 100%;
 }
 
@@ -4898,7 +4952,7 @@
     padding: .5rem .7rem;
     border-radius: var(--mds-border-radius-md, .5rem);
     color: var(--mds-text-subtle, #495057);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     border-color: var(--mds-border-default, #dee2e6);
     font-size: .84rem;
     font-weight: 650;
@@ -4970,13 +5024,14 @@
     --quote-accent: var(--mds-bg-feedback-info-default, #006778);
     max-width: 1040px;
     margin: 1.5rem auto 3rem;
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     padding: clamp(1rem, 3vw, 2.4rem);
     border: 1px solid var(--quote-line);
     border-radius: var(--mds-border-radius-xl, 1rem);
     color: var(--quote-ink);
     background:
         radial-gradient(ellipse at 92% 0%, rgba(217, 235, 224, .42), transparent 34%),
-        var(--mds-bg-surface-default, #ffffff);
+        var(--mds-bg-surface-default, #fff);
     box-shadow: 0 16px 48px -38px rgba(31, 59, 52, .42);
 }
 
@@ -4985,6 +5040,7 @@
     max-width: 720px;
     margin: 0 auto 1.35rem;
     color: var(--quote-ink);
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     font-size: clamp(1.7rem, 3vw, 2.35rem);
     font-weight: 760;
     letter-spacing: -.035em;
@@ -5037,6 +5093,7 @@
 }
 
 .path-mod-visuallearning .vl-quote-total {
+    /* stylelint-disable-next-line declaration-no-important -- Beats a Bootstrap spacing utility. */
     margin-top: 1.2rem !important;
     padding: 1.15rem 1.3rem;
     border: 1px solid var(--mds-border-interactive-secondary-default, #ced4da);
@@ -5048,11 +5105,13 @@
 }
 
 .path-mod-visuallearning .vl-quote-total strong {
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     font-size: clamp(1.15rem, 2vw, 1.45rem);
 }
 
 .path-mod-visuallearning .vl-quote-rules {
     margin-top: .6rem;
+    /* stylelint-disable-next-line declaration-no-important -- Overrides Bootstrap .text-muted, which uses !important. */
     color: var(--quote-muted) !important;
     line-height: 1.55;
     text-align: right;
@@ -5083,6 +5142,7 @@
 .path-mod-visuallearning .vl-quote-page .continuebutton {
     max-width: 720px;
     margin: 1.5rem auto 0;
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     padding: clamp(1rem, 2.5vw, 1.5rem);
     border: 1px solid var(--mds-border-default, #dee2e6);
     border-radius: var(--mds-border-radius-xl, 1rem);
@@ -5215,8 +5275,8 @@
 }
 
 /* Lesson settings: choices shown as clickable cards (classes/local/form_cards.php). */
-[id^="fgroup_id_vlcards_"] fieldset > .d-flex {
-    /* Bootstrap's d-flex uses !important, so the grid must too. */
+.path-mod-visuallearning [id^="fgroup_id_vlcards_"] fieldset > .d-flex {
+    /* stylelint-disable-next-line declaration-no-important -- Bootstrap's d-flex uses !important, so the grid must too. */
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 12px;
@@ -5224,17 +5284,17 @@
     max-width: 820px;
 }
 
-#fgroup_id_vlcards_visualstyle fieldset > .d-flex {
+.path-mod-visuallearning #fgroup_id_vlcards_visualstyle fieldset > .d-flex {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
 
-#fgroup_id_vlcards_animate fieldset > .d-flex,
-#fgroup_id_vlcards_callouts fieldset > .d-flex,
-#fgroup_id_vlcards_teachingapproach fieldset > .d-flex {
+.path-mod-visuallearning #fgroup_id_vlcards_animate fieldset > .d-flex,
+.path-mod-visuallearning #fgroup_id_vlcards_callouts fieldset > .d-flex,
+.path-mod-visuallearning #fgroup_id_vlcards_teachingapproach fieldset > .d-flex {
     grid-template-columns: repeat(auto-fill, minmax(220px, 260px));
 }
 
-[id^="fgroup_id_vlcards_"] label.form-check-label {
+.path-mod-visuallearning [id^="fgroup_id_vlcards_"] label.form-check-label {
     position: relative;
     display: block;
     height: 100%;
@@ -5242,27 +5302,27 @@
     padding: 12px;
     border: 1.5px solid var(--mds-border-default, #dee2e6);
     border-radius: var(--mds-border-radius-lg, .75rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     cursor: pointer;
     transition: border-color .15s, box-shadow .15s, transform .15s;
 }
 
-[id^="fgroup_id_vlcards_"] label.form-check-label:hover {
+.path-mod-visuallearning [id^="fgroup_id_vlcards_"] label.form-check-label:hover {
     border-color: var(--mds-border-interactive-secondary-default, #ced4da);
     transform: translateY(-1px);
 }
 
-[id^="fgroup_id_vlcards_"] label.form-check-label:has(input:checked) {
+.path-mod-visuallearning [id^="fgroup_id_vlcards_"] label.form-check-label:has(input:checked) {
     border-color: var(--mds-border-interactive-primary-default, #0f6cbf);
     box-shadow: 0 0 0 3px rgba(15, 108, 191, .16);
 }
 
-[id^="fgroup_id_vlcards_"] label.form-check-label:has(input:focus-visible) {
+.path-mod-visuallearning [id^="fgroup_id_vlcards_"] label.form-check-label:has(input:focus-visible) {
     outline: 3px solid rgba(59, 130, 246, .55);
     outline-offset: 2px;
 }
 
-[id^="fgroup_id_vlcards_"] input[type="radio"] {
+.path-mod-visuallearning [id^="fgroup_id_vlcards_"] input[type="radio"] {
     position: absolute;
     top: 14px;
     right: 14px;
@@ -5274,13 +5334,13 @@
     box-shadow: 0 0 0 3px rgba(255, 255, 255, .9);
 }
 
-.vl-card {
+.path-mod-visuallearning .vl-card {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.vl-card-img {
+.path-mod-visuallearning .vl-card-img {
     display: block;
     width: 100%;
     max-width: 100%;
@@ -5292,29 +5352,29 @@
     background: var(--mds-bg-surface-subtle, #f8f9fa);
 }
 
-.vl-card-icon {
+.path-mod-visuallearning .vl-card-icon {
     color: var(--mds-text-link-primary-default, #0f6cbf);
     margin-bottom: 6px;
 }
 
-.vl-card-title {
+.path-mod-visuallearning .vl-card-title {
     font-weight: 700;
     color: var(--mds-text-default, #1d2125);
     line-height: 1.25;
     padding-right: 22px;
 }
 
-.vl-card.has-image .vl-card-title {
+.path-mod-visuallearning .vl-card.has-image .vl-card-title {
     padding-right: 0;
 }
 
-.vl-card-desc {
+.path-mod-visuallearning .vl-card-desc {
     font-size: .85rem;
     line-height: 1.35;
     color: var(--mds-text-subtle, #495057);
 }
 
-.vl-card-badge {
+.path-mod-visuallearning .vl-card-badge {
     align-self: flex-start;
     margin-top: 6px;
     padding: 2px 8px;
@@ -5327,13 +5387,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    [id^="fgroup_id_vlcards_"] label.form-check-label {
+    .path-mod-visuallearning [id^="fgroup_id_vlcards_"] label.form-check-label {
         transition: none;
     }
 }
 
 /* The one price on the lesson form (mod_form::add_price_estimate) and on the confirmation screen. */
-.vl-estimate {
+.path-mod-visuallearning .vl-estimate {
     max-width: 820px;
     margin: 8px 0 20px auto;
     padding: 16px 20px;
@@ -5342,7 +5402,7 @@
     background: var(--mds-bg-interactive-primary-default-light, #e7f0f9);
 }
 
-.vl-estimate-heading {
+.path-mod-visuallearning .vl-estimate-heading {
     font-size: .75rem;
     font-weight: 800;
     letter-spacing: .08em;
@@ -5350,21 +5410,21 @@
     color: var(--mds-text-link-primary-default, #0f6cbf);
 }
 
-.vl-estimate-text {
+.path-mod-visuallearning .vl-estimate-text {
     margin-top: 4px;
     font-size: 1.15rem;
     font-weight: 700;
     color: var(--mds-text-default, #1d2125);
 }
 
-.vl-estimate-note {
+.path-mod-visuallearning .vl-estimate-note {
     margin-top: 4px;
     font-size: .875rem;
     color: var(--mds-text-subtle, #495057);
 }
 
 
-.vl-quote-balance {
+.path-mod-visuallearning .vl-quote-balance {
     margin-top: 2px;
     font-size: .875rem;
     color: var(--mds-text-subtle, #495057);
@@ -5379,7 +5439,12 @@
     padding: 1.2rem 1.4rem;
     border: 1px solid var(--mds-border-feedback-primary, #9fc4e5);
     border-radius: var(--mds-border-radius-xl, 1rem);
-    background: linear-gradient(135deg, var(--mds-bg-interactive-primary-default-light, #e7f0f9), var(--mds-bg-surface-subtle, #f8f9fa));
+    background:
+        linear-gradient(
+            135deg,
+            var(--mds-bg-interactive-primary-default-light, #e7f0f9),
+            var(--mds-bg-surface-subtle, #f8f9fa)
+        );
 }
 
 .path-mod-visuallearning .vl-writing h4 {
@@ -5604,11 +5669,11 @@
     display: none;
 }
 
-body.vl-zoom-open {
+body.path-mod-visuallearning.vl-zoom-open {
     overflow: hidden;
 }
 
-.vl-zoom {
+.path-mod-visuallearning .vl-zoom {
     position: fixed;
     inset: 0;
     z-index: 10050;
@@ -5618,7 +5683,7 @@ body.vl-zoom-open {
     animation: vl-zoom-in .2s ease both;
 }
 
-.vl-zoom-bar {
+.path-mod-visuallearning .vl-zoom-bar {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -5626,7 +5691,7 @@ body.vl-zoom-open {
     padding: 10px 14px;
 }
 
-.vl-zoom-btn {
+.path-mod-visuallearning .vl-zoom-btn {
     width: 44px;
     height: 44px;
     border: 0;
@@ -5639,25 +5704,25 @@ body.vl-zoom-open {
     cursor: pointer;
 }
 
-.vl-zoom-btn:hover,
-.vl-zoom-btn:focus-visible {
+.path-mod-visuallearning .vl-zoom-btn:hover,
+.path-mod-visuallearning .vl-zoom-btn:focus-visible {
     background: rgba(255, 255, 255, .26);
     outline: 2px solid rgba(255, 255, 255, .6);
     outline-offset: 2px;
 }
 
-.vl-zoom-close {
+.path-mod-visuallearning .vl-zoom-close {
     margin-left: 10px;
 }
 
-.vl-zoom-level {
+.path-mod-visuallearning .vl-zoom-level {
     min-width: 3.5em;
     color: var(--mds-text-inverse, #f8f9fa);
     font-weight: 700;
     text-align: center;
 }
 
-.vl-zoom-view {
+.path-mod-visuallearning .vl-zoom-view {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
@@ -5666,31 +5731,31 @@ body.vl-zoom-open {
     cursor: zoom-out;
 }
 
-.vl-zoom.is-zoomed .vl-zoom-view {
+.path-mod-visuallearning .vl-zoom.is-zoomed .vl-zoom-view {
     cursor: grab;
 }
 
-.vl-zoom-canvas {
+.path-mod-visuallearning .vl-zoom-canvas {
     margin: auto;
     cursor: zoom-in;
 }
 
-.vl-zoom.is-zoomed .vl-zoom-canvas {
+.path-mod-visuallearning .vl-zoom.is-zoomed .vl-zoom-canvas {
     cursor: grab;
 }
 
-.vl-zoom-item {
+.path-mod-visuallearning .vl-zoom-item {
     display: block;
     width: 100%;
     height: 100%;
     max-width: none;
     border-radius: var(--mds-border-radius-lg, .75rem);
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
     box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .6);
     user-select: none;
 }
 
-img.vl-zoom-item {
+.path-mod-visuallearning img.vl-zoom-item {
     object-fit: contain;
 }
 
@@ -5704,7 +5769,7 @@ img.vl-zoom-item {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .vl-zoom {
+    .path-mod-visuallearning .vl-zoom {
         animation: none;
     }
 }
@@ -5730,7 +5795,7 @@ img.vl-zoom-item {
 
 .mod-visuallearning .pb-topbar .pb-toc-toggle,
 .mod-visuallearning .pb-topbar .pb-sound-toggle {
-    background-color: var(--mds-bg-surface-default, #ffffff);
+    background-color: var(--mds-bg-surface-default, #fff);
 }
 
 .mod-visuallearning .pb-topbar .pb-toc-toggle:hover,
@@ -5765,10 +5830,11 @@ img.vl-zoom-item {
 .mod-visuallearning .pb-diagram.is-htmlembed {
     position: relative;
     aspect-ratio: 10 / 7;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
 }
 
 .mod-visuallearning .pb-page-figure.has-diagram .pb-diagram.is-htmlembed {
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     width: min(100cqw, 142.86cqh);
 }
 
@@ -5782,17 +5848,18 @@ img.vl-zoom-item {
     gap: 24px;
 }
 
-.vl-htmlembed {
+.path-mod-visuallearning .vl-htmlembed {
     display: block;
     width: 100%;
     height: 100%;
     border: 0;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
 }
 
 /* Full screen: the Fullscreen API where there is one, otherwise the frame fills the window. */
-.is-htmlembed:fullscreen,
-.is-htmlembed.is-expanded {
+.path-mod-visuallearning .is-htmlembed:fullscreen,
+.path-mod-visuallearning .is-htmlembed.is-expanded {
+    /* stylelint-disable-next-line declaration-no-important -- Full screen must beat the inline embed size. */
     width: 100vw !important;
     height: 100vh;
     aspect-ratio: auto;
@@ -5800,19 +5867,21 @@ img.vl-zoom-item {
     background: #fff;
 }
 
-.is-htmlembed.is-expanded:not(:fullscreen) {
+.path-mod-visuallearning .is-htmlembed.is-expanded:not(:fullscreen) {
     position: fixed;
     inset: 0;
     z-index: 3000;
 }
 
-html.vl-htmlembed-open {
+html.vl-htmlembed-open:has(> body.path-mod-visuallearning) {
     overflow: hidden;
 }
 
-.vl-htmlembed-close {
+.path-mod-visuallearning .vl-htmlembed-close {
     position: absolute;
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     top: max(12px, env(safe-area-inset-top, 0px));
+    /* stylelint-disable-next-line csstree/validator -- Modern CSS the validator does not know yet. */
     right: max(12px, env(safe-area-inset-right, 0px));
     width: 44px;
     height: 44px;
@@ -5827,31 +5896,31 @@ html.vl-htmlembed-open {
     z-index: 2;
 }
 
-.vl-htmlembed-close:focus-visible {
+.path-mod-visuallearning .vl-htmlembed-close:focus-visible {
     outline: 3px solid #0e88ff;
     outline-offset: 2px;
 }
 
 /* The teacher's screen: preview, prompt and form. */
-.vl-customhtml {
+.path-mod-visuallearning .vl-customhtml {
     max-width: 1100px;
 }
 
-.vl-customhtml .vl-lead {
+.path-mod-visuallearning .vl-customhtml .vl-lead {
     max-width: 75ch;
 }
 
-.vl-customhtml-preview {
+.path-mod-visuallearning .vl-customhtml-preview {
     margin: 1rem 0 1.5rem;
 }
 
-.vl-customhtml-tests {
+.path-mod-visuallearning .vl-customhtml-tests {
     display: flex;
     flex-wrap: wrap;
     gap: .5rem;
 }
 
-.vl-customhtml-stage {
+.path-mod-visuallearning .vl-customhtml-stage {
     position: relative;
     aspect-ratio: 10 / 7;
     max-width: 900px;
@@ -5859,41 +5928,41 @@ html.vl-htmlembed-open {
     border: 1px solid var(--mds-border-default, #dee2e6);
     border-radius: var(--mds-border-radius-md, .5rem);
     overflow: hidden;
-    background: var(--mds-bg-surface-default, #ffffff);
+    background: var(--mds-bg-surface-default, #fff);
 }
 
-.vl-customhtml-actions {
+.path-mod-visuallearning .vl-customhtml-actions {
     display: flex;
     flex-wrap: wrap;
     gap: .5rem;
     align-items: center;
 }
 
-.vl-customhtml-actions form {
+.path-mod-visuallearning .vl-customhtml-actions form {
     margin: 0;
 }
 
-.vl-customhtml-prompt {
+.path-mod-visuallearning .vl-customhtml-prompt {
     margin-bottom: 1.5rem;
 }
 
-.vl-customhtml-prompt summary {
+.path-mod-visuallearning .vl-customhtml-prompt summary {
     font-weight: 700;
     cursor: pointer;
 }
 
-.vl-customhtml .vl-code,
-.vl-customhtml textarea.vl-code {
+.path-mod-visuallearning .vl-customhtml .vl-code,
+.path-mod-visuallearning .vl-customhtml textarea.vl-code {
     font-family: SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     font-size: .85rem;
     white-space: pre;
 }
 
-.vl-media-card.has-customhtml .vl-media-thumb {
+.path-mod-visuallearning .vl-media-card.has-customhtml .vl-media-thumb {
     position: relative;
 }
 
-.vl-media-card.has-customhtml .vl-media-thumb::after {
+.path-mod-visuallearning .vl-media-card.has-customhtml .vl-media-thumb::after {
     content: "</>";
     position: absolute;
     right: 6px;
@@ -5930,8 +5999,13 @@ html.vl-htmlembed-open {
     font-weight: var(--mds-font-weight-medium, 500);
     padding: var(--mds-spacing-xs, .5rem) var(--mds-spacing-md, 1rem);
     box-shadow: var(--vl-shadow-xs);
-    transition: background-color 150ms var(--vl-ease), border-color 150ms var(--vl-ease), color 150ms var(--vl-ease),
-        box-shadow 150ms var(--vl-ease), transform 150ms var(--vl-ease), opacity .3s;
+    transition:
+        background-color 150ms var(--vl-ease),
+        border-color 150ms var(--vl-ease),
+        color 150ms var(--vl-ease),
+        box-shadow 150ms var(--vl-ease),
+        transform 150ms var(--vl-ease),
+        opacity .3s;
 }
 .mod-visuallearning .pb-btn:hover:not(:disabled) {
     transform: none;
@@ -6040,7 +6114,10 @@ html.vl-htmlembed-open {
     font-weight: var(--mds-font-weight-medium, 500);
     min-height: 2.5rem;
     padding: var(--mds-spacing-xs, .5rem) var(--mds-spacing-md, 1rem);
-    transition: background-color 150ms var(--vl-ease), border-color 150ms var(--vl-ease), color 150ms var(--vl-ease),
+    transition:
+        background-color 150ms var(--vl-ease),
+        border-color 150ms var(--vl-ease),
+        color 150ms var(--vl-ease),
         box-shadow 150ms var(--vl-ease);
 }
 .path-mod-visuallearning .vl-wizard .btn-primary,
@@ -6191,6 +6268,7 @@ html.vl-htmlembed-open {
     color: var(--mds-text-muted, #6a737b);
     font-weight: var(--mds-font-weight-regular, 400);
 }
+
 @media (max-width: 575.98px) {
     .path-mod-visuallearning .vl-outcome {
         grid-template-columns: auto 1fr;
@@ -6199,6 +6277,7 @@ html.vl-htmlembed-open {
         grid-column: 2;
     }
 }
+
 @media (prefers-reduced-motion: reduce) {
     .mod-visuallearning .pb-btn,
     .path-mod-visuallearning .pb-manage-page,

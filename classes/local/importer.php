@@ -34,7 +34,8 @@ class importer {
     public static function append(\stdClass $book, array $page, \context_module $context): void {
         global $DB;
         $number = (int)$DB->get_field_sql(
-            'SELECT MAX(pagenum) FROM {visuallearning_pages} WHERE visuallearningid = ?', [$book->id]
+            'SELECT MAX(pagenum) FROM {visuallearning_pages} WHERE visuallearningid = ?',
+            [$book->id]
         ) + 1;
         $DB->insert_record('visuallearning_pages', (object)(
             question::to_fields($page['question'] ?? null) + ($page['_bundle'] ?? []) + [
@@ -145,7 +146,7 @@ class importer {
                 'question' => question::from_ai($p),
                 'card_image_prompts' => self::card_prompts($p['card_image_prompts'] ?? null),
                 'diagram' => diagram::clean($p['diagram'] ?? null),
-                // "scene" (1.8; null = nothing to animate) or "scene_plan" (1.7.2).
+                // Either "scene" (1.8; null = nothing to animate) or "scene_plan" (1.7.2).
                 'scene_plan' => array_key_exists('scene', $p)
                     ? ($p['scene'] === null ? scene_plan::NONE : scene_plan::clean($p['scene']))
                     : scene_plan::clean($p['scene_plan'] ?? null),

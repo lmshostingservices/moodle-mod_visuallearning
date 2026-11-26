@@ -96,8 +96,11 @@ class prompt_builder {
         $rules = approaches::of($book)->image_rules();
         if (learner_levels::young($book)) {
             // School-age learners: the people shown need not be adults at work.
-            $rules = str_replace('Adults in a professional, workplace-appropriate setting with respectful representation',
-                'Age-appropriate, safe and respectful representation', $rules);
+            $rules = str_replace(
+                'Adults in a professional, workplace-appropriate setting with respectful representation',
+                'Age-appropriate, safe and respectful representation',
+                $rules
+            );
         }
         return $rules;
     }
@@ -390,8 +393,12 @@ step by step, so each picture flows on from the one before:
   recap and the questions.
 - Keep the composition stable. Do not bring in new people in prompts 2 and 3 unless the card needs them.
 TXT;
-            return [$step, "      \"card_image_prompts\": [\"string\", \"string\", \"string\"],\n", ' card_image_prompts 2 and 3 only '
-                . 'describe changes to the picture before;', 'ten'];
+            return [
+                $step,
+                "      \"card_image_prompts\": [\"string\", \"string\", \"string\"],\n",
+                ' card_image_prompts 2 and 3 only describe changes to the picture before;',
+                'ten',
+            ];
         }
         if ($mode === picture_modes::ANIMATED) {
             if (animation_settings::values($book)['animationmode'] !== 'legacy') {
@@ -593,8 +600,20 @@ SHAPE;
             'AVOID: ' . $style['avoid'] . (visual_styles::callouts($book) && !$square ? '; logos, watermarks or misspelled words.'
                 : '; any text, letters, numbers, logos or watermarks.'),
         ];
-        $build = function () use (&$look, &$guide, &$culture, &$cast, &$scene, &$same, $open, $audience, $science,
-                $tail, $objective, $square): string {
+        $build = function () use (
+            &$look,
+            &$guide,
+            &$culture,
+            &$cast,
+            &$scene,
+            &$same,
+            $open,
+            $audience,
+            $science,
+            $tail,
+            $objective,
+            $square
+): string {
             $parts = [$open];
             if ($objective !== '') {
                 $parts[] = 'THIS PAGE TEACHES: ' . $objective;
@@ -831,8 +850,10 @@ SHAPE;
      */
     public static function lesson_extras(\stdClass $book): string {
         $lines = [];
-        foreach (['objectives' => 'Learning objectives', 'priorknowledge' => 'What the learners already know',
-                'unitcode' => 'Unit / outcome code'] as $field => $label) {
+        foreach (
+            ['objectives' => 'Learning objectives', 'priorknowledge' => 'What the learners already know',
+                'unitcode' => 'Unit / outcome code'] as $field => $label
+        ) {
             $text = trim(preg_replace('/\s+/u', ' ', (string)($book->{$field} ?? '')));
             if ($text !== '') {
                 $lines[] = $label . ': ' . $text;

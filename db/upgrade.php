@@ -123,8 +123,16 @@ function xmldb_visuallearning_upgrade($oldversion) {
         $table = new xmldb_table('visuallearning');
         $fields = [
             new xmldb_field('teachingapproach', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'story', 'imagestyle'),
-            new xmldb_field('visualstyle', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'illustration',
-                'teachingapproach'),
+            new xmldb_field(
+                'visualstyle',
+                XMLDB_TYPE_CHAR,
+                '30',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                'illustration',
+                'teachingapproach'
+            ),
         ];
         foreach ($fields as $field) {
             if (!$dbman->field_exists($table, $field)) {
@@ -253,8 +261,13 @@ function xmldb_visuallearning_upgrade($oldversion) {
             }
             // Compared in PHP: a text column cannot be compared in full in SQL on every database.
             $like = $DB->sql_like('imagestyle', '?');
-            $rows = $DB->get_records_select('visuallearning', $like, [$DB->sql_like_escape(substr($legacy, 0, 60)) . '%'],
-                '', 'id, imagestyle');
+            $rows = $DB->get_records_select(
+                'visuallearning',
+                $like,
+                [$DB->sql_like_escape(substr($legacy, 0, 60)) . '%'],
+                '',
+                'id, imagestyle'
+            );
             foreach ($rows as $row) {
                 if (trim((string)$row->imagestyle) === $legacy) {
                     $DB->set_field('visuallearning', 'imagestyle', '', ['id' => $row->id]);

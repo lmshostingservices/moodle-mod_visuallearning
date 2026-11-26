@@ -216,6 +216,10 @@ jobs:
           - {php: '8.3', moodle-branch: 'MOODLE_502_STABLE', database: mariadb}
           - {php: '8.4', moodle-branch: 'MOODLE_502_STABLE', database: pgsql}
           - {php: '8.4', moodle-branch: 'MOODLE_502_STABLE', database: mariadb}
+          - {php: '8.3', moodle-branch: 'MOODLE_503_STABLE', database: pgsql}
+          - {php: '8.3', moodle-branch: 'MOODLE_503_STABLE', database: mariadb}
+          - {php: '8.4', moodle-branch: 'MOODLE_503_STABLE', database: pgsql}
+          - {php: '8.4', moodle-branch: 'MOODLE_503_STABLE', database: mariadb}
           # Moodle 5.3 development is main; retain PostgreSQL 17 / MariaDB 11.4.
           - {php: '8.3', moodle-branch: 'main', database: pgsql}
           - {php: '8.3', moodle-branch: 'main', database: mariadb}

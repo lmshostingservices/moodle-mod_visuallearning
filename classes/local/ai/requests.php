@@ -196,6 +196,7 @@ class requests {
      * @param int $maxcredits
      * @param string $aspect 4:3 (page, cover) or 1:1 (picture-pick option)
      * @param string $purpose page, cover or option (for LMS Labs reporting only)
+     * @param string $style Picture style
      * @return array
      */
     public static function image_body(
@@ -252,7 +253,10 @@ class requests {
             $out['teachingApproach'] = $approach;
         }
         $level = \mod_visuallearning\local\learner_levels::of($book);
-        if ($level !== \mod_visuallearning\local\learner_levels::DEFAULT && in_array('learnerLevel', lmslabs::image_fields(), true)) {
+        if (
+            $level !== \mod_visuallearning\local\learner_levels::DEFAULT
+            && in_array('learnerLevel', lmslabs::image_fields(), true)
+        ) {
             $out['learnerLevel'] = $level;
         }
         return $out;
@@ -378,8 +382,10 @@ class requests {
             // Older servers can still write cards; send svg only after explicit draft capability discovery.
             return in_array($mode, lmslabs::draft_picture_modes(), true) ? ['pictureMode' => $mode] : [];
         }
-        if ($mode === \mod_visuallearning\local\picture_modes::SINGLE
-                || !in_array($mode, lmslabs::draft_picture_modes(), true)) {
+        if (
+            $mode === \mod_visuallearning\local\picture_modes::SINGLE
+                || !in_array($mode, lmslabs::draft_picture_modes(), true)
+        ) {
             return [];
         }
         return ['pictureMode' => $mode];
@@ -394,6 +400,7 @@ class requests {
      * @param int $userid
      * @param array $plans from {@see media::plan()}, or one write plan
      * @param string|null $result kept with an import (the pages it creates once LMS Labs confirms the charge)
+     * @param string|null $idempotencykey Reuse this key for the first request (a retried confirmation)
      * @return array ['batch', 'items' => count by operation, 'credits' => total, 'free' => free clips,
      *     'included' => count by operation already paid for in the slide price, 'hold' => reason|null,
      *     'skipped' => already waiting, 'dropped' => option pictures left out, 'droppedhold' => why]
@@ -468,8 +475,13 @@ class requests {
                     : 'page', self::image_style($book));
             } else if ($operation === self::OPTION) {
                 $price = lmslabs::IMAGE_CREDITS;
-                $body = self::image_body((string)$plan['prompt'], $price, media::OPTION_ASPECT, 'option',
-                    self::image_style($book));
+                $body = self::image_body(
+                    (string)$plan['prompt'],
+                    $price,
+                    media::OPTION_ASPECT,
+                    'option',
+                    self::image_style($book)
+                );
             } else if ($operation === self::CARD) {
                 $price = lmslabs::approved_price('card');
                 $body = self::image_body((string)$plan['prompt'], $price, media::ASPECT, 'card', self::image_style($book));
@@ -498,8 +510,13 @@ class requests {
                 $body += self::image_hints($book);
             }
             $included = false;
-            if (in_array($operation, [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD, self::ANIMATION],
-                    true)) {
+            if (
+                in_array(
+                    $operation,
+                    [self::VOICE, self::IMAGE, self::COVER, self::OPTION, self::CARD, self::ANIMATION],
+                    true
+                )
+            ) {
                 $listprice = $price;
                 [$body, $price] = bundles::media_quote((int)$book->id, $operation, $targetid, $part, $body);
                 // Covered by the slide price the teacher already paid (not a free remake).
@@ -774,8 +791,12 @@ class requests {
                 throw new moodle_exception('lmslabscredentialsmissing', 'mod_visuallearning');
             }
             [$body, $price] = bundles::media_quote(
-                (int)$book->id, $row->operation, (int)$row->targetid, $row->part,
-                json_decode($row->body, true), true
+                (int)$book->id,
+                $row->operation,
+                (int)$row->targetid,
+                $row->part,
+                json_decode($row->body, true),
+                true
             );
             if ($price !== 0 || $body['remake']) {
                 throw new moodle_exception('bundlesupport', 'mod_visuallearning');
@@ -876,7 +897,8 @@ class requests {
             $accept = $image ? 'image/png, image/webp, image/jpeg, image/svg+xml, application/json'
                 : ($row->operation === self::VOICE ? 'audio/mpeg, application/json'
                 : ($animation ? 'image/svg+xml, application/json' : 'application/json'));
-            $timeout = $image || $animation ? lmslabs::IMAGE_TIMEOUT : ($row->operation === self::WRITE ? lmslabs::DRAFT_TIMEOUT : 100);
+            $timeout = $image || $animation ? lmslabs::IMAGE_TIMEOUT
+                : ($row->operation === self::WRITE ? lmslabs::DRAFT_TIMEOUT : 100);
             \core_php_time_limit::raise($timeout + 60);
             try {
                 $sent = json_decode($row->body, true);
@@ -886,12 +908,12 @@ class requests {
                     $route = empty($sent['bundleId']) || $animation ? $routes[$row->operation] :
                         bundles::PREFIX . ($row->operation === self::VOICE ? '/speech/tts' : '/images');
                     [$status, $headers, $body] = lmslabs::post(
-                    $route,
-                    $payload,
-                    (string)$row->idemkey,
-                    $accept,
-                    $timeout
-                );
+                        $route,
+                        $payload,
+                        (string)$row->idemkey,
+                        $accept,
+                        $timeout
+                    );
                 }
             } catch (moodle_exception $e) {
                 // No credentials any more: nothing was sent this time.
@@ -1004,8 +1026,10 @@ class requests {
     protected static function stale(stdClass $row, stdClass $book, \context_module $context): string {
         global $DB;
         $sent = json_decode((string)$row->body, true) ?: [];
-        if ($row->operation === self::IMPORT && !empty($sent['_manual']) &&
-                $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]) >= 20) {
+        if (
+            $row->operation === self::IMPORT && !empty($sent['_manual']) &&
+                $DB->count_records('visuallearning_pages', ['visuallearningid' => $book->id]) >= 20
+        ) {
             return 'maxpagesreached';
         }
         if (in_array($row->operation, [self::IMAGE, self::OPTION, self::VOICE, self::CARD, self::ANIMATION], true)) {
@@ -1170,8 +1194,15 @@ class requests {
             if ($row->operation === self::OPTION) {
                 media::save_option($context, (int)$row->targetid, (int)$row->part, (string)$sent['prompt'], $bytes, $ext);
             } else if ($row->operation === self::CARD) {
-                media::save_card($context, (int)$row->targetid, (int)$row->part, (string)$sent['prompt'],
-                    (string)($sent['_referenceHash'] ?? ''), $bytes, $ext);
+                media::save_card(
+                    $context,
+                    (int)$row->targetid,
+                    (int)$row->part,
+                    (string)$sent['prompt'],
+                    (string)($sent['_referenceHash'] ?? ''),
+                    $bytes,
+                    $ext
+                );
             } else {
                 $area = $row->operation === self::COVER ? media::AREA_COVER : media::AREA_IMAGE;
                 media::save_image($context, $area, (int)$row->targetid, (string)$sent['prompt'], $bytes, $ext);
@@ -1228,8 +1259,12 @@ class requests {
         // New or replaced pages change what a full grade needs.
         visuallearning_update_grades($DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST));
         if ($row->operation === self::WRITE && !empty($sent['_autobuild'])) {
-            self::autobuild($DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST), $context,
-                (int)$row->userid, (int)($sent['_autobudget'] ?? 0));
+            self::autobuild(
+                $DB->get_record('visuallearning', ['id' => $book->id], '*', MUST_EXIST),
+                $context,
+                (int)$row->userid,
+                (int)($sent['_autobudget'] ?? 0)
+            );
         }
     }
 
@@ -1284,8 +1319,12 @@ class requests {
         }
         // Each kind is priced and confirmed on its own, so one that cannot be made now never stops the others.
         foreach ($kinds as $kind) {
-            $before = $DB->get_fieldset_select('visuallearning_aireq', 'id', 'visuallearningid = ? AND status = ?',
-                [(int)$book->id, 'quoted']);
+            $before = $DB->get_fieldset_select(
+                'visuallearning_aireq',
+                'id',
+                'visuallearningid = ? AND status = ?',
+                [(int)$book->id, 'quoted']
+            );
             try {
                 $plans = media::plan($book, $context, 'missing', 0, [$kind]);
                 if (!$plans) {
@@ -1301,8 +1340,11 @@ class requests {
             } catch (\Throwable $e) {
                 // This kind waits for the teacher in step 3; quotes left half made are removed.
                 [$notin, $params] = $before ? $DB->get_in_or_equal($before, SQL_PARAMS_QM, 'p', false) : ['<> 0', []];
-                $DB->delete_records_select('visuallearning_aireq', "visuallearningid = ? AND status = ? AND id $notin",
-                    array_merge([(int)$book->id, 'quoted'], $params));
+                $DB->delete_records_select(
+                    'visuallearning_aireq',
+                    "visuallearningid = ? AND status = ? AND id $notin",
+                    array_merge([(int)$book->id, 'quoted'], $params)
+                );
                 debugging('Automatic build of ' . $kind . ' stopped: ' . $e->getMessage(), DEBUG_DEVELOPER);
             }
         }
