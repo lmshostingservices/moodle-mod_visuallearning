@@ -23,7 +23,7 @@ Feature: Build and view an AI Visual Learning
   Scenario: Building a lesson needs the site to be activated with LMS Labs
     Given I am on the "How to promote teamwork" "visuallearning activity" page logged in as teacher1
     Then I should see "AI Visual Learning is not activated on this site yet"
-    And I should see "Open the AI Visual Learning settings"
+    And I should see "Ask your site administrator to activate it"
     And I should not see "Step 1 — Create your lesson"
 
   Scenario: On an activated site without LMS Labs credentials, a teacher sees the steps but nothing paid is offered

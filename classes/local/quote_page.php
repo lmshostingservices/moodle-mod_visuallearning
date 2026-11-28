@@ -98,7 +98,19 @@ class quote_page {
                 ['class' => 'text-muted']
             );
         }
-        $balance = lmslabs::balance();
+        $ownai = (int)($summary['ownai'] ?? 0);
+        if ($ownai) {
+            // What runs on the site's own AI (Bring your own AI) costs no credits.
+            $why = $total === 0 ? 'quote_ownai_all' : (isset($summary['items']['write']) ? 'quote_ownai_written'
+                : 'quote_ownai_some');
+            echo html_writer::div(
+                html_writer::span(html_writer::tag('i', '', ['class' => 'fa-solid fa-key', 'aria-hidden' => 'true']) .
+                    get_string('quote_ownai_badge', 'mod_visuallearning'), 'vl-ownai-badge') .
+                html_writer::tag('p', get_string($why, 'mod_visuallearning')),
+                'vl-quote-ownai'
+            );
+        }
+        $balance = $ownai && $total === 0 ? null : lmslabs::balance();
         $a = (object)[
             'credits' => $total,
             'usd' => lmslabs::usd($total),
@@ -106,8 +118,9 @@ class quote_page {
                 : ($balance['unlimited'] ? get_string('balance_unlimited', 'mod_visuallearning') : $balance['credits']),
         ];
         // The one price: the total for everything listed above.
+        $totalstring = $ownai && $total === 0 ? 'quote_total_ownai' : 'quote_total';
         echo html_writer::div(
-            html_writer::tag('strong', get_string('quote_total', 'mod_visuallearning', $a)) .
+            html_writer::tag('strong', get_string($totalstring, 'mod_visuallearning', $a)) .
             ($balance !== null && !$balance['unlimited']
                 ? html_writer::div(get_string('quote_balance', 'mod_visuallearning', $a), 'vl-quote-balance') : ''),
             'vl-quote-total'
@@ -132,8 +145,10 @@ class quote_page {
             $OUTPUT->render(new single_button($confirm, $label, 'post', single_button::BUTTON_PRIMARY)),
             'vl-quote-actions'
         );
-        echo html_writer::tag('p', get_string($nocharge ? 'quote_confirmfree' : 'quote_confirm', 'mod_visuallearning', $a) . ' '
-            . get_string('quote_rules', 'mod_visuallearning'), ['class' => 'text-muted small vl-quote-rules']);
+        $rules = $nocharge && $ownai ? get_string('quote_confirmownai', 'mod_visuallearning')
+            : get_string($nocharge ? 'quote_confirmfree' : 'quote_confirm', 'mod_visuallearning', $a) . ' '
+            . get_string('quote_rules', 'mod_visuallearning');
+        echo html_writer::tag('p', $rules, ['class' => 'text-muted small vl-quote-rules']);
         echo html_writer::end_div();
         echo $OUTPUT->footer();
         exit;

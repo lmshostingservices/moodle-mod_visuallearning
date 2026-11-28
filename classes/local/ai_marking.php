@@ -39,6 +39,12 @@ class ai_marking {
     /** @var string Provider of the generating system. */
     public const PROVIDER = 'LMS Hosting Services (LMS Labs)';
 
+    /** @var string Generating system when the site's own AI made the media (Bring your own AI). */
+    public const SYSTEM_OWNAI = 'AI Visual Learning (mod_visuallearning) with the site\'s own AI';
+
+    /** @var string Provider when the site's own AI made the media. */
+    public const PROVIDER_OWNAI = 'The site\'s own AI provider (LMS Labs Bring your own AI)';
+
     /** @var string Namespace of the provenance fields. */
     public const NS = 'https://lms-labs.com/ns/ai-provenance/1.0/';
 
@@ -59,10 +65,13 @@ class ai_marking {
      * @return array
      */
     public static function provenance(string $kind): array {
+        // With "Bring your own AI", the site's own provider makes this kind of media, not LMS Labs.
+        $ownkind = ['picture' => 'image', 'voice' => 'voice', 'animation' => 'text'][$kind] ?? '';
+        $ownai = $ownkind !== '' && \mod_visuallearning\byok::uses($ownkind);
         return [
             'kind' => $kind,
-            'system' => self::SYSTEM,
-            'provider' => self::PROVIDER,
+            'system' => $ownai ? self::SYSTEM_OWNAI : self::SYSTEM,
+            'provider' => $ownai ? self::PROVIDER_OWNAI : self::PROVIDER,
             'created' => gmdate('Y-m-d\TH:i:s\Z'),
             'version' => (string)(\core_plugin_manager::instance()->get_plugin_info('mod_visuallearning')->release ?? ''),
         ];

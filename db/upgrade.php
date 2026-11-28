@@ -324,5 +324,30 @@ function xmldb_visuallearning_upgrade($oldversion) {
         }
         upgrade_mod_savepoint(true, 2026112600, 'visuallearning');
     }
+
+    if ($oldversion < 2026112800) {
+        // 1.10.0 was also released to main as 2026112600 (Bring your own AI) without the fields added in 2026112400 and
+        // 2026112600 above, so a site on that build skipped those steps. Add any field that is still missing.
+        $fields = [
+            'visuallearning' => [
+                new xmldb_field('showoutcomes', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'grade'),
+                new xmldb_field('outcomerating', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'showoutcomes'),
+                new xmldb_field('reviewedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'outcomerating'),
+                new xmldb_field('timereviewed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'reviewedby'),
+            ],
+            'visuallearning_pages' => [
+                new xmldb_field('outcomes', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'sceneplan'),
+            ],
+        ];
+        foreach ($fields as $tablename => $tablefields) {
+            $table = new xmldb_table($tablename);
+            foreach ($tablefields as $field) {
+                if (!$dbman->field_exists($table, $field)) {
+                    $dbman->add_field($table, $field);
+                }
+            }
+        }
+        upgrade_mod_savepoint(true, 2026112800, 'visuallearning');
+    }
     return true;
 }

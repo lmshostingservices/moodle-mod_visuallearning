@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_visuallearning;
+
 use mod_visuallearning\local\animation_settings;
 use mod_visuallearning\local\diagram;
 use mod_visuallearning\local\picture_modes;

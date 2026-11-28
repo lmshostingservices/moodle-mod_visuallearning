@@ -292,7 +292,13 @@ class lmslabs {
         $kept = json_decode((string)get_config('mod_visuallearning', 'caps_' . $kind), true);
         $kept = is_array($kept) ? $kept : [];
         if (!self::$fetch || $credentials === null) {
-            return is_array($cached) && $cached['data'] ? $cached['data'] : $kept;
+            $data = is_array($cached) && $cached['data'] ? $cached['data'] : $kept;
+            if (!$data && $credentials === null && \mod_visuallearning\byok::any()) {
+                // A site on its own AI that has never read them from LMS Labs: what the service publishes. Prices
+                // here never reach a purchase: without credentials nothing is bought from LMS Labs.
+                return \mod_visuallearning\byok::capabilities();
+            }
+            return $data;
         }
         if (!$fresh && is_array($cached)) {
             $ttl = $cached['data'] ? self::CAPABILITIES_TTL : self::CAPABILITIES_RETRY;
@@ -365,8 +371,13 @@ class lmslabs {
      */
     public static function hold(string $operation): ?string {
         if (get_config('mod_visuallearning', 'aipaused')) {
-            // An administrator paused all AI generation (EU AI Act, Article 26(5)): manual work carries on.
+            // An administrator paused all AI generation (EU AI Act, Article 26(5)), including the site's own AI.
+            // Manual work carries on.
             return 'paused';
+        }
+        if (\mod_visuallearning\byok::local_price($operation)) {
+            // Made on the site's own AI: no LMS Labs credentials, activation or price are involved.
+            return \mod_visuallearning\byok::hold($operation);
         }
         if (!self::is_connected()) {
             return 'nocredentials';
