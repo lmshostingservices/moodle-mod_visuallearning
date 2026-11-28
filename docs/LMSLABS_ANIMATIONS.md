@@ -149,3 +149,57 @@ Retry once with the same prompt if any check fails. If the second answer also fa
    textbook detail. Labels are in the lesson's language.
 7. Played in the lesson: each card's stage plays while the card is read, at half speed (CPR-style scenes marked
    `data-realtime="true"` play at real speed). "Play animation at normal speed" appears after the last card.
+
+---
+
+# 1.11.0: contract svg-2 (camera, draw-on, guide character, try it)
+
+**Plugin:** 1.11.0 (version 2026112900). **Server work:** list `svg-2`, keep the plugin's system prompt in step, and
+accept `data-vl-*` attributes in the checks. Route, price, idempotency and the response are unchanged.
+
+## What changes
+
+- svg-2 is svg-1 plus a motion layer. Claude still answers with one SVG, but tags shapes with `data-vl-*`
+  attributes (camera per stage, draw-on, show/hide/pop, move, count, sequence, a guide character, and an optional
+  try-it step). The plugin's player moves them, timed to each card's clip. The SVG holds no code.
+- The rules are in the new **SVG-2 MOTION** section of `schema/svg-animation-system.md`. It is one system prompt for
+  both contracts: the section applies only when the brief says `CONTRACT: svg-2`.
+- `examples/svg2-macronutrients.svg` is a worked svg-2 scene (it passes the sanitiser and the plugin's tests).
+
+## Capabilities
+
+```json
+"animations": {"credits": 6, "contracts": ["svg-1", "svg-2"]}
+```
+
+A 1.11.0 site asks for svg-2 as soon as it is listed, and falls back to svg-1 when only svg-1 is listed. Older sites
+keep sending `"contract": "svg-1"`; keep answering those exactly as today.
+
+## Request
+
+The body is unchanged except `"contract": "svg-2"`. The brief (`prompt`) ends with four extra lines:
+`CONTRACT: svg-2`, `MOTION: …`, `GUIDE CHARACTER: …` and `TRY IT: …`.
+
+- System prompt: the 1.11.0 `schema/svg-animation-system.md`, byte for byte (re-sync it from the ZIP). Keep it
+  cached as today.
+- Output: allow up to **16,000 output tokens** for svg-2 (scenes run about 20-30% larger).
+- Use the strongest model, as for svg-1.
+
+## Checks before charging (svg-2)
+
+Section 4 above, with two changes:
+1. The size limit is **48 KB** for svg-2 (40 KB for svg-1).
+2. Keep every `data-vl-*` attribute. If the root has `data-vl-try`, it must parse as JSON with a `controls` array;
+   otherwise retry once (the plugin also rebuilds or drops it, so never fail a scene for it on the second try).
+
+The EU AI Act marking (C2PA manifest and XMP for SVG) must not remove or reorder `data-vl-*` attributes.
+
+## Acceptance checks
+
+1. Capabilities list `["svg-1", "svg-2"]`: a 1.11.0 site sends `"contract": "svg-2"` and the brief has
+   `CONTRACT: svg-2`. A 1.10.0 site still sends `svg-1` and gets an svg-1 answer.
+2. A food-safety or science page comes back with `data-vl-camera-*`, `data-vl-draw` and a `data-vl-guide` group, and
+   (where the concept has a number to change) a `data-vl-try` definition. A definition-only page has no try-it.
+3. In the lesson, each card's stage plays over its clip; the camera glides, lines draw on, the guide points at what
+   the card names. After the last card the scrub bar and "Try it yourself" appear and work.
+4. Same key and body: same SVG, never charged twice. Two failed answers: `animation_failed`, no charge.

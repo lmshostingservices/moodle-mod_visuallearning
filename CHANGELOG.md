@@ -2,6 +2,32 @@
 
 All notable changes to mod_visuallearning are documented here.
 
+## [1.11.0] - 2026-11-29
+
+Version 2026112900. Animated scenes get explainer-video motion (contract svg-2). No database change.
+
+### Animated scenes: svg-2
+- **Camera moves:** each card can zoom in on the part it is about and pull back out for the next card, gliding in
+  time with the voice.
+- **Lines that draw themselves:** outlines, arrows, graph lines and bars draw on as the narration names them.
+- **A guide character:** one friendly mascot per lesson enters, points at what each card names and reacts with its
+  face (calm, thinking, worried, wow). It never covers what is taught.
+- **Counters and sequences:** numbers count up (or double, for growth) and groups build up while a card is read.
+- **Timed exactly to the narration:** every svg-2 movement is worked out from the card's own clip length, so it pauses,
+  resumes and lands on its final frame with the voice. The three cards, their text and the narration are unchanged.
+- **Try it yourself:** where the concept has a number learners can change (temperature, time, voltage, load...),
+  sliders appear under the scene once the page has been heard. The scene, the guide's face and a short outcome
+  message respond as the learner moves them.
+- **Scrub bar:** once the page has been heard, learners can drag through the whole animation or tap a card to replay
+  its stage.
+- The AI writes no code: Claude only tags shapes with data-vl-* attributes and the player moves them. The sanitiser
+  still removes every script and handler, and rebuilds the try-it definition from its allowed fields.
+- The plugin asks LMS Labs for svg-2 only when LMS Labs lists it in `animations.contracts`; until then new scenes stay
+  svg-1. Sites on "Bring your own AI" get svg-2 straight away. Existing scenes are unchanged; Remake gives a page the
+  new style.
+- New example scene: `examples/svg2-macronutrients.svg` (carbohydrate, protein and fat, with a try-it step).
+- New module `mod_visuallearning/svgmotion`; `svgscene` drives it from the narration hooks the player already calls.
+
 ## [1.10.0] - 2026-11-28
 
 Version 2026112800. Brings together "Bring your own AI" (merged to main on 26 November as 2026112600) with Moodle 5.3

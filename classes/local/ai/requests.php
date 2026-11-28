@@ -212,7 +212,7 @@ class requests {
 
     /**
      * The exact body of an animated SVG scene. LMS Labs sends "prompt" to Claude together with the plugin's SVG system
-     * prompt (contract svg-1, schema/svg-animation-system.md) and answers with the SVG.
+     * prompt (contract svg-2 or svg-1, schema/svg-animation-system.md) and answers with the SVG.
      *
      * @param stdClass $book
      * @param string $prompt the page's brief
@@ -220,7 +220,7 @@ class requests {
      * @return array
      */
     public static function animation_body(stdClass $book, string $prompt, int $maxcredits): array {
-        return ['prompt' => $prompt, 'contract' => lmslabs::ANIMATION_CONTRACT, 'language' => (string)$book->language,
+        return ['prompt' => $prompt, 'contract' => lmslabs::animation_contract() ?? lmslabs::ANIMATION_CONTRACT, 'language' => (string)$book->language,
             'learnerLevel' => \mod_visuallearning\local\learner_levels::of($book),
             'teachingApproach' => approaches::of($book)->key(), 'purpose' => 'animation', 'maxCredits' => $maxcredits];
     }

@@ -169,6 +169,16 @@ class svg_sanitiser {
             $el->setAttribute('style', $inline);
         }
 
+        // svg-2: the try-it definition is rebuilt from the fields the player reads, or dropped.
+        if ($root->hasAttribute('data-vl-try')) {
+            $try = self::clean_try((string)$root->getAttribute('data-vl-try'));
+            if ($try === null) {
+                $root->removeAttribute('data-vl-try');
+            } else {
+                $root->setAttribute('data-vl-try', $try);
+            }
+        }
+
         $root->setAttribute('id', $scope);
         $classes = preg_split('/\s+/', trim((string)$root->getAttribute('class')));
         if (!preg_grep('/^stage-/', $classes)) {
@@ -182,6 +192,68 @@ class svg_sanitiser {
         }
         $out = $doc->saveXML($root);
         return $out !== false && strlen($out) <= self::MAX_BYTES ? $out : null;
+    }
+
+    /**
+     * The svg-2 try-it definition, rebuilt with only the fields and sizes the player uses.
+     *
+     * Shape: {"controls": [{id, label, min, max, step, value, unit}] (1 or 2),
+     * "rules": [{"when": {id: [lo|null, hi|null]}, "say", "mood", "tone": ok|warn|bad}] (at most 8)}.
+     *
+     * @param string $json
+     * @return string|null JSON, or null when nothing usable is left
+     */
+    public static function clean_try(string $json): ?string {
+        $raw = json_decode(html_entity_decode($json, ENT_QUOTES | ENT_HTML5), true);
+        if (!is_array($raw) || !is_array($raw['controls'] ?? null)) {
+            return null;
+        }
+        $text = fn($v, int $max) => is_string($v) ? \core_text::substr(trim(strip_tags($v)), 0, $max) : '';
+        $controls = [];
+        foreach ($raw['controls'] as $c) {
+            if (count($controls) === 2) {
+                break;
+            }
+            if (
+                !is_array($c) || !preg_match('/^[a-z][a-z0-9]{0,15}$/i', (string)($c['id'] ?? ''))
+                    || !is_numeric($c['min'] ?? null) || !is_numeric($c['max'] ?? null) || $c['max'] <= $c['min']
+            ) {
+                continue;
+            }
+            $min = (float)$c['min'];
+            $max = (float)$c['max'];
+            $step = is_numeric($c['step'] ?? null) && $c['step'] > 0 ? (float)$c['step'] : ($max - $min) / 100;
+            $value = is_numeric($c['value'] ?? null) ? max($min, min($max, (float)$c['value'])) : $min;
+            $controls[] = ['id' => (string)$c['id'], 'label' => $text($c['label'] ?? '', 40), 'min' => $min, 'max' => $max,
+                'step' => $step, 'value' => $value, 'unit' => $text($c['unit'] ?? '', 8)];
+        }
+        if (!$controls) {
+            return null;
+        }
+        $ids = array_column($controls, 'id');
+        $rules = [];
+        foreach (array_slice(is_array($raw['rules'] ?? null) ? $raw['rules'] : [], 0, 8) as $r) {
+            if (!is_array($r) || !is_array($r['when'] ?? null) || !$r['when']) {
+                continue;
+            }
+            $when = [];
+            foreach ($r['when'] as $id => $range) {
+                if (!in_array((string)$id, $ids, true) || !is_array($range) || count($range) !== 2) {
+                    continue 2;
+                }
+                $range = array_values($range);
+                foreach ($range as $end) {
+                    if ($end !== null && !is_numeric($end)) {
+                        continue 3;
+                    }
+                }
+                $when[(string)$id] = [$range[0] === null ? null : (float)$range[0], $range[1] === null ? null : (float)$range[1]];
+            }
+            $tone = in_array($r['tone'] ?? '', ['ok', 'warn', 'bad'], true) ? $r['tone'] : 'ok';
+            $rules[] = ['when' => $when, 'say' => $text($r['say'] ?? '', 160),
+                'mood' => preg_match('/^[a-z]{1,16}$/', (string)($r['mood'] ?? '')) ? (string)$r['mood'] : '', 'tone' => $tone];
+        }
+        return json_encode(['controls' => $controls, 'rules' => $rules], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     /**
