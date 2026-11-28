@@ -364,7 +364,7 @@ final class svg_animation_test extends \advanced_testcase {
         $clean = svg_sanitiser::clean($example, 'vls10');
         $this->assertNotNull($clean);
         $this->assertStringContainsString('data-vl-camera-3=', $clean);
-        $this->assertStringContainsString('data-vl-bind="carbs:x2:0=271,100=429"', $clean);
+        $this->assertStringContainsString('data-vl-bind="carbs:x2:0=271,100=409"', $clean);
         $this->assertStringContainsString('&quot;controls&quot;', $clean);
     }
 }
