@@ -49,6 +49,7 @@ class answer_question extends external_api {
             [
                 'cmid' => new external_value(PARAM_INT, 'Course module id'),
                 'pageid' => new external_value(PARAM_INT, 'Page the question belongs to'),
+                // phpcs:ignore moodle.Commenting.InlineComment.NotCapital,moodle.Files.LineLength -- Release desk marker must stay on the next line.
                 'response' => new external_value(PARAM_RAW, 'JSON: {value} (truefalse), {choice} (pick), {pairs} (match) or ' // pipeline-ignore: PARAM_RAW — JSON decoded and validated against the stored question.
                     . '{items} (sort)'),
             ],
@@ -131,6 +132,8 @@ class answer_question extends external_api {
         if ($newlypassed) {
             visuallearning_update_grades($book, (int)$USER->id);
             visuallearning_update_completion($course, $cm, (int)$USER->id);
+            // Scaled learning outcomes are rated once all their check questions are right (when the lesson asks).
+            \mod_visuallearning\local\outcomes::rate_user($book, $cm, (int)$USER->id);
         }
 
         $feedback = '';

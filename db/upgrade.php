@@ -123,8 +123,16 @@ function xmldb_visuallearning_upgrade($oldversion) {
         $table = new xmldb_table('visuallearning');
         $fields = [
             new xmldb_field('teachingapproach', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'story', 'imagestyle'),
-            new xmldb_field('visualstyle', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'illustration',
-                'teachingapproach'),
+            new xmldb_field(
+                'visualstyle',
+                XMLDB_TYPE_CHAR,
+                '30',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                'illustration',
+                'teachingapproach'
+            ),
         ];
         foreach ($fields as $field) {
             if (!$dbman->field_exists($table, $field)) {
@@ -253,8 +261,13 @@ function xmldb_visuallearning_upgrade($oldversion) {
             }
             // Compared in PHP: a text column cannot be compared in full in SQL on every database.
             $like = $DB->sql_like('imagestyle', '?');
-            $rows = $DB->get_records_select('visuallearning', $like, [$DB->sql_like_escape(substr($legacy, 0, 60)) . '%'],
-                '', 'id, imagestyle');
+            $rows = $DB->get_records_select(
+                'visuallearning',
+                $like,
+                [$DB->sql_like_escape(substr($legacy, 0, 60)) . '%'],
+                '',
+                'id, imagestyle'
+            );
             foreach ($rows as $row) {
                 if (trim((string)$row->imagestyle) === $legacy) {
                     $DB->set_field('visuallearning', 'imagestyle', '', ['id' => $row->id]);
@@ -274,6 +287,67 @@ function xmldb_visuallearning_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
         upgrade_mod_savepoint(true, 2026102302, 'visuallearning');
+    }
+
+    if ($oldversion < 2026112400) {
+        // 1.10.0: Moodle learning outcomes. Pages are tagged with the outcomes they teach; lessons can show them to
+        // learners and rate scaled outcomes from the check questions.
+        $table = new xmldb_table('visuallearning');
+        $fields = [
+            new xmldb_field('showoutcomes', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'grade'),
+            new xmldb_field('outcomerating', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'showoutcomes'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        $table = new xmldb_table('visuallearning_pages');
+        $field = new xmldb_field('outcomes', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'sceneplan');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026112400, 'visuallearning');
+    }
+
+    if ($oldversion < 2026112600) {
+        // 1.10.0: responsible AI (EU AI Act). Record the teacher who checked an AI-made lesson.
+        $table = new xmldb_table('visuallearning');
+        $fields = [
+            new xmldb_field('reviewedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'outcomerating'),
+            new xmldb_field('timereviewed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'reviewedby'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_mod_savepoint(true, 2026112600, 'visuallearning');
+    }
+
+    if ($oldversion < 2026112800) {
+        // 1.10.0 was also released to main as 2026112600 (Bring your own AI) without the fields added in 2026112400 and
+        // 2026112600 above, so a site on that build skipped those steps. Add any field that is still missing.
+        $fields = [
+            'visuallearning' => [
+                new xmldb_field('showoutcomes', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'grade'),
+                new xmldb_field('outcomerating', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'showoutcomes'),
+                new xmldb_field('reviewedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'outcomerating'),
+                new xmldb_field('timereviewed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'reviewedby'),
+            ],
+            'visuallearning_pages' => [
+                new xmldb_field('outcomes', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'sceneplan'),
+            ],
+        ];
+        foreach ($fields as $tablename => $tablefields) {
+            $table = new xmldb_table($tablename);
+            foreach ($tablefields as $field) {
+                if (!$dbman->field_exists($table, $field)) {
+                    $dbman->add_field($table, $field);
+                }
+            }
+        }
+        upgrade_mod_savepoint(true, 2026112800, 'visuallearning');
     }
     return true;
 }

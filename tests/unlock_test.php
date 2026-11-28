@@ -19,6 +19,7 @@ namespace mod_visuallearning;
 use mod_visuallearning\local\unlock;
 use PHPUnit\Framework\Attributes\CoversClass;
 
+#[CoversClass(unlock::class)]
 /**
  * Activation (one-time unlock) with a mocked LMS Labs: nothing is sent to the network and nothing is bought.
  *
@@ -26,8 +27,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\unlock
  */
-#[CoversClass(unlock::class)]
 final class unlock_test extends \advanced_testcase {
     /** @var array Requests the fake LMS Labs received. */
     protected $sent = [];

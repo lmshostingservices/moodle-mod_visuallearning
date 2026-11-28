@@ -21,6 +21,10 @@ use mod_visuallearning\local\ai\requests;
 use mod_visuallearning\local\byok\engine;
 use mod_visuallearning\local\media;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(byok::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(engine::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(local\byok\draft_check::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(requests::class)]
 /**
  * Tests for making lessons, pictures, animated scenes and narration on the site's own AI.
  *
@@ -36,10 +40,6 @@ use mod_visuallearning\local\media;
  * @covers     \mod_visuallearning\local\byok\draft_check
  * @covers     \mod_visuallearning\local\ai\requests
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(byok::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(engine::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(local\byok\draft_check::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(requests::class)]
 final class byok_test extends \advanced_testcase {
     /** @var array Requests the mocked providers received: [url, body]. */
     protected $requests = [];

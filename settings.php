@@ -164,4 +164,44 @@ if ($ADMIN->fulltree) {
             visuallearning_page_counts()
         )
     );
+    // Responsible AI (EU AI Act): pause, machine-readable marking, learner disclosure and teacher review.
+    $settings->add(
+        new admin_setting_heading(
+            "$component/responsibleai",
+            get_string('settings_responsibleai', $component),
+            get_string('settings_responsibleai_desc', $component)
+        )
+    );
+    $settings->add(
+        new admin_setting_configcheckbox(
+            "$component/aipaused",
+            get_string('settings_aipaused', $component),
+            get_string('settings_aipaused_desc', $component),
+            0
+        )
+    );
+    $settings->add(
+        new admin_setting_configcheckbox(
+            "$component/aimarking",
+            get_string('settings_aimarking', $component),
+            get_string('settings_aimarking_desc', $component),
+            1
+        )
+    );
+    $settings->add(
+        new admin_setting_configcheckbox(
+            "$component/aidisclosure",
+            get_string('settings_aidisclosure', $component),
+            get_string('settings_aidisclosure_desc', $component),
+            1
+        )
+    );
+    $settings->add(
+        new admin_setting_configcheckbox(
+            "$component/requirereview",
+            get_string('settings_requirereview', $component),
+            get_string('settings_requirereview_desc', $component),
+            0
+        )
+    );
 }

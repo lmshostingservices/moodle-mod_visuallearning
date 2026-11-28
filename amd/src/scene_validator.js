@@ -47,17 +47,17 @@ const cycles = v => integer(v, 1, 32);
 const operations = {
     move: [{}, xy], rotate: [{}, {rotation}], scale: [{}, scales], fade: [{}, {opacity: unit}],
     highlight: [{colour, width}, {stroke: paint, strokeWidth: width}],
-    draw_path: [{}, {drawProgress: unit}],
-    follow_path: [{path: id, from: unit, to: unit, orient: bool}, {...xy, rotation}],
-    emit_particles: [{origin: point, stagger: v => number(v, 0, 0.9)}, {positions: points}],
-    merge_particles: [{}, {point}],
-    split_particles: [{}, {positions: points}],
+    'draw_path': [{}, {drawProgress: unit}],
+    'follow_path': [{path: id, from: unit, to: unit, orient: bool}, {...xy, rotation}],
+    'emit_particles': [{origin: point, stagger: v => number(v, 0, 0.9)}, {positions: points}],
+    'merge_particles': [{}, {point}],
+    'split_particles': [{}, {positions: points}],
     morph: [{}, {path: id}],
     reveal: [{}, visibility], hide: [{}, visibility],
     flow: [{cycles, alternate: bool}, {flowOffset: coord}],
     pulse: [{amplitude: v => number(v, 0, 0.9), cycles}, scales],
     zoom: [{}, {zoom: v => number(v, 0.1, 10)}],
-    pan: [{}, xy], change_colour: [{}, {fill: colour}], change_value: [{}, {value}],
+    pan: [{}, xy], 'change_colour': [{}, {fill: colour}], 'change_value': [{}, {value}],
     connect: [{}, {connected: v => v === true}], disconnect: [{}, {connected: v => v === false}]
 };
 const operation = v => object(v, {type: enumeration(Object.keys(operations)), params: isObject, "final": isObject}) &&
@@ -155,6 +155,7 @@ const structure = s => object(s, {
         stageDescriptions: a => array(a, long, 3, 3)})
 });
 
+// eslint-disable-next-line complexity -- Mirrors the server validator rule for rule; kept together so the two stay identical.
 const semantics = s => {
     if (s.viewBox[2] < 1 || s.viewBox[3] < 1) {
         return false;

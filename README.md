@@ -170,6 +170,35 @@ With **Match the country of the narration language** (the default), the language
 
 Choose **International / neutral** for a mixed, location-neutral cast.
 
+## Learning outcomes (Moodle 5.3)
+
+Tick learning outcomes in the activity's settings (Moodle's Learning outcomes section; outcomes must be enabled for the
+site). AI Visual Learning then:
+
+- writes the lesson to those outcomes and tags each page with the outcomes it teaches;
+- shows coverage on **Check your pages**, warning about any outcome not taught yet (you can tag pages yourself);
+- lists the outcomes on the lesson's opening page (**Show learning outcomes**, on by default);
+- optionally rates scaled outcomes from the check questions (**Rate learning outcomes**, off by default; a teacher's
+  rating is never changed);
+- adds an outcome mapping and Moodle's outcome import file to **Download all content**.
+
+Scale-less outcomes need Moodle 5.3; scaled outcomes work on every supported version.
+
+## Responsible AI (EU AI Act)
+
+AI Visual Learning is a content generator under Article 50 of the EU AI Act. It is not a high-risk system under
+Annex III as built: check questions are marked by fixed rules, not by AI. Release 1.10.0 adds:
+
+- machine-readable "AI-generated" marking (IPTC `trainedAlgorithmicMedia`) on every picture, voice clip and animated
+  diagram, keeping any existing marking such as C2PA;
+- a "Made with AI" note for learners naming the teacher who checked the lesson;
+- a teacher check on the Ready step (optionally required before learners can open a lesson);
+- a site-wide pause switch, an AI literacy panel for teachers and an `ai-provenance.json` file in downloads.
+
+Settings are under Site administration > Plugins > Activity modules > AI Visual Learning > Responsible AI.
+Read [docs/eu-ai-act.md](docs/eu-ai-act.md) for the full guide and instructions for use. This is technical
+information from the provider, not legal advice.
+
 ## Reusing the content
 
 On the **Ready** step, **Download all content** gives one ZIP (free, nothing is sent to LMS Labs):

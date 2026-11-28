@@ -49,6 +49,10 @@
         <FIELD NAME="completionlistened" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="completionquiz" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="100" SEQUENCE="false" COMMENT="Maximum grade (points), negative scale id, or 0 for no grade"/>
+        <FIELD NAME="showoutcomes" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Show the linked learning outcomes to learners on the opening page"/>
+        <FIELD NAME="outcomerating" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Rate scaled learning outcomes from the check questions"/>
+        <FIELD NAME="reviewedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Teacher who checked the AI-made lesson (editorial responsibility), 0 when not checked"/>
+        <FIELD NAME="timereviewed" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="When the teacher checked the lesson"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
@@ -86,6 +90,7 @@
         <FIELD NAME="cardprompts" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: three picture prompts, one per card; 2 and 3 edit the picture before them"/>
         <FIELD NAME="diagram" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: animated diagram specification drawn by the plugin"/>
         <FIELD NAME="sceneplan" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON: validated three-card drawing plan for svg-1"/>
+        <FIELD NAME="outcomes" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Ids of the learning outcomes this page teaches, comma separated"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

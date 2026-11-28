@@ -519,7 +519,8 @@ const DRAW = {
                     el('path', Object.assign({d: `M${x - 15},${y - 15} L${x + 15},${y + 15} M${x + 15},${y - 15} ` +
                         `L${x - 15},${y + 15}`}, s, {'stroke-width': 3}), g);
                 } else {
-                    const letter = c.kind === 'motor' ? 'M' : (/^v/i.test(c.label) ? 'V' : 'A');
+                    const meter = /^v/i.test(c.label) ? 'V' : 'A';
+                    const letter = c.kind === 'motor' ? 'M' : meter;
                     text(g, letter, x, y + 7, {'font-size': 20, 'font-weight': 800});
                 }
             }
@@ -570,7 +571,8 @@ const DRAW = {
             let strength;
             if (staging && st.card && stages[st.card] && stages[st.card].flow) {
                 const flow = stages[st.card].flow;
-                const way = flow === 'stopped' ? 0 : (flow === 'clockwise' ? 1 : -1);
+                const turn = flow === 'clockwise' ? 1 : -1;
+                const way = flow === 'stopped' ? 0 : turn;
                 travelled += last === null ? 0 : (time - last) / 1000 * 70 * way;
                 offset = travelled;
                 strength = way === 0 ? 0 : 1;
@@ -755,10 +757,14 @@ const DRAW = {
             const a = rad(f.angle);
             const [sx, sy] = edge(a);
             // Room to the edge of the drawing in this direction, less space for the label.
-            const roomx = Math.cos(a) > 0.01 ? (box.x + box.w - sx) / Math.cos(a)
-                : (Math.cos(a) < -0.01 ? (box.x - sx) / Math.cos(a) : Infinity);
-            const roomy = -Math.sin(a) > 0.01 ? (box.y + box.h - sy) / -Math.sin(a)
-                : (-Math.sin(a) < -0.01 ? (box.y - sy) / -Math.sin(a) : Infinity);
+            const room = (d, far, near) => {
+                if (d > 0.01) {
+                    return far / d;
+                }
+                return d < -0.01 ? near / d : Infinity;
+            };
+            const roomx = room(Math.cos(a), box.x + box.w - sx, box.x - sx);
+            const roomy = room(-Math.sin(a), box.y + box.h - sy, box.y - sy);
             const len = Math.max(50, Math.min(roomx, roomy) - 60) * (0.35 + 0.65 * f.magnitude);
             const ex = sx + Math.cos(a) * len;
             const ey = sy - Math.sin(a) * len;

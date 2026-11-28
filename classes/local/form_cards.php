@@ -8,11 +8,11 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_visuallearning\local;
 
@@ -28,7 +28,8 @@ namespace mod_visuallearning\local;
 class form_cards {
     /** @var array Line icons (24 x 24, current colour) for cards without an example picture. */
     public const ICONS = [
-        'primary' => '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2"/><path d="M9 9.5h.01M15 9.5h.01"/>',
+        'primary' => '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2"/>'
+            . '<path d="M9 9.5h.01M15 9.5h.01"/>',
         'secondary' => '<path d="M6 8h12v12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M6 13h12"/>',
         'adult' => '<path d="M4 15a8 8 0 0 1 16 0"/><path d="M2 15h20v3H2z"/><path d="M12 7V4"/>',
         'advanced' => '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/><path d="M22 9v6"/>',
@@ -49,8 +50,14 @@ class form_cards {
      * @param mixed $default
      * @param string $help help string identifier ('' for none)
      */
-    public static function add(\MoodleQuickForm $mform, string $name, string $label, array $options, $default,
-            string $help = ''): void {
+    public static function add(
+        \MoodleQuickForm $mform,
+        string $name,
+        string $label,
+        array $options,
+        $default,
+        string $help = ''
+    ): void {
         $cards = [];
         foreach ($options as $value => $option) {
             $cards[] = $mform->createElement('radio', $name, '', self::html($option), $value);

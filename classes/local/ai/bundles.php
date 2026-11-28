@@ -8,15 +8,13 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_visuallearning\local\ai;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Durable bundle identities for slide text and its included media.
@@ -70,7 +68,12 @@ class bundles {
      * @return array New body and price
      */
     public static function media_quote(
-        int $bookid, string $operation, int $targetid, string $part, array $body, bool $recovering = false
+        int $bookid,
+        string $operation,
+        int $targetid,
+        string $part,
+        array $body,
+        bool $recovering = false
     ): array {
         $page = self::page($bookid, $targetid);
         if (!$page || empty($page->bundleid)) {
@@ -91,8 +94,15 @@ class bundles {
             // no included slot to check first.
             $bound = ['bundleId' => $page->bundleid, 'slideId' => $page->slideid, 'slot' => 'card' . $part,
                 'remake' => false, 'maxCredits' => (int)$body['maxCredits']];
-            unset($body['clipRef'], $body['purpose'], $body['maxCredits'], $body['bundleId'], $body['slideId'],
-                $body['slot'], $body['remake']);
+            unset(
+                $body['clipRef'],
+                $body['purpose'],
+                $body['maxCredits'],
+                $body['bundleId'],
+                $body['slideId'],
+                $body['slot'],
+                $body['remake']
+            );
             return [$body + $bound, $bound['maxCredits']];
         }
         $slot = $operation === requests::VOICE ? 'clip:' . $part :
@@ -128,14 +138,17 @@ class bundles {
             $hasfile = true;
         }
         // Delivery without a matching saved receipt is recovery, never a paid optional remake.
-        if ($delivered && (!$hasfile || empty($receipts[$slot]) ||
-                ($recovering && $receipts[$slot] !== ($remote['deliveryId'] ?? '')))) {
+        if (
+            $delivered && (!$hasfile || empty($receipts[$slot]) ||
+                ($recovering && $receipts[$slot] !== ($remote['deliveryId'] ?? '')))
+        ) {
             $delivery = $remote['deliveryId'] ?? '';
             [$code, $lostheaders, $lostbody] = lmslabs::post(
                 self::PREFIX . '/bundles/' . $page->bundleid . '/slides/' . $page->slideid .
                     '/slots/' . $slot . '/lost',
                 json_encode(['deliveryId' => $delivery, 'maxCredits' => 0]),
-                self::key($delivery, 'lost'), 'application/json'
+                self::key($delivery, 'lost'),
+                'application/json'
             );
             if ($code !== 200 || !empty(json_decode($lostbody, true)['supportRequired'])) {
                 throw new \moodle_exception('bundlesupport', 'mod_visuallearning');
@@ -146,8 +159,10 @@ class bundles {
             'remake' => $delivered, 'maxCredits' => $delivered ? 2 : 0];
         if ($operation === requests::VOICE) {
             [$code, , $raw] = lmslabs::post(
-                self::PREFIX . '/speech/quote', json_encode(array_replace($bound, ['maxCredits' => 0])),
-                \core\uuid::generate(), 'application/json'
+                self::PREFIX . '/speech/quote',
+                json_encode(array_replace($bound, ['maxCredits' => 0])),
+                \core\uuid::generate(),
+                'application/json'
             );
             $quote = json_decode($raw, true);
             if ($code !== 200 || !isset($quote['credits']) || !in_array($quote['credits'], [0, 2], true)) {
@@ -155,8 +170,15 @@ class bundles {
             }
             $bound['maxCredits'] = $quote['credits'];
         }
-        unset($body['clipRef'], $body['purpose'], $body['maxCredits'], $body['bundleId'],
-            $body['slideId'], $body['slot'], $body['remake']);
+        unset(
+            $body['clipRef'],
+            $body['purpose'],
+            $body['maxCredits'],
+            $body['bundleId'],
+            $body['slideId'],
+            $body['slot'],
+            $body['remake']
+        );
         return [$body + $bound, $bound['maxCredits']];
     }
 
@@ -191,7 +213,10 @@ class bundles {
             'source' => $source, 'slides' => $count, 'maxCredits' => (int)$row->maxcredits];
         if (empty($body['_bundle'])) {
             [$status, $headers, $raw] = lmslabs::post(
-                self::PREFIX . '/bundles', json_encode($open), self::key($row->idemkey, 'open'), 'application/json'
+                self::PREFIX . '/bundles',
+                json_encode($open),
+                self::key($row->idemkey, 'open'),
+                'application/json'
             );
             if (!in_array($status, [200, 201], true)) {
                 return [$status, $headers, $raw];
@@ -218,7 +243,10 @@ class bundles {
         }
         $result = lmslabs::post(
             self::PREFIX . '/bundles/' . $bundle['bundleId'] . '/' . $source,
-            json_encode($body), $row->idemkey, 'application/json', lmslabs::DRAFT_TIMEOUT
+            json_encode($body),
+            $row->idemkey,
+            'application/json',
+            lmslabs::DRAFT_TIMEOUT
         );
         if ($written !== null && $result[0] === 200) {
             // The pages bought are the pages written here.

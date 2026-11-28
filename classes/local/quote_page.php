@@ -70,15 +70,21 @@ class quote_page {
             $total += (int)$summary['autobudget'];
         } else {
             foreach ($summary['items'] as $operation => $count) {
-                $one = (int)$count === 1 && get_string_manager()->string_exists('quote_item_' . $operation . '_one',
-                    'mod_visuallearning');
+                $one = (int)$count === 1 && get_string_manager()->string_exists(
+                    'quote_item_' . $operation . '_one',
+                    'mod_visuallearning'
+                );
                 $lines[] = get_string('quote_item_' . $operation . ($one ? '_one' : ''), 'mod_visuallearning', $count);
             }
         }
-        echo html_writer::tag('ul', implode('', array_map(fn($l) => html_writer::tag('li', $l, ['class' => 'vl-quote-line']),
-            $lines)), ['class' => 'vl-quote-lines']);
-        foreach (['dropped' => 'quote_dropped', 'droppedcards' => 'quote_droppedcards',
-                'droppedanimations' => 'quote_droppedanimations'] as $field => $string) {
+        echo html_writer::tag('ul', implode('', array_map(
+            fn($l) => html_writer::tag('li', $l, ['class' => 'vl-quote-line']),
+            $lines
+        )), ['class' => 'vl-quote-lines']);
+        foreach (
+            ['dropped' => 'quote_dropped', 'droppedcards' => 'quote_droppedcards',
+                'droppedanimations' => 'quote_droppedanimations'] as $field => $string
+        ) {
             if (!empty($summary[$field])) {
                 $hold = $summary[$field === 'dropped' ? 'droppedhold' : $field . 'hold'];
                 echo html_writer::tag('p', get_string($string, 'mod_visuallearning', (object)['count' => $summary[$field],
@@ -86,8 +92,11 @@ class quote_page {
             }
         }
         if ($summary['skipped']) {
-            echo html_writer::tag('p', get_string('quote_skipped', 'mod_visuallearning', $summary['skipped']),
-                ['class' => 'text-muted']);
+            echo html_writer::tag(
+                'p',
+                get_string('quote_skipped', 'mod_visuallearning', $summary['skipped']),
+                ['class' => 'text-muted']
+            );
         }
         $ownai = (int)($summary['ownai'] ?? 0);
         if ($ownai) {
@@ -127,7 +136,10 @@ class quote_page {
         $cancel = new moodle_url($baseurl, ['action' => 'cancelquote', 'batch' => $summary['batch'], 'sesskey' => sesskey()]);
         $nocharge = $total === 0;
         $label = $nocharge ? get_string('quote_confirmbuttonfree', 'mod_visuallearning')
-            : get_string(isset($summary['autobudget']) ? 'quote_confirmbutton_lesson' : 'quote_confirmbutton', 'mod_visuallearning');
+            : get_string(
+                isset($summary['autobudget']) ? 'quote_confirmbutton_lesson' : 'quote_confirmbutton',
+                'mod_visuallearning'
+            );
         echo html_writer::div(
             $OUTPUT->render(new single_button($cancel, get_string('cancel'), 'post')) .
             $OUTPUT->render(new single_button($confirm, $label, 'post', single_button::BUTTON_PRIMARY)),

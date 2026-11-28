@@ -142,7 +142,7 @@ class book_data {
             ['start', 'continuefrom', 'startover', 'contents', 'close', 'previous', 'next', 'finish', 'pause',
                 'play', 'replay', 'pageof', 'listenedof', 'taptolisten', 'finishedtitle', 'finishedtext',
                 'readagain', 'backtocourse', 'nextactivity', 'coverabout', 'coveraboutauto', 'coveraboutautoone',
-                'coverhow', 'coverlearn', 'coverpage', 'coverpages', 'coverpart', 'coverpassall', 'coverpasssome',
+                'coverhow', 'coverlearn', 'coveroutcomes', 'coverpage', 'coverpages', 'coverpart', 'coverpassall', 'coverpasssome',
                 'coverquestion', 'coverquestions', 'coverrecap', 'coverthen', 'factminutes', 'factpage', 'factpages',
                 'factquestion', 'factquestions', 'stepcheck', 'stepchecktext', 'steplisten', 'steplistenfree',
                 'steplistenlinear', 'steprecap', 'steprecaptext', 'steprecaponce', 'stepcheckonce',
@@ -150,7 +150,8 @@ class book_data {
                 'gradepassedfull', 'gradenotyet', 'gradenotyetpages', 'gradeonly', 'gotoquestion', 'gradeheadpassed',
                 'gradeheadnotyet', 'locked', 'listenedstatus', 'notlistened', 'nowreading',
                 'imagecoming', 'listenfirst', 'pagescount', 'cover', 'listen', 'listening', 'listenagain',
-                'recaptitle', 'recapsubtitle', 'recapsubtitleone', 'recaptoc', 'recaptocone', 'true', 'false', 'correct', 'continue', 'pressplay',
+                'recaptitle', 'recapsubtitle', 'recapsubtitleone', 'recaptoc', 'recaptocone', 'true', 'false', 'correct',
+                'continue', 'pressplay',
                 'checkx', 'questionof', 'frompage', 'qtype_truefalse', 'qtype_pick', 'qtype_match', 'qtype_sort',
                 'checkanswer', 'nextquestion', 'notquite', 'notquitetext', 'golisten', 'nopenalty', 'attemptx',
                 'nextlocked', 'relistentitle', 'relistentext', 'backtoquestion', 'welcomeback', 'thatsit',
@@ -188,6 +189,13 @@ class book_data {
             'courseurl' => (new \moodle_url('/course/view.php', ['id' => $cm->course]))->out(false),
             'nextactivity' => self::next_activity($cm, $userid),
             'grade' => self::grade_info($book),
+            // The learning outcomes linked to the activity, shown on the opening page when the teacher chooses.
+            'outcomes' => !isset($book->showoutcomes) || !empty($book->showoutcomes)
+                ? array_values(array_map(fn($o) => ['code' => $o->code,
+                    'name' => format_string($o->name, true, ['context' => $context])], outcomes::for_cm($cm)))
+                : [],
+            // Tells learners which parts AI made and who checked them (EU AI Act, Article 50).
+            'ai' => responsible_ai::player_data($book, $out),
             'strings' => $strings,
         ];
     }

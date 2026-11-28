@@ -90,6 +90,7 @@ $string['act_unsaved'] = 'Save any changes below first: these buttons leave this
 $string['act_warn_insufficient'] = 'The balance ({$a->balance}) is below the price ({$a->price} credits). LMS Labs will refuse the unlock unless it recognises an existing purchase for this site.';
 $string['activation'] = 'AI Visual Learning activation';
 $string['addpage'] = 'Add a page';
+$string['aiand'] = 'and';
 $string['aierr_alreadymade'] = 'it had already been made';
 $string['aierr_body_too_large'] = 'The request is too large. Nothing was charged; shorten the content.';
 $string['aierr_changed'] = 'the page or the lesson\'s voice changed after the price was confirmed, so it was not sent; ask for the price again';
@@ -141,6 +142,21 @@ $string['aiinstructions_help'] = 'Everything else the AI should use or follow wh
 Up to 50,000 characters; together with "What to teach", up to 60,000.';
 $string['aiinstructions_placeholder'] = 'Paste your own notes, a unit outline, a procedure, or the text of a PDF, Word document or PowerPoint (open it, select all, copy and paste). Add any instructions too, for example: use the terms in AS/NZS 3000; give a safety warning on any page about live work; no brand names.';
 $string['aiinstructions_toolong'] = '"What to teach" and these extra instructions together can be at most {$a} characters. Shorten one of them.';
+$string['ailiteracy_heading'] = 'Using AI responsibly';
+$string['ailiteracy_learners'] = 'Learners see a note on the opening page saying which parts AI made and who checked the lesson. Leave it on.';
+$string['ailiteracy_limits'] = 'AI can be wrong, out of date or biased, and can miss local rules (for example Australian standards). Pictures can show details that are not accurate.';
+$string['ailiteracy_made'] = 'AI wrote the pages, cards, summaries and check questions from your content, and made the pictures, animated diagrams and narration.';
+$string['ailiteracy_report'] = 'If you or a learner finds a problem, fix or delete the page and tell your site administrator. An administrator can pause all AI generation on the site.';
+$string['ailiteracy_you'] = 'You are responsible for what learners see: read every page, check facts, numbers and safety steps, and edit anything that is wrong before marking the lesson as checked.';
+$string['ainotice_checked'] = 'Checked by {$a->name} on {$a->date}.';
+$string['ainotice_checkedteacher'] = 'Checked by a teacher on {$a}.';
+$string['ainotice_heading'] = 'Made with AI';
+$string['ainotice_report'] = 'If something looks wrong, tell your teacher.';
+$string['ainotice_text'] = 'This lesson\'s {$a} were made with AI from your teacher\'s content.';
+$string['aipart_animations'] = 'animated diagrams';
+$string['aipart_pictures'] = 'pictures';
+$string['aipart_text'] = 'text';
+$string['aipart_voice'] = 'narration';
 $string['aireq_cancelled'] = '{$a->what}: not sent and not charged ({$a->error}).';
 $string['aireq_checkagain'] = 'Check again';
 $string['aireq_completed'] = '{$a->what}: done. LMS Labs charged {$a->charged} credits (balance: {$a->balance}).';
@@ -255,6 +271,58 @@ $string['credentials_central'] = 'In use: the Site ID and API key from LMS Labs 
 $string['credentials_centralincomplete'] = 'Not configured: LMS Labs Central Config is missing its Site ID or API key, and the standalone fields below are not both filled in. LMS Labs is not contacted until then.';
 $string['credentials_local'] = 'In use: the standalone Site ID and API key below (LMS Labs Central Config is not installed or does not have both).';
 $string['credentials_none'] = 'Not configured: enter this site\'s LMS Labs Site ID and API key in LMS Labs Central Config (recommended), or both in the standalone fields below. LMS Labs is not contacted until then.';
+$string['customhtml_alt'] = 'Description for screen readers';
+$string['customhtml_alt_help'] = 'One or two sentences saying what the HTML shows, read out by screen readers in place of it. It also becomes the page\'s picture description.';
+$string['customhtml_change'] = 'Change my own HTML…';
+$string['customhtml_disabled'] = 'Your site administrator has switched off teachers\' own HTML.';
+$string['customhtml_done'] = 'Done';
+$string['customhtml_err_empty'] = 'Paste your HTML or upload an HTML file.';
+$string['customhtml_err_nothtml'] = 'This does not look like HTML. Paste the whole file, for example everything Claude gives you from <!doctype html> to </html>.';
+$string['customhtml_err_size'] = 'This HTML is too big. The largest is {$a}: put large pictures on the web, or ask for a lighter version.';
+$string['customhtml_heading'] = 'Your own HTML: {$a}';
+$string['customhtml_intro'] = 'Show your own HTML in place of this page\'s picture: an animated chart, numbers that count up, a drill-down, anything made in Claude or by hand. Learners can click and tap inside it, and the magnifier opens it full screen. The page picture is kept for the recap, the cover and the downloads, and comes back if you remove your HTML. Your HTML runs in a sandboxed frame, so it cannot reach Moodle or your learners\' accounts.';
+$string['customhtml_paste'] = 'Or paste your HTML';
+$string['customhtml_paste_help'] = 'Paste the whole HTML file, with its CSS and JavaScript inside. An uploaded file is used in place of what is pasted here.';
+$string['customhtml_preview'] = 'Preview';
+$string['customhtml_preview_desc'] = 'This is what learners see in place of the picture. The buttons send the same messages the lesson sends while each key point is read aloud.';
+$string['customhtml_prompt'] = 'Make a single self-contained HTML file to show on one page of a narrated Moodle lesson, in place of the page picture.
+
+Page: {$a->title}
+{$a->cards}
+
+What to show: [describe it here, for example an animated bar chart of the figures, with numbers that count up and bars learners can tap to see the detail]
+
+Requirements:
+- One HTML file with all its CSS and JavaScript written inside it. Do not load anything from other websites: no libraries, fonts or images from a CDN. Draw charts with plain SVG or canvas, so the file keeps working for years with nothing to break.
+- It fills a box of about 800 by 560 pixels and resizes to fit any size, from a phone held upright to a large screen, with no scrolling. Tap targets are at least 44 by 44 pixels. Light background, large readable text.
+- Accessible: text and important graphics meet WCAG 2.2 AA colour contrast (4.5:1 for text). Never use colour alone to show meaning; add a label, number or pattern. Everything learners can click also works with the keyboard (Tab, Enter and Space) and shows a clear focus outline. Use real buttons for controls. Give the main graphic a role="img" and an aria-label that sums up what it shows, and put changing numbers in an aria-live="polite" region so screen readers announce the result.
+- Respect reduced motion: also check the prefers-reduced-motion media query, and when it is set show the end state without movement.
+- No logins, no forms that send data, no localStorage or cookies, and no network calls of any kind.
+- The lesson tells the page which key point is being read aloud with window messages (check event.data.source === "visuallearning"):
+  {type: "vl:card", card: 1, 2 or 3, ms} key point N is being read for ms milliseconds: animate its part over that time.
+  {type: "vl:finish", card: N} show everything up to key point N at once (4 means everything).
+  {type: "vl:reset"} start again from the beginning.
+  {type: "vl:pause", paused: true or false} pause or resume any movement.
+  Every message also has reducedMotion: when it is true, skip the movement and show the end state.
+- If no message arrives within 1.5 seconds (for example when the file is opened on its own), play the key points in order.
+- Learners can click or tap parts of it to see more detail.';
+$string['customhtml_prompt_card'] = '{$a->label}: {$a->text}';
+$string['customhtml_prompt_copied'] = 'Copied';
+$string['customhtml_prompt_copy'] = 'Copy the prompt';
+$string['customhtml_prompt_desc'] = 'Paste this into Claude, describe what you want to see, and save the HTML file it makes. The prompt already holds this page\'s key points and the messages the lesson sends while each one is read.';
+$string['customhtml_prompt_heading'] = 'Make it with Claude: a ready-made prompt';
+$string['customhtml_remove'] = 'Remove my HTML';
+$string['customhtml_remove_confirm'] = 'Remove your HTML from this page? Learners will see the page picture again.';
+$string['customhtml_removed'] = 'Your HTML was removed. The page shows its picture again.';
+$string['customhtml_save'] = 'Save and preview';
+$string['customhtml_saved'] = 'Saved. Learners now see your HTML on this page.';
+$string['customhtml_testall'] = 'Show everything';
+$string['customhtml_testcard'] = 'Read key point {$a}';
+$string['customhtml_testreset'] = 'Start again';
+$string['customhtml_title'] = 'Your own HTML';
+$string['customhtml_upload'] = 'Upload an HTML file';
+$string['customhtml_upload_help'] = 'An .html file, for example one you saved from Claude. Up to 2 MB, with its CSS and JavaScript inside.';
+$string['customhtml_use'] = 'Use my own HTML…';
 $string['defaultimagestyle'] = 'Editorial textbook illustration: hand-painted gouache with subtle coloured-pencil texture, confident organic outlines, softly layered pigment, a warm natural palette, simplified but credible forms, gentle natural light and a clean warm-cream background.';
 $string['deletepage_confirm'] = 'Delete this page, its illustration, its voiceover and all learner progress on it?';
 $string['diagramspec'] = 'Animated diagram';
@@ -329,6 +397,7 @@ $string['hold_notactivated'] = 'Nothing new can be made: AI Visual Learning is n
 $string['hold_novoice'] = 'LMS Labs does not offer the chosen voice for the lesson\'s language. Choose another voice in the lesson\'s settings.';
 $string['hold_off'] = 'This is switched off in the AI Visual Learning settings.';
 $string['hold_ownainoedits'] = 'Card pictures 2 and 3 change the card picture before, which needs your own OpenAI image key (Moodle AI and DALL-E only draw new pictures), so each page shows its one picture.';
+$string['hold_paused'] = 'Nothing new can be made: an administrator has paused AI generation on this site. You can still edit pages by hand.';
 $string['hold_pricechanged'] = 'Waiting for LMS Labs: the price it publishes differs from the approved price, so nothing is made until they match.';
 $string['hold_priceunknown'] = 'Not available yet: LMS Labs has not published its price for this, so nothing is made (you are never charged a price you were not shown).';
 $string['holdop_animation'] = 'animated scenes';
@@ -401,7 +470,6 @@ $string['maxpages_help'] = 'Each page teaches one concept, and every four pages 
 $string['maxpagesreached'] = 'A lesson can have at most 20 pages.';
 $string['media_alldone'] = 'Every picture and voiceover clip is ready.';
 $string['media_animation'] = 'Animated scene';
-$string['media_customhtml'] = 'Your own HTML';
 $string['media_attention'] = 'Needs your attention ({$a})';
 $string['media_bypage'] = 'Page by page';
 $string['media_cards'] = 'Card pictures {$a}/3';
@@ -409,6 +477,7 @@ $string['media_chip_failed'] = 'Problem';
 $string['media_chip_making'] = 'Making';
 $string['media_chip_ready'] = 'Ready';
 $string['media_chip_todo'] = 'Not made';
+$string['media_customhtml'] = 'Your own HTML';
 $string['media_inprogresslist'] = 'Show the {$a} requests LMS Labs is working on';
 $string['media_making'] = 'LMS Labs is making {$a} items. This page refreshes on its own.';
 $string['media_picture'] = 'Picture';
@@ -452,9 +521,23 @@ $string['objectives_help'] = 'Optional. What learners should be able to do after
 $string['optionlabel'] = 'Option {$a}';
 $string['optionprompt'] = 'Picture prompt for option {$a}';
 $string['optionx'] = 'Option {$a}';
+$string['outcome_nottaught'] = 'Not taught yet';
+$string['outcome_taughton'] = 'Pages {$a}';
+$string['outcome_taughtonone'] = 'Page {$a}';
+$string['outcomerating'] = 'Rate learning outcomes';
+$string['outcomerating_help'] = 'For learning outcomes that have a scale, each learner is rated once they have answered every check question on the pages that teach the outcome. All right first time gives the top of the scale; none right first time gives the bottom. A rating a teacher has already given is never changed, and each outcome is rated only once. Outcomes without a scale are never rated.';
+$string['outcomerating_label'] = 'Rate scaled outcomes from the check questions';
+$string['outcomes_allcovered'] = 'Every outcome is taught';
+$string['outcomes_coverage'] = 'Learning outcomes';
+$string['outcomes_formintro'] = 'AI Visual Learning writes each page to the learning outcomes ticked above, and tags every page with the outcomes it teaches.';
+$string['outcomes_missing'] = '{$a} not taught yet';
+$string['outcomes_missinghelp'] = 'Edit a page to tag it with an outcome it teaches, or add a page that teaches it. You can still go on without it.';
 $string['page'] = 'Page';
 $string['pagecount'] = '{$a} pages';
 $string['pagedeleted'] = 'Page deleted.';
+$string['pageoutcomes'] = 'Learning outcomes on this page';
+$string['pageoutcomes_help'] = 'The learning outcomes this page teaches. Its check question counts towards them. They come from the outcomes ticked in the activity\'s settings.';
+$string['pageoutcomes_none'] = 'No outcome tagged';
 $string['pages'] = 'Pages';
 $string['pagesaved'] = 'Page saved.';
 $string['pageslistened'] = 'Pages listened';
@@ -504,6 +587,7 @@ $string['player_coveraboutauto'] = 'This lesson covers {$a->title} in {$a->pages
 $string['player_coveraboutautoone'] = 'This lesson covers {$a->title} in one short illustrated page, read aloud to you. Here is what you will learn.';
 $string['player_coverhow'] = 'How this lesson works';
 $string['player_coverlearn'] = 'What you will learn';
+$string['player_coveroutcomes'] = 'Learning outcomes';
 $string['player_coverpage'] = 'Page {$a}';
 $string['player_coverpages'] = 'Pages {$a->from}–{$a->to}';
 $string['player_coverpart'] = 'Part {$a}';
@@ -644,6 +728,9 @@ $string['privacy:metadata:progress:timepassed'] = 'When the learner answered the
 $string['privacy:metadata:progress:timespent'] = 'Seconds the learner spent on the page.';
 $string['privacy:metadata:progress:userid'] = 'The learner.';
 $string['privacy:metadata:progress:views'] = 'How many times the learner opened the page.';
+$string['privacy:metadata:visuallearning'] = 'The teacher who checked an AI-made lesson before learners use it.';
+$string['privacy:metadata:visuallearning:reviewedby'] = 'The ID of the teacher who checked the lesson.';
+$string['privacy:metadata:visuallearning:timereviewed'] = 'When the teacher checked the lesson.';
 $string['qtype'] = 'Question type';
 $string['qtype_help'] = 'True or false: one statement. Pick the picture: four options, one right. Match them up: three or four pairs. Sort into groups: four to six cards and two groups.';
 $string['qtype_match'] = 'Match them up';
@@ -700,58 +787,6 @@ $string['quote_skipped'] = '{$a} item(s) are left out because an earlier request
 $string['quote_total'] = 'Price: up to {$a->credits} credits (about {$a->usd})';
 $string['quote_total_ownai'] = 'Price: no LMS Labs credits';
 $string['regenanimation'] = 'New animated scene';
-$string['customhtml_alt'] = 'Description for screen readers';
-$string['customhtml_alt_help'] = 'One or two sentences saying what the HTML shows, read out by screen readers in place of it. It also becomes the page\'s picture description.';
-$string['customhtml_change'] = 'Change my own HTML…';
-$string['customhtml_disabled'] = 'Your site administrator has switched off teachers\' own HTML.';
-$string['customhtml_done'] = 'Done';
-$string['customhtml_err_empty'] = 'Paste your HTML or upload an HTML file.';
-$string['customhtml_err_nothtml'] = 'This does not look like HTML. Paste the whole file, for example everything Claude gives you from <!doctype html> to </html>.';
-$string['customhtml_err_size'] = 'This HTML is too big. The largest is {$a}: put large pictures on the web, or ask for a lighter version.';
-$string['customhtml_heading'] = 'Your own HTML: {$a}';
-$string['customhtml_intro'] = 'Show your own HTML in place of this page\'s picture: an animated chart, numbers that count up, a drill-down, anything made in Claude or by hand. Learners can click and tap inside it, and the magnifier opens it full screen. The page picture is kept for the recap, the cover and the downloads, and comes back if you remove your HTML. Your HTML runs in a sandboxed frame, so it cannot reach Moodle or your learners\' accounts.';
-$string['customhtml_paste'] = 'Or paste your HTML';
-$string['customhtml_paste_help'] = 'Paste the whole HTML file, with its CSS and JavaScript inside. An uploaded file is used in place of what is pasted here.';
-$string['customhtml_preview'] = 'Preview';
-$string['customhtml_preview_desc'] = 'This is what learners see in place of the picture. The buttons send the same messages the lesson sends while each key point is read aloud.';
-$string['customhtml_prompt'] = 'Make a single self-contained HTML file to show on one page of a narrated Moodle lesson, in place of the page picture.
-
-Page: {$a->title}
-{$a->cards}
-
-What to show: [describe it here, for example an animated bar chart of the figures, with numbers that count up and bars learners can tap to see the detail]
-
-Requirements:
-- One HTML file with all its CSS and JavaScript written inside it. Do not load anything from other websites: no libraries, fonts or images from a CDN. Draw charts with plain SVG or canvas, so the file keeps working for years with nothing to break.
-- It fills a box of about 800 by 560 pixels and resizes to fit any size, from a phone held upright to a large screen, with no scrolling. Tap targets are at least 44 by 44 pixels. Light background, large readable text.
-- Accessible: text and important graphics meet WCAG 2.2 AA colour contrast (4.5:1 for text). Never use colour alone to show meaning; add a label, number or pattern. Everything learners can click also works with the keyboard (Tab, Enter and Space) and shows a clear focus outline. Use real buttons for controls. Give the main graphic a role="img" and an aria-label that sums up what it shows, and put changing numbers in an aria-live="polite" region so screen readers announce the result.
-- Respect reduced motion: also check the prefers-reduced-motion media query, and when it is set show the end state without movement.
-- No logins, no forms that send data, no localStorage or cookies, and no network calls of any kind.
-- The lesson tells the page which key point is being read aloud with window messages (check event.data.source === "visuallearning"):
-  {type: "vl:card", card: 1, 2 or 3, ms} key point N is being read for ms milliseconds: animate its part over that time.
-  {type: "vl:finish", card: N} show everything up to key point N at once (4 means everything).
-  {type: "vl:reset"} start again from the beginning.
-  {type: "vl:pause", paused: true or false} pause or resume any movement.
-  Every message also has reducedMotion: when it is true, skip the movement and show the end state.
-- If no message arrives within 1.5 seconds (for example when the file is opened on its own), play the key points in order.
-- Learners can click or tap parts of it to see more detail.';
-$string['customhtml_prompt_card'] = '{$a->label}: {$a->text}';
-$string['customhtml_prompt_copied'] = 'Copied';
-$string['customhtml_prompt_copy'] = 'Copy the prompt';
-$string['customhtml_prompt_desc'] = 'Paste this into Claude, describe what you want to see, and save the HTML file it makes. The prompt already holds this page\'s key points and the messages the lesson sends while each one is read.';
-$string['customhtml_prompt_heading'] = 'Make it with Claude: a ready-made prompt';
-$string['customhtml_remove'] = 'Remove my HTML';
-$string['customhtml_remove_confirm'] = 'Remove your HTML from this page? Learners will see the page picture again.';
-$string['customhtml_removed'] = 'Your HTML was removed. The page shows its picture again.';
-$string['customhtml_save'] = 'Save and preview';
-$string['customhtml_saved'] = 'Saved. Learners now see your HTML on this page.';
-$string['customhtml_testall'] = 'Show everything';
-$string['customhtml_testcard'] = 'Read key point {$a}';
-$string['customhtml_testreset'] = 'Start again';
-$string['customhtml_title'] = 'Your own HTML';
-$string['customhtml_upload'] = 'Upload an HTML file';
-$string['customhtml_upload_help'] = 'An .html file, for example one you saved from Claude. Up to 2 MB, with its CSS and JavaScript inside.';
-$string['customhtml_use'] = 'Use my own HTML…';
 $string['regenaudio'] = 'New voiceover';
 $string['regencards'] = 'New card pictures';
 $string['regenerateall'] = 'Make everything again…';
@@ -779,6 +814,16 @@ $string['reportfor'] = 'Listening report: {$a}';
 $string['reportintro'] = 'Pages listened, questions answered and time spent for each learner. The lesson has {$a} pages. Click a name for the page-by-page detail.';
 $string['resetprogress'] = 'Delete all AI Visual Learning listening progress';
 $string['retry_narration'] = 'Not quite. Listen to “{$a}” again, then come straight back here to try once more.';
+$string['review_checkedby'] = 'Checked by {$a->name} on {$a->date}. Learners see this on the opening page. If AI writes new pages, the lesson needs checking again.';
+$string['review_done'] = 'Lesson marked as checked.';
+$string['review_heading'] = 'Teacher check';
+$string['review_markchecked'] = 'Mark as checked';
+$string['review_needed'] = 'AI made this lesson. Read every page, fix anything that is wrong, then mark it as checked. Learning outcomes are only rated after the check.';
+$string['review_needed_required'] = 'AI made this lesson. Learners cannot open it until you read every page, fix anything that is wrong and mark it as checked.';
+$string['review_waiting'] = 'This lesson is not ready yet: your teacher is still checking it.';
+$string['review_waiting_teacher'] = 'Learners cannot open this lesson yet: this site asks a teacher to check AI-made lessons first. <a href="{$a}">Check the lesson</a>.';
+$string['review_withdraw'] = 'Undo check';
+$string['review_withdrawn'] = 'Check removed. The lesson needs checking again.';
 $string['reviewheader'] = 'Recap and questions';
 $string['rightanswer'] = 'Right answer';
 $string['sceneplan'] = 'Scene plan';
@@ -786,17 +831,23 @@ $string['sceneplan_help'] = 'Optional. How the AI draws this page\'s animated sc
 $string['sceneplan_invalid'] = 'This scene plan cannot be used. It needs a layout and exactly three stages, each with what happens and at most three labels of up to four words (32 characters).';
 $string['settings_ai'] = 'LMS Labs AI';
 $string['settings_ai_desc'] = 'AI Visual Learning uses LMS Labs credits; no separate Google, Anthropic or OpenAI key is needed. Claude writes the pages and draws the animated diagrams; OpenAI GPT Image 2.5 Flare makes every picture; Google Chirp 3 HD reads the pages aloud. Teachers see one price for each lesson or remake and confirm it before anything is made.';
+$string['settings_aidisclosure'] = 'Tell learners about AI';
+$string['settings_aidisclosure_desc'] = 'Show learners a note on each lesson\'s opening page saying which parts AI made and which teacher checked it (EU AI Act, Article 50). Recommended: on.';
 $string['settings_aiimages'] = 'Illustrations';
 $string['settings_aiimages_desc'] = 'Teachers can create pictures (OpenAI GPT Image through LMS Labs).';
+$string['settings_aimarking'] = 'Mark AI media';
+$string['settings_aimarking_desc'] = 'Add a machine-readable "AI-generated" marking (IPTC digital source type "trainedAlgorithmicMedia") to every picture, voice clip and animated diagram when it is saved (EU AI Act, Article 50(2)). Markings already in a file are kept. Recommended: on.';
+$string['settings_aipaused'] = 'Pause AI generation';
+$string['settings_aipaused_desc'] = 'Stop all new AI writing, pictures, animations and voice on this site straight away, for example while you look into a problem (EU AI Act, Article 26(5)). Learners keep the lessons already made, and teachers can still edit pages by hand.';
 $string['settings_aivoice'] = 'Voiceover';
 $string['settings_aivoice_desc'] = 'Teachers can create voiceover clips (Google Chirp 3 HD through LMS Labs).';
 $string['settings_aiwrite'] = 'LMS Labs AI writes pages';
 $string['settings_aiwrite_desc'] = 'Teachers can let AI (Claude, through LMS Labs) write the pages from their content. When off, pages can only be typed in one at a time.';
+$string['settings_allowcustomhtml'] = 'Teachers can use their own HTML';
+$string['settings_allowcustomhtml_desc'] = 'Teachers with the "Use their own HTML in place of page pictures" capability can replace any page picture with their own HTML, for example an animated chart or a count-up made in Claude. It runs in a sandboxed frame with an origin of its own, so its scripts cannot reach Moodle or the learner\'s session. When this is off, pages show their pictures again (the HTML is kept).';
 $string['settings_defaultapproach'] = 'Default teaching approach';
 $string['settings_defaultapproach_desc'] = 'Pre-selected for new lessons; teachers can change it per lesson.';
 $string['settings_defaultcallouts'] = 'Callouts on pictures by default';
-$string['settings_allowcustomhtml'] = 'Teachers can use their own HTML';
-$string['settings_allowcustomhtml_desc'] = 'Teachers with the "Use their own HTML in place of page pictures" capability can replace any page picture with their own HTML, for example an animated chart or a count-up made in Claude. It runs in a sandboxed frame with an origin of its own, so its scripts cannot reach Moodle or the learner\'s session. When this is off, pages show their pictures again (the HTML is kept).';
 $string['settings_defaultcallouts_desc'] = 'Pre-ticks "Add labels and a short info card to pictures" for new lessons; teachers can change it per lesson.';
 $string['settings_defaultimagestyle'] = 'Default illustration style';
 $string['settings_defaultimagestyle_desc'] = 'Pre-filled for new lessons; teachers can change it per lesson.';
@@ -808,7 +859,14 @@ $string['settings_defaultsheading'] = 'Defaults for new lessons';
 $string['settings_defaultvisualstyle'] = 'Default visual style';
 $string['settings_defaultvisualstyle_desc'] = 'Pre-selected for new lessons; teachers can change it per lesson.';
 $string['settings_defaultvoice_desc'] = 'Only voices LMS Labs offers are listed. The list appears after "Check access" in the activation section above.';
+$string['settings_requirereview'] = 'Teacher check before learners';
+$string['settings_requirereview_desc'] = 'Learners can only open an AI-made lesson after a teacher has marked it as checked (human oversight). When off, the check is still offered and shown to learners, and learning outcomes are only rated after it.';
+$string['settings_responsibleai'] = 'Responsible AI (EU AI Act)';
+$string['settings_responsibleai_desc'] = 'Controls that help your organisation meet its duties as a deployer of AI under the EU AI Act: telling learners, marking AI media, human oversight and pausing. See docs/eu-ai-act.md in the plugin for the full guide. This is technical support, not legal advice.';
 $string['setupbook'] = 'Build the lesson';
+$string['showoutcomes'] = 'Show learning outcomes';
+$string['showoutcomes_help'] = 'Lists the learning outcomes ticked above on the lesson\'s opening page, so learners know what they will be able to do.';
+$string['showoutcomes_label'] = 'List the learning outcomes on the opening page';
 $string['sounds'] = 'Sounds';
 $string['sounds_help'] = 'Short, quiet interface sounds: a soft tick on hover, a pop when choosing, a chime for a right answer, a gentle bonk for a wrong one and a fanfare at the end. Learners can mute them; the voiceover is never affected.';
 $string['sounds_label'] = 'Play little sounds for answers, page turns and finishing';
@@ -850,9 +908,9 @@ $string['true'] = 'True';
 $string['unitcode'] = 'Unit or outcome code';
 $string['unitcode_help'] = 'Optional. A unit of competency or outcome code (for example BSBWHS211), so the lesson matches its wording and requirements.';
 $string['views'] = 'Views';
+$string['visuallearning:addcustomhtml'] = 'Use their own HTML in place of page pictures';
 $string['visuallearning:addinstance'] = 'Add a new AI Visual Learning activity';
 $string['visuallearning:manage'] = 'Build and edit AI Visual Learning pages';
-$string['visuallearning:addcustomhtml'] = 'Use their own HTML in place of page pictures';
 $string['visuallearning:useai'] = 'Use paid LMS Labs AI in AI Visual Learning (pages, illustrations, voiceover)';
 $string['visuallearning:view'] = 'View AI Visual Learning activities';
 $string['visuallearning:viewreports'] = 'View AI Visual Learning reports';

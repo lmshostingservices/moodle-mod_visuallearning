@@ -1,0 +1,6 @@
+# Development-only files kept in the repository for the LMS Labs server's own tests and demos.
+# They are not part of the plugin package (see .gitattributes) and are not checked by Moodle Plugin CI.
+filter:
+  notPaths:
+    - tests/fixtures/media_gallery.php
+    - examples/water-cycle/generated-artifacts

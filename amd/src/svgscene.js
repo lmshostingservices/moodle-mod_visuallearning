@@ -57,6 +57,7 @@ export const fitText = (svg) => {
     // the text's own size (so the player refits once its fonts are in, and as stages show more).
     // The house style's padding: about 12-14px between a label's text and the end of its card or pill.
     const pad = (t) => Math.max(10 * scale, parseFloat(getComputedStyle(t).fontSize) * scale * 0.9);
+    // eslint-disable-next-line complexity -- One branch per SVG scene feature; kept together with its sanitiser rules.
     texts.forEach((t) => {
         let tb = box(t);
         if (!tb.width || !tb.height) {

@@ -42,9 +42,11 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
                 'unitcode', 'scenestyle', 'aiinstructions', 'callouts', 'maxpages',
                 'language', 'voice', 'speakingrate', 'imagestyle', 'teachingapproach', 'visualstyle', 'picturemode', 'learnerlevel',
                 'animationmode', 'animationcomplexity', 'animationpacing', 'navmode', 'autoplay', 'imageculture',
-                'enablerecap', 'enablequiz', 'questiontypes', 'pickimages', 'sounds', 'relistenlock', 'styleguide', 'characters', 'coverprompt',
+                'enablerecap', 'enablequiz', 'questiontypes', 'pickimages', 'sounds', 'relistenlock', 'styleguide', 'characters',
+                'coverprompt',
                 'coverstatus',
-                'covererror', 'completionlistened', 'completionquiz', 'grade', 'timecreated', 'timemodified',
+                'covererror', 'completionlistened', 'completionquiz', 'grade', 'showoutcomes', 'outcomerating', 'timecreated',
+                'timemodified',
             ],
         );
         $pages = new backup_nested_element('pages');
@@ -55,7 +57,7 @@ class backup_visuallearning_activity_structure_step extends backup_activity_stru
                 'pagenum', 'title', 'concepttext', 'actiontext', 'outcometext', 'imageprompt', 'alttext',
                 'summarytext', 'tfstatement', 'tfanswer', 'qtype', 'qdata', 'feedback', 'imagestatus', 'audiostatus', 'lasterror',
                 'bundleid', 'slideid', 'bundlesite', 'bundledeliveries', 'cardprompts', 'diagram',
-                'sceneplan',
+                'sceneplan', 'outcomes',
                 'timemodified',
             ],
         );

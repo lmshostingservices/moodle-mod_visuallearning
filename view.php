@@ -71,6 +71,22 @@ if (empty($data['pages'])) {
     exit;
 }
 
+// The site asks for a teacher check before learners see an AI-made lesson.
+if (\mod_visuallearning\local\responsible_ai::learners_wait($book)) {
+    if (!$canmanage) {
+        echo $OUTPUT->notification(get_string('review_waiting', 'mod_visuallearning'), \core\output\notification::NOTIFY_INFO);
+        echo $OUTPUT->footer();
+        exit;
+    }
+    echo $OUTPUT->notification(
+        get_string('review_waiting_teacher', 'mod_visuallearning', (new moodle_url(
+            '/mod/visuallearning/manage.php',
+            ['id' => $cm->id, 'step' => 4]
+        ))->out(false)),
+        \core\output\notification::NOTIFY_WARNING
+    );
+}
+
 if ($canmanage && $data['missingmedia']) {
     echo $OUTPUT->notification(
         get_string(

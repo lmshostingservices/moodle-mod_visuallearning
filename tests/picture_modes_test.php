@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace mod_visuallearning;
 
 use mod_visuallearning\local\book_data;
@@ -22,6 +23,8 @@ use mod_visuallearning\local\media;
 use mod_visuallearning\local\picture_modes;
 use mod_visuallearning\local\prompt_builder;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(picture_modes::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(diagram::class)]
 /**
  * Tests for the picture modes: one picture per page, one picture per card, and animated diagrams.
  *
@@ -29,9 +32,9 @@ use mod_visuallearning\local\prompt_builder;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\picture_modes
+ * @covers     \mod_visuallearning\local\diagram
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(picture_modes::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(diagram::class)]
 final class picture_modes_test extends \advanced_testcase {
     /**
      * Sample specifications (valid ones, and "bad" and "badwave" that are not).
@@ -122,8 +125,10 @@ final class picture_modes_test extends \advanced_testcase {
         [$data] = importer::parse(json_encode(['pages' => [$page]]), 10);
         $this->assertSame([], $data['pages'][0]['card_image_prompts']);
         $this->assertNull($data['pages'][0]['diagram']);
-        $this->assertSame(['cardprompts' => null, 'diagram' => null, 'sceneplan' => null],
-            importer::picture_fields($data['pages'][0]));
+        $this->assertSame(
+            ['cardprompts' => null, 'diagram' => null, 'sceneplan' => null],
+            importer::picture_fields($data['pages'][0])
+        );
     }
 
     public function test_prompt_file_asks_for_the_mode_only_when_chosen(): void {
@@ -198,9 +203,12 @@ final class picture_modes_test extends \advanced_testcase {
     public function test_player_gets_card_pictures_diagrams_and_numbered_cards(): void {
         global $DB;
         $this->resetAfterTest();
-        $prompts = ['Scene one.', 'Same picture, same viewpoint and layout. Two.', 'Same picture, same viewpoint and layout. Three.'];
-        [$book, $page, $context] = $this->lesson(['picturemode' => 'sequence', 'teachingapproach' => 'science'],
-            ['cardprompts' => json_encode($prompts), 'diagram' => diagram::json($this->specs()['ac'])]);
+        $prompts = ['Scene one.', 'Same picture, same viewpoint and layout. Two.',
+            'Same picture, same viewpoint and layout. Three.'];
+        [$book, $page, $context] = $this->lesson(
+            ['picturemode' => 'sequence', 'teachingapproach' => 'science'],
+            ['cardprompts' => json_encode($prompts), 'diagram' => diagram::json($this->specs()['ac'])]
+        );
         $chain = media::card_chain($context, $book, $page);
         media::save_card($context, (int)$page->id, 1, $chain[1]['prompt'], '', 'png-one', 'png');
         $cm = get_coursemodule_from_instance('visuallearning', $book->id);
@@ -309,7 +317,9 @@ final class picture_modes_test extends \advanced_testcase {
         $this->assertStringContainsString('keep every diagram very simple', $file);
 
         [$pro] = $this->lesson(['learnerlevel' => 'advanced']);
-        $this->assertStringContainsString('AUDIENCE: university students and professionals',
-            prompt_builder::image_prompt($pro, 'A four-stroke engine cycle.', 2000));
+        $this->assertStringContainsString(
+            'AUDIENCE: university students and professionals',
+            prompt_builder::image_prompt($pro, 'A four-stroke engine cycle.', 2000)
+        );
     }
 }

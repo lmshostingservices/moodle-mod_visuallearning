@@ -18,6 +18,7 @@ namespace mod_visuallearning;
 
 use mod_visuallearning\local\exporter;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(exporter::class)]
 /**
  * Tests for downloading all content and adding the questions to the question bank.
  *
@@ -25,8 +26,8 @@ use mod_visuallearning\local\exporter;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\exporter
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(exporter::class)]
 final class exporter_test extends \advanced_testcase {
     /**
      * A lesson with one question of each type.
@@ -83,5 +84,4 @@ final class exporter_test extends \advanced_testcase {
         $parts = array_map(fn($f) => $f->pathname, get_file_packer('application/zip')->list_files($docx));
         $this->assertContains('word/document.xml', $parts);
     }
-
 }

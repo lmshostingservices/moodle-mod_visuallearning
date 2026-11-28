@@ -22,6 +22,7 @@ global $CFG;
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\restore_visuallearning_activity_structure_step::class)]
 /**
  * Backup and restore tests.
  *
@@ -29,8 +30,8 @@ require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \restore_visuallearning_activity_structure_step
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(\restore_visuallearning_activity_structure_step::class)]
 final class backup_restore_test extends \advanced_testcase {
     /**
      * Pages and their media survive backup and restore, with file item ids remapped to the new pages.
@@ -43,8 +44,12 @@ final class backup_restore_test extends \advanced_testcase {
         $book = $this->getDataGenerator()->create_module('visuallearning', ['course' => $course->id, 'callouts' => 1,
             'objectives' => 'Explain how water flows', 'priorknowledge' => 'Pipes', 'unitcode' => 'HLTAAP001',
             'visualstyle' => 'model3d', 'aiinstructions' => 'No brand names.']);
-        $DB->set_field('visuallearning', 'scenestyle', '{"palette":"blue = water","recurring":"","subject":"earth"}',
-            ['id' => $book->id]);
+        $DB->set_field(
+            'visuallearning',
+            'scenestyle',
+            '{"palette":"blue = water","recurring":"","subject":"earth"}',
+            ['id' => $book->id]
+        );
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_visuallearning');
         $context = \context_module::instance($book->cmid);
         $fs = get_file_storage();
@@ -96,7 +101,7 @@ final class backup_restore_test extends \advanced_testcase {
 
         $newbook = $DB->get_record('visuallearning', ['course' => $target->id], '*', MUST_EXIST);
         $newcm = get_coursemodule_from_instance('visuallearning', $newbook->id);
-        $newpages = $DB->get_records('visuallearning_pages', ['visuallearningid' => $newbook->id]);
+        $newpages = $DB->get_records('visuallearning_pages', ['visuallearningid' => $newbook->id], 'pagenum');
         $this->assertCount(2, $newpages);
         $restored = array_values($newpages);
         $this->assertSame($plan, $restored[0]->sceneplan);

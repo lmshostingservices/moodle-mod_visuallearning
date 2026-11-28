@@ -2,7 +2,11 @@
 
 All notable changes to mod_visuallearning are documented here.
 
-## [1.10.0] - 2026-11-26
+## [1.10.0] - 2026-11-28
+
+Version 2026112800. Brings together "Bring your own AI" (merged to main on 26 November as 2026112600) with Moodle 5.3
+learning outcomes, the Moodle Design System look and responsible AI (EU AI Act). The new upgrade step 2026112800 adds
+any database field a 2026112600 site is missing, so both routes upgrade safely.
 
 ### Bring your own AI
 - With an LMS Labs "Bring your own AI" licence (set up in AI Grader Central Config 1.1.0 or later), lessons,
@@ -23,6 +27,52 @@ All notable changes to mod_visuallearning are documented here.
   the voice chosen in Central Config.
 - The price page and the activity form show "Your own AI" and no credits for this work; a failure on the site's own
   AI is shown as failed (never as an unknown charge) and can be asked for again.
+
+### Added: responsible AI (EU AI Act)
+- Every picture, voice clip and animated diagram is marked as AI-generated in a machine-readable way when it is saved:
+  IPTC digital source type `trainedAlgorithmicMedia` with provenance, as XMP in PNG, JPEG and WebP, an ID3 tag in MP3
+  and RDF metadata in SVG (Article 50(2)). Markings already in a file, such as a signed C2PA manifest, are kept.
+- Learners see a "Made with AI" note on the opening page: which parts AI made, the teacher who checked the lesson and
+  when, and to tell their teacher if something looks wrong.
+- Teacher check on the Ready step: the teacher marks the lesson as checked; it is cleared whenever AI writes new pages.
+  Learning outcomes are only rated after the check.
+- "Using AI responsibly" panel for teachers (AI literacy, Article 4).
+- Download all content adds ai-provenance.json.
+- New site settings under Responsible AI (EU AI Act): Pause AI generation, Mark AI media (on), Tell learners about AI
+  (on) and Teacher check before learners (off).
+- Privacy API declares, exports and removes the teacher who checked a lesson.
+- docs/eu-ai-act.md: classification, dates, provider and deployer duties, feature matrix and instructions for use.
+- Database: reviewedby and timereviewed on the activity (upgrade step 2026112600).
+
+### Moodle 5.3 learning outcomes
+- AI Visual Learning now supports Moodle learning outcomes. The Learning outcomes section appears on the activity's
+  settings (it was switched off before), and its links show on Moodle 5.3's course Learning outcomes page.
+  Scale-less outcomes (Moodle 5.3) and scaled outcomes (every version) both work.
+- The lesson is written to the ticked outcomes. They travel in the lesson inputs (so LMS Labs AI and the ChatGPT prompt
+  both see them), and the writer tags every page with the codes of the outcomes it teaches. Unknown codes are dropped.
+- Check your pages shows outcome coverage: each outcome with the pages that teach it, and a warning (never a block) for
+  any outcome not taught yet. Each page shows its outcome tags; teachers can change them on the page editor.
+- Show learning outcomes (on by default): the lesson's opening page lists them for learners.
+- Rate learning outcomes (off by default): scaled outcomes are rated from the check questions once every question on
+  the outcome's pages is right. All right first time gives the top of the scale. A teacher's rating is never changed,
+  and each outcome is rated once.
+- Download all content adds outcomes/mapping.csv (outcome, pages, check questions: evidence for auditors) and
+  outcomes/learning-outcomes-import.csv (Moodle's own import format).
+- Backup and restore keep page tags, pointing at the restored outcomes.
+- Database: showoutcomes and outcomerating on the activity, outcomes on pages (upgrade step 2026112400).
+
+### Moodle Design System look
+- The plugin's colours now come from the Moodle Design System tokens: Moodle blue instead of indigo, MDS neutrals and
+  feedback colours, and MDS radii (8px controls, 12px cards, 16px panels). On Moodle 5.3 it follows the site's brand
+  colour and Boost dark mode; earlier versions get MDS's own values.
+- Premium finish on top: MDS button shapes with a crisp edge and highlight, hairline borders, soft layered shadows,
+  a visible focus halo and 150 ms transitions (none when reduced motion is set).
+- Idea, action and outcome cards keep their colour coding (blue, teal, orange), mixed so they stay readable in dark mode.
+- Animated diagrams, scenes and full-screen viewers keep their own colours.
+
+### Tests
+- New outcomes_test (8 tests). Fixed a backup test that depended on database row order.
+- Full suite on Moodle 5.3.1+ (PHP 8.3, PostgreSQL 16): 127 tests, 1,248 assertions.
 
 ## [1.9.4] - 2026-11-14
 

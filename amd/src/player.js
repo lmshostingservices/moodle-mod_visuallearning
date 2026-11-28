@@ -399,6 +399,7 @@ class Player {
      *
      * @param {KeyboardEvent} e
      */
+    // eslint-disable-next-line complexity -- One dispatcher per input; splitting it would scatter the slide state machine.
     onKey(e) {
         if (!this.root.isConnected || e.target.closest('input, textarea, select, [contenteditable]')) {
             return;
@@ -952,6 +953,19 @@ class Player {
         }
         this.q('.pb-cover-learnheading').textContent = this.str('coverlearn');
 
+        // The Moodle learning outcomes the lesson teaches, when the teacher shows them.
+        const outcomes = Array.isArray(this.data.outcomes) ? this.data.outcomes : [];
+        const outcomesBox = this.q('.pb-cover-outcomes');
+        if (outcomesBox && outcomes.length) {
+            this.q('.pb-cover-outcomesheading').textContent = this.str('coveroutcomes');
+            this.q('.pb-cover-outcomelist').innerHTML = outcomes.map((o) =>
+                '<li class="pb-cover-outcome"><span class="pb-cover-outcome-code">' + esc(o.code) +
+                '</span><span class="pb-cover-outcome-text">' + esc(o.name) + '</span></li>').join('');
+            outcomesBox.hidden = false;
+        }
+
+        this.renderCoverAi();
+
         // How it works: listen, recap, check (only the parts this lesson has).
         const how = [];
         how.push(['is-listen', HEADPHONES_SVG, this.str('steplisten'),
@@ -1002,6 +1016,24 @@ class Player {
         const need = Math.min(total, Math.max(1, Math.ceil(fraction * total - 1e-9)));
         return need >= total ? this.str('coverpassall', label)
             : this.str('coverpasssome', {need, total, pass: label});
+    }
+
+    /**
+     * The cover's AI notice: which parts of the lesson AI made, and the teacher who checked it (EU AI Act, Article 50).
+     */
+    renderCoverAi() {
+        const ai = this.data.ai;
+        const aiBox = this.q('.pb-cover-ai');
+        if (!aiBox || !ai || !ai.text) {
+            return;
+        }
+        this.q('.pb-cover-aiheading').textContent = ai.heading;
+        this.q('.pb-cover-aitext').textContent = ai.text;
+        this.q('.pb-cover-aireport').textContent = ai.report;
+        const checked = this.q('.pb-cover-aichecked');
+        checked.textContent = ai.checked || '';
+        checked.hidden = !ai.checked;
+        aiBox.hidden = false;
     }
 
     /**
@@ -1382,7 +1414,8 @@ class Player {
                 let cls = 'is-notyet';
                 if (p.passed) {
                     label = tries === 1 ? this.str('firsttry') : this.str('ntries', tries);
-                    cls = tries === 1 ? 'is-first' : (tries === 2 ? 'is-second' : 'is-more');
+                    const later = tries === 2 ? 'is-second' : 'is-more';
+                    cls = tries === 1 ? 'is-first' : later;
                 }
                 let dots = '';
                 for (let d = 0; d < Math.min(tries, 5); d++) {
@@ -1548,6 +1581,7 @@ class Player {
      *
      * @param {number} index
      */
+    // eslint-disable-next-line complexity -- One dispatcher per input; splitting it would scatter the slide state machine.
     go(index) {
         if (index < 0) {
             this.showCover();
@@ -2237,6 +2271,7 @@ class Player {
      *
      * @param {HTMLElement} [chosen] the true/false button pressed
      */
+    // eslint-disable-next-line complexity -- One dispatcher per input; splitting it would scatter the slide state machine.
     async submit(chosen) {
         const step = this.step();
         if (!step || step.type !== 'question' || this.response === null) {

@@ -8,11 +8,11 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_visuallearning;
 
@@ -20,6 +20,9 @@ use mod_visuallearning\local\media;
 use mod_visuallearning\local\prompt_builder;
 use mod_visuallearning\local\visual_styles;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(visual_styles::class)]
 /**
  * Picture prompts for GPT Image, the callouts choice, and pictures kept current when prompts change.
  *
@@ -27,10 +30,10 @@ use mod_visuallearning\local\visual_styles;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\local\prompt_builder
+ * @covers     \mod_visuallearning\local\media
+ * @covers     \mod_visuallearning\local\visual_styles
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(prompt_builder::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(media::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(visual_styles::class)]
 final class picture_prompts_test extends \advanced_testcase {
     /**
      * A lesson with one page.
@@ -75,8 +78,10 @@ final class picture_prompts_test extends \advanced_testcase {
         $this->assertSame(get_string('defaultimagestyle', 'mod_visuallearning'), visual_styles::direction($book));
         $book->visualstyle = 'realistic';
         $book->imagestyle = visual_styles::LEGACY_DEFAULTS[1];
-        $this->assertSame(get_string('visualstyle_realistic_direction', 'mod_visuallearning'),
-            visual_styles::direction($book));
+        $this->assertSame(
+            get_string('visualstyle_realistic_direction', 'mod_visuallearning'),
+            visual_styles::direction($book)
+        );
         // A site that still holds the old default gets the new one too.
         set_config('defaultimagestyle', visual_styles::LEGACY_DEFAULTS[0], 'mod_visuallearning');
         $book->visualstyle = 'illustration';
@@ -138,7 +143,8 @@ final class picture_prompts_test extends \advanced_testcase {
     public function test_first_api_test_findings_are_covered(): void {
         $this->resetAfterTest();
         [$book] = $this->lesson(['teachingapproach' => 'science', 'callouts' => 1, 'styleguide' => 'Colour code: amber, violet.',
-            'scenestyle' => json_encode(['palette' => 'amber', 'recurring' => 'Front view of the upper body.', 'subject' => 'biology'])]);
+            'scenestyle' => json_encode(['palette' => 'amber', 'recurring' => 'Front view of the upper body.',
+                'subject' => 'biology'])]);
         $page = prompt_builder::image_prompt($book, 'The nerve enters the spinal cord.', 6000);
         // People in explanations are clothed; anatomy is an overlay.
         $this->assertStringContainsString('fully clothed, with anatomy as a see-through overlay', $page);
@@ -153,7 +159,8 @@ final class picture_prompts_test extends \advanced_testcase {
     }
 
     public function test_the_image_model_is_recorded_with_each_picture(): void {
-        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR4nGP4z8DwnwEKGBgAQ+8C/l0IGQ0AAAAASUVORK5CYII=');
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR4nGP4z8DwnwEKGBgAQ+8C/'
+            . 'l0IGQ0AAAAASUVORK5CYII=');
         $receipt = \mod_visuallearning\local\ai\requests::image_receipt(['x-model' => 'gpt-image-2.5-flare<script>',
             'x-usage-output-tokens' => '712', 'x-usage-input-tokens' => 'n/a', 'x-provider-cost-usd' => '0.0214'], $png, 'png');
         $this->assertSame('gpt-image-2.5-flarescript', $receipt['model']);

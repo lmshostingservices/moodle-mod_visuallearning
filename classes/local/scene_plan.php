@@ -8,11 +8,11 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace mod_visuallearning\local;
 
@@ -98,8 +98,10 @@ class scene_plan {
             }
             $value = $decoded;
         }
-        if (!is_array($value) || !is_array($value['stages'] ?? null) || count($value['stages']) !== 3
-                || array_keys($value['stages']) !== [0, 1, 2]) {
+        if (
+            !is_array($value) || !is_array($value['stages'] ?? null) || count($value['stages']) !== 3
+                || array_keys($value['stages']) !== [0, 1, 2]
+        ) {
             return null;
         }
         $out = [];

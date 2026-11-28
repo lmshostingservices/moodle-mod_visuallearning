@@ -10,7 +10,12 @@
  * @param {number} t
  * @returns {number}
  */
-export const lerp = (a, b, t) => t === 0 ? a : t === 1 ? b : a + (b - a) * t;
+export const lerp = (a, b, t) => {
+    if (t === 0) {
+        return a;
+    }
+    return t === 1 ? b : a + (b - a) * t;
+};
 export const clamp = (n, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
 export const interpolatePoint = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
 export const pathData = segments => segments.map(s => s.command + s.values.join(' ')).join(' ');
@@ -86,7 +91,12 @@ export const compatiblePaths = (a, b) => a.segments.length === b.segments.length
  * @param {number} from
  * @param {number} to
  */
-export const travelRotation = (angle, from, to) => from <= to ? angle : angle > 0 ? angle - 180 : angle + 180;
+export const travelRotation = (angle, from, to) => {
+    if (from <= to) {
+        return angle;
+    }
+    return angle > 0 ? angle - 180 : angle + 180;
+};
 
 export const colourAt = (a, b, t) => '#' + [1, 3, 5].map(i =>
     Math.round(lerp(parseInt(a.slice(i, i + 2), 16), parseInt(b.slice(i, i + 2), 16), t))

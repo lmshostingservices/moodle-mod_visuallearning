@@ -141,8 +141,10 @@ class track_page extends external_api {
                 ],
             )->trigger();
             // Lessons without check questions are graded on pages listened.
-            visuallearning_update_grades($DB->get_record('visuallearning', ['id' => $cm->instance], '*', MUST_EXIST),
-                (int)$USER->id);
+            visuallearning_update_grades(
+                $DB->get_record('visuallearning', ['id' => $cm->instance], '*', MUST_EXIST),
+                (int)$USER->id
+            );
             visuallearning_update_completion($course, $cm, (int)$USER->id);
         }
 

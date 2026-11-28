@@ -22,6 +22,7 @@ use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 use core_privacy\tests\provider_testcase;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(provider::class)]
 /**
  * Privacy provider tests.
  *
@@ -29,8 +30,8 @@ use core_privacy\tests\provider_testcase;
  * @category   test
  * @copyright  2026 LMS Hosting Services
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \mod_visuallearning\privacy\provider
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(provider::class)]
 final class provider_test extends provider_testcase {
     /** @var \stdClass */
     private $book;
