@@ -26,6 +26,8 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+import * as Motion from 'mod_visuallearning/svgmotion';
+
 /**
  * Keep every label inside its card, pill or panel, and inside the plate. An AI-drawn scene sometimes sizes a card
  * for shorter text than it holds ("Oxygen-poor blood" running past its legend card). Each text that overflows the
@@ -34,25 +36,35 @@
  * text-anchor and the scene's scale do not matter. Texts hidden at the moment (zero size) are fitted later.
  *
  * @param {SVGSVGElement} svg
+ * @param {boolean} canGrow widen or move cards to fit (svg-1); svg-2 scenes are laid out exactly, so text only shrinks
  */
-export const fitText = (svg) => {
+export const fitText = (svg, canGrow = true) => {
     const box = (el) => el.getBoundingClientRect();
     const plateBox = box(svg);
     if (!plateBox.width) {
         return;
     }
     const scale = plateBox.width / ((svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width) || plateBox.width);
+    // Shapes faded right out (an svg-2 step not shown now) neither hold nor block a label.
+    const shown = (el) => {
+        for (let n = el; n && n !== svg; n = n.parentNode) {
+            if (n.style && n.style.opacity === '0') {
+                return false;
+            }
+        }
+        return true;
+    };
     const plateArea = plateBox.width * plateBox.height;
     // Shapes that can hold text: filled rects smaller than the plate (cards, pills, panels, legends).
     const shapes = Array.from(svg.querySelectorAll('rect')).map((el) => ({el, b: box(el)}))
         .filter(({el, b}) => b.width > 4 && b.height > 4 && b.width * b.height < plateArea * 0.6
-            && getComputedStyle(el).fill !== 'none');
-    const texts = Array.from(svg.querySelectorAll('text'));
+            && getComputedStyle(el).fill !== 'none' && shown(el));
+    const texts = Array.from(svg.querySelectorAll('text')).filter(shown);
     // Everything painted, in painting order (document order), with its box.
     const painted = Array.from(svg.querySelectorAll('rect, circle, ellipse, path, polygon, use'))
         .filter((el) => !el.closest('defs, clipPath, mask, pattern, marker, symbol'))
         .map((el) => ({el, b: box(el)}))
-        .filter(({b}) => b.width > 2 && b.height > 2 && b.width * b.height < plateArea * 0.6);
+        .filter(({el, b}) => b.width > 2 && b.height > 2 && b.width * b.height < plateArea * 0.6 && shown(el));
     // Safe to run again at any time: a text that fits is left alone, and a smaller size is always worked out from
     // the text's own size (so the player refits once its fonts are in, and as stages show more).
     // The house style's padding: about 12-14px between a label's text and the end of its card or pill.
@@ -89,7 +101,7 @@ export const fitText = (svg) => {
         if (overR <= 0.5 && overL <= 0.5) {
             return;
         }
-        if (holder && anchor === 'middle') {
+        if (holder && anchor === 'middle' && canGrow) {
             // A centred label (a pill): widen it evenly on both sides when there is room.
             const grow = Math.max(overR, overL) * 2 + 1;
             const wanted = {left: holder.b.left - grow / 2, right: holder.b.right + grow / 2, top: holder.b.top,
@@ -107,7 +119,7 @@ export const fitText = (svg) => {
                 return;
             }
         }
-        if (holder && anchor !== 'middle' && overR > 0 && overL <= 0.5) {
+        if (holder && anchor !== 'middle' && overR > 0 && overL <= 0.5 && canGrow) {
             // Widen the card to the right when nothing else is in the way and it stays on the plate.
             const grow = overR + 1;
             const wanted = {left: holder.b.right, right: holder.b.right + grow, top: holder.b.top, bottom: holder.b.bottom};
@@ -201,6 +213,14 @@ export const fitText = (svg) => {
 const PACE = {slow: 0.4, normal: 0.5, fast: 0.7};
 
 /**
+ * The teaching-pace factor for a lesson.
+ *
+ * @param {Object} options
+ * @returns {number}
+ */
+const slowOf = (options) => PACE[options.pacing] || PACE.normal;
+
+/**
  * Draw a scene into a container.
  *
  * @param {HTMLElement} container emptied and filled with the SVG
@@ -227,7 +247,9 @@ export const render = (container, spec, options = {}) => {
     }
     container.appendChild(svg);
     // Fit the labels once the scene has its size and the player's fonts are in (and again as stages show more).
-    const refit = () => window.requestAnimationFrame(() => fitText(svg));
+    // svg-2 scenes (data-vl-* tags) are laid out exactly and their shapes move: never widen or shift them.
+    const exact = /\sdata-vl-/.test(spec.svg);
+    const refit = () => window.requestAnimationFrame(() => fitText(svg, !exact));
     refit();
     if (document.fonts && document.fonts.load) {
         // The scene's text uses the player's fonts, which may still be loading: fit again once they are in.
@@ -237,6 +259,15 @@ export const render = (container, spec, options = {}) => {
     window.setTimeout(refit, 800);
 
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // An svg-2 scene: its tagged shapes are moved here, timed exactly to each card's clip.
+    const motion = Motion.attach(svg, {reduced});
+    if (motion) {
+        // Lay the scene out at once (before the first label fit), so hidden steps are known to be hidden.
+        motion.render(1, 1);
+    }
+    const NORMAL_STAGE_MS = 3200;
+    const stageSeconds = Number(svg.getAttribute('data-stage-seconds')) || 6;
+    const m = {stage: 1, elapsed: 0, length: stageSeconds * 1000 / slowOf(options), mode: 'still', all: false};
     // A scene that teaches a real rhythm (CPR compressions, a heartbeat) asks never to be slowed down.
     const slow = svg.getAttribute('data-realtime') === 'true' ? 1 : (PACE[options.pacing] || PACE.normal);
     let rate = slow;
@@ -287,6 +318,21 @@ export const render = (container, spec, options = {}) => {
                 svg.setCurrentTime(clock);
             }
         }
+        if (motion) {
+            if (!paused && m.mode !== 'still' && !motion.trying) {
+                m.elapsed = Math.min(m.length, m.elapsed + dt * 1000);
+                if (m.all && m.elapsed >= m.length && m.stage < 3) {
+                    m.stage++;
+                    m.elapsed = 0;
+                }
+            }
+            if (!motion.trying) {
+                motion.render(m.stage, m.mode === 'still' ? 1 : m.elapsed / m.length);
+                syncScrub();
+            } else {
+                motion.idle(now);
+            }
+        }
         frame = window.requestAnimationFrame(tick);
     };
     if (reduced && smil) {
@@ -310,6 +356,139 @@ export const render = (container, spec, options = {}) => {
         container.appendChild(bar);
     }
 
+    // svg-2: once the page has been heard, learners can scrub through the animation and try it themselves.
+    let scrub = null;
+    let tryButton = null;
+    let tryPanel = null;
+    let verdict = null;
+    const strings = options.strings || {};
+    /** Keep the scrub bar where the animation is. */
+    const syncScrub = () => {
+        if (scrub && document.activeElement !== scrub) {
+            scrub.value = String(Math.round(((m.stage - 1) + (m.mode === 'still' ? 1 : m.elapsed / m.length)) * 100));
+        }
+    };
+    if (motion) {
+        const bar = container.querySelector('.vl-svgscene-bar') || container.appendChild(document.createElement('div'));
+        bar.classList.add('vl-svgscene-bar');
+        scrub = document.createElement('input');
+        scrub.type = 'range';
+        scrub.min = '0';
+        scrub.max = '300';
+        scrub.step = '1';
+        scrub.className = 'vl-svgscene-scrub';
+        scrub.hidden = true;
+        scrub.setAttribute('aria-label', strings.scrub || 'Move through the animation');
+        scrub.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const v = Number(scrub.value) / 100;
+            leaveTry();
+            m.all = false;
+            m.mode = 'scrub';
+            m.stage = Math.min(3, Math.floor(v) + 1);
+            m.length = NORMAL_STAGE_MS;
+            m.elapsed = (v - (m.stage - 1)) * m.length;
+            paused = true;
+        });
+        bar.insertBefore(scrub, bar.firstChild);
+        if (motion.tryDef) {
+            tryButton = document.createElement('button');
+            tryButton.type = 'button';
+            tryButton.className = 'vl-svgscene-try';
+            tryButton.hidden = true;
+            tryButton.textContent = strings.tryit || 'Try it';
+            bar.appendChild(tryButton);
+            tryPanel = document.createElement('div');
+            tryPanel.className = 'vl-svgscene-trypanel';
+            tryPanel.hidden = true;
+            const values = {};
+            motion.tryDef.controls.forEach((c) => {
+                values[c.id] = c.value;
+                const row = document.createElement('label');
+                row.className = 'vl-svgscene-tryrow';
+                const name = document.createElement('span');
+                name.textContent = c.label;
+                const input = document.createElement('input');
+                input.type = 'range';
+                input.min = String(c.min);
+                input.max = String(c.max);
+                input.step = String(c.step);
+                input.value = String(c.value);
+                const out = document.createElement('output');
+                const show = () => {
+                    out.textContent = Number(input.value).toLocaleString() + (c.unit ? ' ' + c.unit : '');
+                };
+                show();
+                input.addEventListener('input', (e) => {
+                    e.stopPropagation();
+                    values[c.id] = Number(input.value);
+                    show();
+                    motion.setTry(values);
+                    showVerdict();
+                });
+                row.append(name, input, out);
+                tryPanel.appendChild(row);
+            });
+            verdict = document.createElement('p');
+            verdict.className = 'vl-svgscene-verdict';
+            verdict.setAttribute('aria-live', 'polite');
+            tryPanel.appendChild(verdict);
+            container.appendChild(tryPanel);
+            tryButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (motion.trying) {
+                    leaveTry();
+                } else {
+                    paused = true;
+                    motion.setTry(values);
+                    tryPanel.hidden = false;
+                    tryButton.textContent = strings.tryitdone || 'Back to the animation';
+                    tryButton.setAttribute('aria-pressed', 'true');
+                    showVerdict();
+                    refit();
+                }
+            });
+        }
+    }
+
+    /** The try-it rule's message, if one matches. */
+    function showVerdict() {
+        if (!verdict) {
+            return;
+        }
+        const rule = motion.verdict();
+        verdict.textContent = rule ? rule.say : '';
+        verdict.dataset.tone = rule ? rule.tone : '';
+    }
+
+    /** Back from the try-it step to the animation. */
+    function leaveTry() {
+        if (motion && motion.trying) {
+            motion.setTry(null);
+        }
+        if (tryPanel) {
+            tryPanel.hidden = true;
+            tryButton.textContent = strings.tryit || 'Try it';
+            tryButton.setAttribute('aria-pressed', 'false');
+        }
+    }
+
+    /**
+     * Start a stage of the svg-2 motion.
+     *
+     * @param {number} stage 1-3
+     * @param {number} length ms
+     * @param {string} mode narrate, normal or still
+     */
+    const startMotion = (stage, length, mode) => {
+        leaveTry();
+        m.stage = stage;
+        m.length = Math.max(400, length);
+        m.elapsed = mode === 'still' ? m.length : 0;
+        m.mode = mode;
+        m.all = false;
+    };
+
     /**
      * Show one stage.
      *
@@ -328,16 +507,23 @@ export const render = (container, spec, options = {}) => {
 
     const controller = {
         svg,
+        motion,
         /**
          * The card's stage, played slowly while its clip is read.
          *
          * @param {number} card 1-3
+         * @param {number} ms the clip's length when known (an svg-2 stage lasts exactly as long)
          */
-        stage(card) {
+        stage(card, ms) {
             if (button) {
                 button.hidden = true;
             }
-            show(String(Math.max(1, Math.min(3, card))), slow);
+            const n = Math.max(1, Math.min(3, card));
+            show(String(n), slow);
+            if (motion) {
+                paused = false;
+                startMotion(n, ms || stageSeconds * 1000 / slow, 'narrate');
+            }
         },
         /**
          * The card's stage at normal speed (a card tapped, or the page shown without narration).
@@ -346,14 +532,27 @@ export const render = (container, spec, options = {}) => {
          */
         finish(card) {
             show(String(Math.max(1, Math.min(3, card || 1))), card ? 1 : slow);
+            if (motion) {
+                // Before narration: stage 1 complete, as a still preview. A tapped card: its stage at normal speed.
+                paused = false;
+                startMotion(Math.max(1, Math.min(3, card || 1)), NORMAL_STAGE_MS, card ? 'normal' : 'still');
+            }
         },
-        /** The clip length is known: the stage simply plays on at the teaching pace for as long as it lasts. */
-        retime() {
-            return;
+        /**
+         * The clip length is known: an svg-2 stage lasts exactly as long as it.
+         *
+         * @param {number} ms
+         */
+        retime(ms) {
+            if (motion && m.mode === 'narrate' && ms > 0) {
+                m.length = ms;
+            }
         },
-        /** A clip ended. */
+        /** A clip ended: an svg-2 stage lands on its final frame. */
         finishStage() {
-            return;
+            if (motion && m.mode === 'narrate') {
+                m.elapsed = m.length;
+            }
         },
         /**
          * Pause or resume with the narration.
@@ -369,6 +568,12 @@ export const render = (container, spec, options = {}) => {
             if (button) {
                 button.hidden = false;
             }
+            if (scrub) {
+                scrub.hidden = false;
+            }
+            if (tryButton) {
+                tryButton.hidden = false;
+            }
         },
         /** The whole animation at normal speed. */
         playAll() {
@@ -377,6 +582,27 @@ export const render = (container, spec, options = {}) => {
             }
             paused = false;
             show('all', 1);
+            if (motion) {
+                startMotion(1, NORMAL_STAGE_MS, 'normal');
+                m.all = true;
+            }
+        },
+        /**
+         * Show an svg-2 scene at a stage and a point in it, held there (the scrub bar, captures and tests).
+         *
+         * @param {number} card 1-3
+         * @param {number} progress 0-1
+         */
+        seek(card, progress) {
+            if (motion) {
+                leaveTry();
+                m.all = false;
+                m.mode = 'scrub';
+                m.stage = Math.max(1, Math.min(3, card));
+                m.length = NORMAL_STAGE_MS;
+                m.elapsed = Math.max(0, Math.min(1, progress)) * m.length;
+                paused = true;
+            }
         },
         /** Stop and remove. */
         destroy() {

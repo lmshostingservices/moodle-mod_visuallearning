@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" role="img" aria-labelledby="t d" class="stage-all" data-stage-seconds="6" data-vl-camera-1="0 0 800 560" data-vl-camera-2="70 92 660 462" data-vl-camera-3="100 224 480 336" data-vl-camera-try="100 224 480 336" data-vl-try='{"controls":[{"id":"carbs","label":"Carbohydrate","min":0,"max":100,"step":5,"value":40,"unit":"g"},{"id":"fat","label":"Fat","min":0,"max":50,"step":1,"value":10,"unit":"g"}],"rules":[{"when":{"fat":[null,4]},"say":"Low in fat: almost all of this energy comes from carbohydrate, at about 17 kJ per gram.","mood":"happy","tone":"ok"},{"when":{"fat":[5,19]},"say":"Each gram of fat adds about 37 kJ, so a little fat adds a lot of energy.","mood":"thinking","tone":"ok"},{"when":{"fat":[20,null]},"say":"Fat-heavy: every 10 g of fat adds about 370 kJ, as much as 22 g of carbohydrate.","mood":"wow","tone":"warn"}]}'>
+<title id="t">The three macronutrients</title>
+<desc id="d">Carbohydrate, protein and fat appear with their jobs in the body, then bars compare their energy: about 17 kJ per gram for carbohydrate and protein and about 37 kJ per gram for fat.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfcff"/><stop offset="1" stop-color="#eef1fa"/></linearGradient>
+<radialGradient id="crust" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></radialGradient>
+<radialGradient id="crumb" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#fffbeb"/><stop offset="1" stop-color="#fde68a"/></radialGradient>
+<radialGradient id="meat" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#fb7185"/><stop offset="1" stop-color="#be123c"/></radialGradient>
+<radialGradient id="skin" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#4ade80"/><stop offset="1" stop-color="#166534"/></radialGradient>
+<radialGradient id="flesh" cx=".4" cy=".35" r=".9"><stop offset="0" stop-color="#f7fee7"/><stop offset="1" stop-color="#bef264"/></radialGradient>
+<radialGradient id="pit" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#b45309"/><stop offset="1" stop-color="#78350f"/></radialGradient>
+<radialGradient id="dial" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe3ff"/></radialGradient>
+<radialGradient id="rim" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#3730a3"/></radialGradient>
+<linearGradient id="steel" x1="0" x2="1"><stop offset="0" stop-color="#cbd5e1"/><stop offset=".5" stop-color="#f8fafc"/><stop offset="1" stop-color="#94a3b8"/></linearGradient>
+<filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#0f172a" flood-opacity=".08"/><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#0f172a" flood-opacity=".09"/></filter>
+<filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+</defs>
+<style>
+.ey{font:800 11px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;letter-spacing:.16em;fill:#4338ca}
+.ti{font:800 26px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;letter-spacing:-.02em;fill:#0f172a}
+.pl{font:800 13.5px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;fill:#fff}
+.kk{font:700 9.5px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;letter-spacing:.13em;fill:#64748b}
+.nm{font:700 13.5px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;fill:#0f172a}
+.mu{font:600 12px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;fill:#64748b}
+.rl{font:700 13px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;fill:#0f172a}
+.vl{font:800 13.5px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;fill:#0f172a}
+.big{font:800 17px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;fill:#4338ca}
+.bb{font:700 13px "VL Sans","Plus Jakarta Sans","Segoe UI",Roboto,system-ui,sans-serif;fill:#0f172a}
+</style>
+<rect x="-400" y="-400" width="1600" height="1400" fill="#eef1fa"/>
+<rect width="800" height="560" rx="22" fill="url(#bg)"/>
+<g>
+<rect x="40" y="36" width="18" height="4" rx="2" fill="#4338ca"/>
+<text x="64" y="42" class="ey">FOOD SCIENCE · NUTRITION</text>
+<path d="M133,80 C200,76 270,78 338,77" fill="none" stroke="#c6007f" stroke-width="5" stroke-linecap="round" opacity=".55" data-vl-draw="1" data-vl-at=".02 .18"/>
+<text x="40" y="72" class="ti">The three macronutrients</text>
+</g>
+
+<g data-vl-hide="3" data-vl-at="0 .1"><g data-vl-show="1" data-vl-at=".2 .32" data-vl-pop="">
+<ellipse cx="210" cy="212" rx="50" ry="7" fill="#0f172a" opacity=".12" filter="url(#soft)"/>
+<path d="M170,206 L170,158 C150,152 152,114 180,116 C190,94 230,94 240,116 C268,114 270,152 250,158 L250,206 Z" fill="url(#crust)" filter="url(#sh)"/>
+<path d="M178,198 L178,152 C163,147 165,124 186,126 C194,108 226,108 234,126 C255,124 257,147 242,152 L242,198 Z" fill="url(#crumb)"/>
+<g fill="#f59e0b" opacity=".45"><circle cx="200" cy="150" r="2.5"/><circle cx="222" cy="166" r="2"/><circle cx="206" cy="180" r="2.5"/><circle cx="228" cy="142" r="2"/></g>
+<rect x="141" y="224" width="138" height="32" rx="16" fill="#d97706"/>
+<text x="210" y="245" text-anchor="middle" class="pl">Carbohydrate</text>
+</g></g>
+<g data-vl-hide="3" data-vl-at="0 .1"><g data-vl-show="1" data-vl-at=".34 .46" data-vl-pop="">
+<ellipse cx="400" cy="212" rx="50" ry="7" fill="#0f172a" opacity=".12" filter="url(#soft)"/>
+<g transform="rotate(-35 400 160)">
+<rect x="430" y="150" width="40" height="18" rx="9" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+<circle cx="472" cy="152" r="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<circle cx="472" cy="167" r="9" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<ellipse cx="394" cy="159" rx="46" ry="34" fill="url(#meat)" filter="url(#sh)"/>
+<ellipse cx="380" cy="146" rx="18" ry="8" fill="#fff" opacity=".28"/>
+</g>
+<rect x="344" y="224" width="112" height="32" rx="16" fill="#e11d48"/>
+<text x="400" y="245" text-anchor="middle" class="pl">Protein</text>
+</g></g>
+<g data-vl-hide="3" data-vl-at="0 .1"><g data-vl-show="1" data-vl-at=".48 .6" data-vl-pop="">
+<ellipse cx="590" cy="212" rx="50" ry="7" fill="#0f172a" opacity=".12" filter="url(#soft)"/>
+<path d="M590,96 C618,96 630,128 634,150 C640,182 620,206 590,206 C560,206 540,182 546,150 C550,128 562,96 590,96 Z" fill="url(#skin)" filter="url(#sh)"/>
+<path d="M590,106 C612,106 621,132 624,152 C628,178 612,196 590,196 C568,196 552,178 556,152 C559,132 568,106 590,106 Z" fill="url(#flesh)"/>
+<circle cx="590" cy="163" r="19" fill="url(#pit)"/>
+<ellipse cx="584" cy="156" rx="6" ry="4" fill="#fff" opacity=".3"/>
+<rect x="547" y="224" width="86" height="32" rx="16" fill="#16a34a"/>
+<text x="590" y="245" text-anchor="middle" class="pl">Fat</text>
+</g></g>
+
+<g data-vl-hide="3" data-vl-at="0 .1">
+<g>
+<rect x="122" y="272" width="176" height="88" rx="14" fill="#fff" data-vl-show="2" data-vl-at=".05 .2" filter="url(#sh)"/>
+<rect x="122" y="272" width="176" height="88" rx="14" fill="none" stroke="#f59e0b" stroke-width="2" data-vl-draw="2" data-vl-at=".02 .2"/>
+<g data-vl-show="2" data-vl-at=".12 .24">
+<path d="M146,286 L139,301 H146 L142,314 L155,295 H148 L153,286 Z" fill="#f59e0b"/>
+<text x="166" y="304" class="kk">ITS JOB</text>
+<text x="140" y="333" class="nm">Main fuel</text>
+<text x="140" y="349" class="mu">for the body</text>
+</g>
+</g>
+<g>
+<rect x="312" y="272" width="176" height="88" rx="14" fill="#fff" data-vl-show="2" data-vl-at=".28 .42" filter="url(#sh)"/>
+<rect x="312" y="272" width="176" height="88" rx="14" fill="none" stroke="#e11d48" stroke-width="2" data-vl-draw="2" data-vl-at=".26 .42"/>
+<g data-vl-show="2" data-vl-at=".34 .46">
+<g fill="#e11d48"><rect x="330" y="288" width="10" height="7" rx="1.5"/><rect x="342" y="288" width="10" height="7" rx="1.5"/><rect x="336" y="297" width="10" height="7" rx="1.5"/><rect x="330" y="306" width="10" height="7" rx="1.5"/><rect x="342" y="306" width="10" height="7" rx="1.5"/></g>
+<text x="362" y="304" class="kk">ITS JOB</text>
+<text x="330" y="333" class="nm">Builds muscle</text>
+<text x="330" y="349" class="mu">and repairs it</text>
+</g>
+</g>
+<g>
+<rect x="502" y="272" width="176" height="88" rx="14" fill="#fff" data-vl-show="2" data-vl-at=".55 .68" filter="url(#sh)"/>
+<rect x="502" y="272" width="176" height="88" rx="14" fill="none" stroke="#16a34a" stroke-width="2" data-vl-draw="2" data-vl-at=".53 .68"/>
+<g data-vl-show="2" data-vl-at=".6 .72">
+<rect x="520" y="289" width="16" height="22" rx="3" fill="none" stroke="#16a34a" stroke-width="2.2"/>
+<rect x="524" y="285" width="8" height="4" rx="1.5" fill="#16a34a"/>
+<rect x="522.5" y="298" width="11" height="10.5" rx="1.5" fill="#16a34a"/>
+<text x="552" y="304" class="kk">ITS JOB</text>
+<text x="520" y="333" class="nm">Stores energy</text>
+<text x="520" y="349" class="mu" data-vl-show="2" data-vl-at=".76 .86">+ vitamins A, D, E, K</text>
+</g>
+</g>
+</g>
+
+<g data-vl-show="3" data-vl-at="0 .12">
+<g data-vl-narration-only=""><rect x="140" y="276" width="18" height="4" rx="2" fill="#4338ca"/><text x="166" y="282" class="ey">COMPARE</text><text x="140" y="314" class="ti">Energy per gram</text><text x="140" y="338" class="mu">Kilojoules (kJ) in one gram of each</text></g>
+<g data-vl-try-only=""><rect x="140" y="276" width="18" height="4" rx="2" fill="#4338ca"/><text x="166" y="282" class="ey">TRY IT</text><text x="140" y="314" class="ti">Your snack's energy</text><text x="140" y="338" class="mu">Move the sliders under the picture</text></g>
+<g data-vl-narration-only=""><rect x="260" y="399" width="232" height="22" rx="11" fill="#e2e8f0"/><rect x="260" y="439" width="232" height="22" rx="11" fill="#e2e8f0"/><rect x="260" y="479" width="232" height="22" rx="11" fill="#e2e8f0"/></g>
+<g data-vl-try-only=""><rect x="260" y="399" width="180" height="22" rx="11" fill="#e2e8f0"/><rect x="260" y="439" width="180" height="22" rx="11" fill="#e2e8f0"/></g>
+</g>
+<g data-vl-narration-only="">
+<g data-vl-show="3" data-vl-at=".02 .12">
+<text x="244" y="415" text-anchor="end" class="rl">Carbohydrate</text>
+<text x="244" y="455" text-anchor="end" class="rl">Protein</text>
+<text x="244" y="495" text-anchor="end" class="rl">Fat</text>
+</g>
+<line x1="271" y1="410" x2="351" y2="410" stroke="#f59e0b" stroke-width="22" stroke-linecap="round" data-vl-draw="3" data-vl-at=".08 .3"/>
+<line x1="271" y1="450" x2="351" y2="450" stroke="#e11d48" stroke-width="22" stroke-linecap="round" data-vl-draw="3" data-vl-at=".3 .48"/>
+<line x1="271" y1="490" x2="471" y2="490" stroke="#16a34a" stroke-width="22" stroke-linecap="round" data-vl-draw="3" data-vl-at=".55 .85"/>
+<text x="374" y="415" class="vl" data-vl-show="3" data-vl-at=".08 .12" data-vl-count="3" data-vl-from="0" data-vl-to="17" data-vl-suffix=" kJ/g">17 kJ/g</text>
+<text x="374" y="455" class="vl" data-vl-show="3" data-vl-at=".3 .34" data-vl-count="3" data-vl-from="0" data-vl-to="17" data-vl-suffix=" kJ/g">17 kJ/g</text>
+<text x="494" y="495" class="vl" data-vl-show="3" data-vl-at=".55 .6" data-vl-count="3" data-vl-from="0" data-vl-to="37" data-vl-suffix=" kJ/g">37 kJ/g</text>
+</g>
+<g data-vl-try-only="">
+<text x="244" y="415" text-anchor="end" class="rl">Carbohydrate</text>
+<text x="244" y="455" text-anchor="end" class="rl">Fat</text>
+<line x1="271" y1="410" x2="351" y2="410" stroke="#f59e0b" stroke-width="22" stroke-linecap="round" data-vl-bind="carbs:x2:0=271,100=429"/>
+<line x1="271" y1="450" x2="351" y2="450" stroke="#16a34a" stroke-width="22" stroke-linecap="round" data-vl-bind="fat:x2:0=271,50=429"/>
+<text x="452" y="415" class="vl" data-vl-text="carbs*17" data-vl-suffix=" kJ">680 kJ</text>
+<text x="452" y="455" class="vl" data-vl-text="fat*37" data-vl-suffix=" kJ">370 kJ</text>
+<line x1="150" y1="478" x2="510" y2="478" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="244" y="503" text-anchor="end" class="bb">Total</text>
+<text x="260" y="504" class="big" data-vl-text="carbs*17+fat*37" data-vl-suffix=" kJ">1,050 kJ</text>
+</g>
+
+<g data-vl-guide="" data-vl-scale=".7" data-vl-pos-0="900 300" data-vl-pos-1="712 300" data-vl-pos-2="650 440" data-vl-pos-3="514 320" data-vl-pos-try="514 320" data-vl-point-1="210 168; 400 168; 590 168" data-vl-point-2="210 316; 400 316; 590 316" data-vl-point-3="355 410; 475 490" data-vl-point-try="330 498" data-vl-mood-1="happy" data-vl-mood-2="happy thinking" data-vl-mood-3="happy happy wow" transform="translate(900 300) scale(.7)">
+<ellipse cx="0" cy="186" rx="40" ry="8" fill="#0f172a" opacity=".14" filter="url(#soft)"/>
+<rect x="-6" y="40" width="12" height="104" rx="6" fill="url(#steel)" stroke="#64748b" stroke-width="1.2"/>
+<path d="M-16,140 H16 V150 H-16 Z" fill="#94a3b8"/>
+<g fill="url(#steel)" stroke="#64748b" stroke-width="1"><rect x="-16" y="146" width="5" height="36" rx="2.5"/><rect x="-6.5" y="146" width="5" height="36" rx="2.5"/><rect x="1.5" y="146" width="5" height="36" rx="2.5"/><rect x="11" y="146" width="5" height="36" rx="2.5"/></g>
+<g transform="translate(42 12) rotate(40)"><path d="M0,0 L36,0" stroke="#3730a3" stroke-width="8" stroke-linecap="round"/><circle cx="40" cy="0" r="8.5" fill="#4f46e5"/></g>
+<g data-vl-arm="" data-vl-pivot="-42 12" data-vl-rest="130" transform="translate(-42 12) rotate(130)"><path d="M0,0 L46,0" stroke="#3730a3" stroke-width="8" stroke-linecap="round"/><circle cx="50" cy="0" r="8.5" fill="#4f46e5"/></g>
+<circle r="50" fill="url(#rim)" filter="url(#sh)"/>
+<circle r="41" fill="url(#dial)"/>
+<circle cx="-22" cy="12" r="6" fill="#fda4af" opacity=".55"/><circle cx="22" cy="12" r="6" fill="#fda4af" opacity=".55"/>
+<g data-vl-blink="" fill="#0f172a"><ellipse cx="-13" cy="-4" rx="5" ry="7"/><ellipse cx="13" cy="-4" rx="5" ry="7"/><circle cx="-11.5" cy="-7" r="1.6" fill="#fff"/><circle cx="14.5" cy="-7" r="1.6" fill="#fff"/></g>
+<g data-vl-mood="happy"><path d="M-12,12 Q0,24 12,12" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/></g>
+<g data-vl-mood="thinking"><path d="M-9,15 Q3,21 12,12" fill="none" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/><path d="M6,-21 Q13,-26 20,-22" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/></g>
+<g data-vl-mood="wow"><ellipse cx="0" cy="17" rx="6" ry="7.5" fill="#0f172a"/><path d="M-20,-20 L-8,-22 M8,-22 L20,-20" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/></g>
+<g data-vl-say="1" data-vl-at=".27 .62" transform="translate(-6 -84) scale(1.35)"><rect x="-48" y="-24" width="96" height="38" rx="16" fill="#fff" stroke="#e2e8f0" filter="url(#sh)"/><path d="M-6,13 L4,25 L8,13 Z" fill="#fff"/><text x="0" y="0" text-anchor="middle" class="nm">Dig in!</text></g>
+<g data-vl-say="3" data-vl-at=".66 .97" transform="translate(-46 -86) scale(1.35)"><rect x="-80" y="-24" width="160" height="38" rx="16" fill="#fff" stroke="#e2e8f0" filter="url(#sh)"/><path d="M-6,13 L4,25 L8,13 Z" fill="#fff"/><text x="0" y="0" text-anchor="middle" class="nm">Twice the energy!</text></g>
+</g>
+</svg>

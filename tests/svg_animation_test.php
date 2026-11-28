@@ -47,6 +47,9 @@ final class svg_animation_test extends \advanced_testcase {
     /** @var bool Whether the fake LMS Labs says it draws animated scenes. */
     protected $drawsanimations = true;
 
+    /** @var string[] The SVG contracts the fake LMS Labs lists. */
+    protected $contracts = ['svg-1'];
+
     /** @var string A small valid scene with a stage per card. */
     protected const SCENE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" class="stage-all" '
         . 'aria-labelledby="t"><title id="t">Test</title><style>.a{fill:url(#g)}.stage-1 .b{opacity:0}'
@@ -75,7 +78,7 @@ final class svg_animation_test extends \advanced_testcase {
                         'voices' => [['name' => 'en-AU-Chirp3-HD-Aoede']]]],
                     'aspectRatios' => ['4:3'],
                     'animations' => $this->drawsanimations
-                        ? ['credits' => lmslabs::ANIMATION_CREDITS, 'contracts' => ['svg-1']] : null,
+                        ? ['credits' => lmslabs::ANIMATION_CREDITS, 'contracts' => $this->contracts] : null,
                 ])];
             }
             if (str_contains($url, '/api/credits')) {
@@ -299,5 +302,69 @@ final class svg_animation_test extends \advanced_testcase {
         $this->assertSame('completed', $DB->get_field('visuallearning_aireq', 'status', ['id' => $row->id]));
         $receipts = json_decode($DB->get_field('visuallearning_pages', 'bundledeliveries', ['id' => $page->id]), true);
         $this->assertSame('d-1', $receipts['animation']);
+    }
+    public function test_svg2_is_asked_for_only_when_listed(): void {
+        $this->assertSame('svg-1', lmslabs::animation_contract());
+        [$book, , $page] = $this->book();
+        $this->assertStringNotContainsString('CONTRACT: svg-2', prompt_builder::svg_prompt($book, $page));
+
+        $this->contracts = ['svg-1', 'svg-2'];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        set_config('caps_images', '', 'mod_visuallearning');
+        $this->assertSame('svg-2', lmslabs::animation_contract());
+        $brief = prompt_builder::svg_prompt($book, $page);
+        $this->assertStringContainsString('CONTRACT: svg-2', $brief);
+        $this->assertStringContainsString('GUIDE CHARACTER:', $brief);
+        $this->assertStringContainsString('TRY IT:', $brief);
+        $this->assertSame('svg-2', \mod_visuallearning\local\ai\requests::animation_body($book, $brief, 6)['contract']);
+
+        $this->contracts = ['svg-3'];
+        \cache::make('mod_visuallearning', 'capabilities')->purge();
+        set_config('caps_images', '', 'mod_visuallearning');
+        $this->assertNull(lmslabs::animation_contract());
+    }
+
+    public function test_svg2_tags_survive_cleaning_and_try_it_is_rebuilt(): void {
+        $try = json_encode(['controls' => [
+            ['id' => 'temp', 'label' => 'Temperature <b>', 'min' => -5, 'max' => 75, 'step' => 1, 'value' => 99,
+                'unit' => '°C', 'extra' => 'x'],
+            ['id' => 'bad id', 'min' => 0, 'max' => 1],
+            ['id' => 'hours', 'label' => 'Time', 'min' => 0, 'max' => 6, 'step' => 0.25, 'value' => 1, 'unit' => 'h'],
+            ['id' => 'third', 'label' => 'Third', 'min' => 0, 'max' => 1],
+        ], 'rules' => [
+            ['when' => ['temp' => [null, 5]], 'say' => 'Safe.', 'mood' => 'happy', 'tone' => 'ok'],
+            ['when' => ['nope' => [0, 1]], 'say' => 'Unknown control.'],
+            ['when' => ['hours' => [4, null]], 'say' => 'Throw it out.', 'mood' => 'alarmed', 'tone' => 'loud'],
+        ]]);
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" data-vl-camera-2="120 150 520 364" '
+            . 'data-vl-try="' . htmlspecialchars($try) . '"><g data-vl-guide="" data-vl-pos-1="640 230">'
+            . '<g data-vl-arm="" data-vl-pivot="-42 12"/><g data-vl-mood="happy"/></g>'
+            . '<path d="M0,0 L10,10" data-vl-draw="1" data-vl-at="0 .5" onclick="x()"/>'
+            . '<text data-vl-count="2" data-vl-from="1" data-vl-to="64" data-vl-curve="double">1</text></svg>';
+        $out = svg_sanitiser::clean($svg, 'vls9');
+        $this->assertNotNull($out);
+        foreach (['data-vl-camera-2="120 150 520 364"', 'data-vl-guide=""', 'data-vl-pivot="-42 12"', 'data-vl-draw="1"',
+                'data-vl-count="2"', 'data-vl-curve="double"'] as $kept) {
+            $this->assertStringContainsString($kept, $out);
+        }
+        $this->assertStringNotContainsString('onclick', $out);
+        $doc = new \DOMDocument();
+        $doc->loadXML($out);
+        $def = json_decode($doc->documentElement->getAttribute('data-vl-try'), true);
+        $this->assertSame(['temp', 'hours'], array_column($def['controls'], 'id'));
+        $this->assertSame('Temperature', $def['controls'][0]['label']);
+        $this->assertEquals(75, $def['controls'][0]['value'], 'The start value is kept inside its range.');
+        $this->assertArrayNotHasKey('extra', $def['controls'][0]);
+        $this->assertCount(2, $def['rules']);
+        $this->assertSame('ok', $def['rules'][1]['tone']);
+        $this->assertNull(svg_sanitiser::clean_try('{"controls":[]}'));
+        $this->assertNull(svg_sanitiser::clean_try('not json'));
+        // The worked svg-2 example cleans with every tag and its try-it step.
+        $example = file_get_contents(__DIR__ . '/../examples/svg2-macronutrients.svg');
+        $clean = svg_sanitiser::clean($example, 'vls10');
+        $this->assertNotNull($clean);
+        $this->assertStringContainsString('data-vl-camera-3=', $clean);
+        $this->assertStringContainsString('data-vl-bind="carbs:x2:0=271,100=429"', $clean);
+        $this->assertStringContainsString('&quot;controls&quot;', $clean);
     }
 }

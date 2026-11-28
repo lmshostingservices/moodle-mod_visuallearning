@@ -62,6 +62,9 @@ class engine {
     const MAX_IMAGE = 10485760;
     /** Largest animated SVG, in bytes. */
     const MAX_SVG = 40000;
+
+    /** @var int Largest svg-2 scene accepted (bytes): the motion tags make scenes about a fifth larger. */
+    const MAX_SVG2 = 48000;
     /** Line the writer gets with the plugin's own brief. */
     const WRITE_BRIEF = 'Write the lesson described in the brief. Return only the JSON object.';
     /** Line in front of the failures the writer is asked to fix. */
@@ -256,7 +259,7 @@ class engine {
      * when the renderer is unavailable is to keep the first valid drawing, and so does this port.
      *
      * @param mixed $body
-     * @param string $system The svg-1 system prompt (schema/svg-animation-system.md).
+     * @param string $system The svg-1/svg-2 system prompt (schema/svg-animation-system.md).
      * @return array
      */
     public static function animation($body, string $system): array {
@@ -271,7 +274,7 @@ class engine {
                     '/[\x{0000}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}]/u',
                     $prompt
                 )
-                || ($v['contract'] ?? null) !== 'svg-1'
+                || !in_array($v['contract'] ?? null, ['svg-1', 'svg-2'], true)
                 || !is_string($v['language'] ?? null) || self::utf16($v['language']) < 2 || self::utf16($v['language']) > 32
                 || !in_array($v['learnerLevel'] ?? null, ['primary', 'secondary', 'adult', 'advanced'], true)
                 || !in_array($v['teachingApproach'] ?? null, ['story', 'science'], true)
@@ -288,7 +291,10 @@ class engine {
         }
         for ($attempt = 0; $attempt < 2; $attempt++) {
             try {
-                $svg = self::usable_animation((self::$aicall)($system, $prompt, self::SVG_TOKENS));
+                $svg = self::usable_animation(
+                    (self::$aicall)($system, $prompt, self::SVG_TOKENS),
+                    $v['contract'] === 'svg-2' ? self::MAX_SVG2 : self::MAX_SVG
+                );
                 return [200, ['content-type' => 'image/svg+xml', 'x-credits-charged' => '0'], $svg];
             } catch (\Throwable $e) {
                 // Unusable drawing or provider failure: one more try, then animation_failed.
@@ -307,9 +313,10 @@ class engine {
      * port refuses them here, so the artist gets its second try instead of the drawing failing later in the plugin.
      *
      * @param string $answer
+     * @param int $max largest SVG accepted, in bytes (svg-2 scenes may be larger)
      * @return string
      */
-    public static function usable_animation(string $answer): string {
+    public static function usable_animation(string $answer, int $max = self::MAX_SVG): string {
         $start = strpos($answer, '<svg');
         $end = strrpos($answer, '</svg>');
         if ($start === false || $end === false || $end < $start) {
@@ -317,7 +324,7 @@ class engine {
         }
         $svg = substr($answer, $start, $end + 6 - $start);
         if (
-            strlen($svg) > self::MAX_SVG
+            strlen($svg) > $max
                 || preg_match(
                     '/<!DOCTYPE|<!ENTITY|<(?:script|foreignObject|iframe|image)\b|javascript\s*:|\bon[\w:-]+\s*=/i',
                     $svg

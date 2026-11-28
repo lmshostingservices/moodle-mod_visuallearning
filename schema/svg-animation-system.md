@@ -12,7 +12,7 @@ ANSWER FORMAT
   aria-labelledby="t d" class="stage-all" data-stage-seconds="6">
   (add data-realtime="true" only as described under ANIMATION). Then <title id="t"> (the page's concept) and
   <desc id="d"> (one or two sentences on what the animation shows, for screen readers).
-- At most 40 KB. Aim for 12 to 30 KB: spend the size on accurate shapes, motion and labels, never on decoration.
+- At most 40 KB (svg-2: 48 KB). Aim for 12 to 30 KB: spend the size on accurate shapes, motion and labels, never on decoration.
 
 STAGES
 - The player sets the root's class to "stage-1", "stage-2", "stage-3" or "stage-all". Write the stage rules in one
@@ -111,6 +111,65 @@ HAND-DRAWN LOOK (only when the brief says SCENE LOOK: hand-drawn sketch)
 - Each stage draws itself: give its strokes pathLength="1", stroke-dasharray:1, and a CSS animation from
   stroke-dashoffset 1 to 0 over about 2 seconds that starts when the stage class is set
   (for example .stage-2 .s2 .draw{animation:pen 2.2s ease-out both}). Earlier stages stay, faded to about 25%.
+
+SVG-2 MOTION (only when the brief says CONTRACT: svg-2; otherwise ignore this section)
+The player moves tagged shapes in time with each card's voice clip. Everything above still applies (stage classes,
+SMIL loops, house style); these data-vl-* tags add explainer-video motion on top. A stage's "progress" runs from 0 at
+the start of its card's clip to 1 at the end. Tags never contain code. Use them where they help the learner see the
+point, not everywhere.
+- CAMERA. On the root: data-vl-camera-1, -2, -3 = "x y w h", a viewBox for each stage (inherit the one before when
+  left out). Keep the 10:7 shape (w = h x 800/560). Zoom in to the part a card is about (never closer than w 360)
+  and pull back out when the next card widens the view. The camera glides in each stage's first quarter. Anything
+  that must be read in a stage lies inside that stage's camera, 16px from its edges.
+- DRAW-ON. data-vl-draw="N" on a stroked path, line, polyline, polygon, rect, circle or ellipse: it draws itself in
+  stage N (and stays drawn later). Use it for outlines of the subject in stage 1, arrows, graph lines and guide lines
+  as they are mentioned. Optional data-vl-at="a b" (fractions of the stage, default "0 .6") says when.
+- SHOW AND HIDE. data-vl-show="N" fades a shape or group in during stage N; data-vl-hide="N" fades it out.
+  data-vl-at as above (default "0 .3"). Before its stage a shown thing is invisible. Prefer these to stage classes
+  for things that appear while a card is read (add data-vl-pop to make a shown object spring up from its centre: use it
+  for the key objects a card introduces), at the moment the narration names them (estimate the moment from the
+  card's wording: a word half-way through the card is at about .5).
+- MOVE. data-vl-move-N="dx dy" slides a shape by that much during stage N (adds up over stages; data-vl-at, default
+  "0 .6"). Use it for markers, pointers and parts that travel to a new place.
+- COUNT. On a text: data-vl-count="N" data-vl-from="1" data-vl-to="64", optional data-vl-curve="double" (steps by
+  doubling), data-vl-prefix, data-vl-suffix (" cells"), data-vl-decimals. Only numbers the cards give.
+- SEQUENCE. data-vl-seq="N" on a group: its children appear one after another during stage N (data-vl-curve=
+  "double" to show doubling: 1, 2, 4 ... children). At most 64 children; reuse one shape with <use>.
+- GUIDE CHARACTER. When the brief asks for one: a friendly, simple mascot drawn from the lesson's own world (a probe
+  thermometer, a spark, a drop of water, a hard hat), about 100-140px tall, flat colours with the house gradients,
+  big readable face, no text on it. It is a helper, never the subject, and never covers what is taught.
+  - Draw it around its own origin (0,0 = middle of its head) inside <g data-vl-guide data-vl-scale="1"
+    data-vl-pos-0="x y" data-vl-pos-1="x y" data-vl-pos-2="x y" data-vl-pos-3="x y">. pos-N is where it stands
+    during stage N (it walks there in the stage's first quarter); pos-0 is where it starts (off the plate, for
+    example x 900, to enter in stage 1). Keep it inside each stage's camera, beside the subject.
+  - One pointing arm: <g data-vl-arm data-vl-pivot="px py" data-vl-rest="120"> drawn along +x from (0,0) to the
+    hand, with the pivot at the shoulder in the character's own coordinates. data-vl-point-N="x y; x y" on the guide
+    lists scene points it points at during stage N, in order, each held for its share of the stage. Point at what
+    the card names, in the order it names them.
+  - Faces: up to three groups <g data-vl-mood="happy">, "worried", "alarmed" (the first is the default), each a
+    complete face (eyes, brows, mouth). data-vl-mood-N="happy worried" on the guide: the moods of stage N in turn.
+    Mood follows the content: calm for a rule, worried as a risk builds, alarmed at the point of danger.
+  - Optional eyes group data-vl-blink (blinks). Optional speech bubble <g data-vl-say="N"> with at most four words
+    (13-14px bold) shown during stage N: a reaction ("Uh oh!"), never the card's text.
+- TRY IT (only when the concept has one or two numbers a learner could change and see the effect: temperature,
+  time, voltage, load, speed, dose; leave it out otherwise). After the page has been heard, the learner gets sliders.
+  - On the root: data-vl-try='{"controls":[{"id":"temp","label":"Temperature","min":-5,"max":75,"step":1,
+    "value":22,"unit":"°C"}],"rules":[{"when":{"temp":[null,5]},"say":"Safe: …","mood":"happy","tone":"ok"},…]}'.
+    At most two controls; ids are short letters; values and ranges only from the cards or the plain facts of the
+    topic. Rules are checked in order (first match wins); "when" holds [low, high] per control (null = open end);
+    "say" is one short sentence the player shows; tone ok, warn or bad. Cover every value with some rule.
+  - In try it the scene shows its stage-3 view (at data-vl-camera-try, or the root viewBox), and:
+    data-vl-bind="temp:y:-5=474,75=90" moves an attribute along straight stops as the value changes (attributes x y
+    cx cy r rx ry width height x1 x2 y1 y2 opacity, or tx ty rotate for a transform; several separated by ";");
+    data-vl-when="temp:5..60&hours:2.." shows a shape only while every range holds;
+    data-vl-text="temp" (or a sum such as "carbs*17+fat*37") writes the value into a text (data-vl-suffix adds a
+    unit); data-vl-camera-try="x y w h" on the root sets the view for try it (default: the root viewBox);
+    data-vl-count-bind / data-vl-seq-bind="hours:0..2" drive a count or sequence from a value (with optional
+    data-vl-count-when / data-vl-seq-when gates); data-vl-try-only shows a shape only in try it, data-vl-narration-only
+    hides it there; on the guide, data-vl-pos-try="x y" and data-vl-point-try="x y", and its face follows the rule.
+  - Check that every rule is true for every value it covers.
+- Order of drawing: background, subject, labels, guide character last (on top). Give the guide room in every stage.
+- Check each stage at progress 0, .5 and 1, and try it at the ends of each slider, for overlaps and clipping.
 
 KEEP IT SMALL (every token counts)
 - Reuse shapes with <defs> and <use>; prefer rect, circle, ellipse and line to long paths; whole-number

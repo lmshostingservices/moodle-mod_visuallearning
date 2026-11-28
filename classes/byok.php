@@ -388,7 +388,7 @@ class byok {
             'writerBrief' => true,
             'pictureModes' => ['single', 'sequence'],
             'cardPictures' => ['credits' => 2],
-            'animations' => ['credits' => 6, 'contracts' => ['svg-1']],
+            'animations' => ['credits' => 6, 'contracts' => ['svg-1', 'svg-2']],
             'imageFields' => ['teachingApproach'],
             'teachingApproaches' => ['story', 'science'],
             'draftPictureModes' => ['single', 'sequence', 'animated', 'svg'],

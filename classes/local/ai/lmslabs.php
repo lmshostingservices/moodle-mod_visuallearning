@@ -107,6 +107,25 @@ class lmslabs {
     /** @var string The animated SVG contract the plugin's player and sanitiser understand. */
     public const ANIMATION_CONTRACT = 'svg-1';
 
+    /** @var string The svg-2 contract: svg-1 plus the motion layer (camera, draw-on, guide character, try it). */
+    public const ANIMATION_CONTRACT_MOTION = 'svg-2';
+
+    /**
+     * The contract new animated scenes are drawn to: svg-2 when LMS Labs (or the site's own AI) lists it, otherwise
+     * svg-1, or null when neither is listed.
+     *
+     * @return string|null
+     */
+    public static function animation_contract(): ?string {
+        $listed = (array)(self::capabilities('images')['animations']['contracts'] ?? []);
+        foreach ([self::ANIMATION_CONTRACT_MOTION, self::ANIMATION_CONTRACT] as $contract) {
+            if (in_array($contract, $listed, true)) {
+                return $contract;
+            }
+        }
+        return null;
+    }
+
 
     /** @var int Longest picture prompt, in Unicode code points, until LMS Labs publishes a longer one. */
     public const MAX_PROMPT = 2000;
@@ -394,13 +413,7 @@ class lmslabs {
             // Card pictures are made only once LMS Labs says it makes them (they edit the picture before).
             return 'nosequence';
         }
-        if (
-            $operation === 'animation' && !in_array(
-                self::ANIMATION_CONTRACT,
-                (array)(self::capabilities('images')['animations']['contracts'] ?? []),
-                true
-            )
-        ) {
+        if ($operation === 'animation' && self::animation_contract() === null) {
             // Animated SVG scenes are made only once LMS Labs says it draws them to this contract.
             return 'noanimation';
         }

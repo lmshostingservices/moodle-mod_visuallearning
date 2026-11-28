@@ -1532,7 +1532,9 @@ class Player {
             label: this.str('diagramlabel', page.alt || page.title),
             pacing: (this.data.animationsettings || {}).animationpacing || 'normal',
             strings: {replay: this.str('animationreplay'), stageReplay: this.str('animationstagereplay'),
-                normal: this.str('animationnormal'), close: this.str('zoomclose')},
+                normal: this.str('animationnormal'), close: this.str('zoomclose'),
+                scrub: this.str('animationscrub'), tryit: this.str('animationtryit'),
+                tryitdone: this.str('animationtryitdone')},
             onReplay: () => {
                 if (Sounds.isMuted()) {
                     this.setMute(false, false);

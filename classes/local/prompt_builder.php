@@ -828,9 +828,37 @@ SHAPE;
         if (($own = self::teacher_instructions($book, 600)) !== '') {
             $lines[] = 'TEACHER\'S INSTRUCTIONS (follow them unless they conflict with accuracy or safety): ' . $own;
         }
+        if (ai\lmslabs::animation_contract() === ai\lmslabs::ANIMATION_CONTRACT_MOTION) {
+            $lines = array_merge($lines, self::svg2_lines($book));
+        }
         $lines[] = 'Use only facts the cards give; never invent numbers. Answer with the SVG only.';
         $out = implode("\n", $lines);
         return \core_text::strlen($out) > self::MAX_SVG_PROMPT ? \core_text::substr($out, 0, self::MAX_SVG_PROMPT) : $out;
+    }
+
+    /**
+     * The svg-2 lines of a scene brief: the motion layer, the lesson's guide character and the try-it step.
+     *
+     * @param \stdClass $book
+     * @return string[]
+     */
+    public static function svg2_lines(\stdClass $book): array {
+        $style = scene_plan::clean_style($book->scenestyle ?? null);
+        $recurring = is_array($style) ? trim((string)($style['recurring'] ?? '')) : '';
+        return [
+            '',
+            'CONTRACT: svg-2 (use the SVG-2 MOTION tags).',
+            'MOTION: camera moves to the part each card is about; outlines, arrows and guide lines draw on as the card '
+                . 'names them; counts and sequences where the card gives numbers.',
+            'GUIDE CHARACTER: add the lesson\'s guide character, the same on every page of "' . trim((string)$book->name)
+                . '". ' . ($recurring !== '' ? 'Draw it as the recurring character: ' . $recurring . '. '
+                : 'Draw it as an object from the lesson\'s own world with the LMS Labs guide face: a round face disc '
+                . '(r 44) with a rim in the accent colour #4338ca and a soft white-to-lavender face, two dark oval eyes with '
+                . 'white glints, rosy cheeks, a simple mouth, and two short stick arms with round hands in #3730a3. ')
+                . 'It enters in stage 1, points at what each card names and reacts with its moods.',
+            'TRY IT: add one when the concept has one or two numbers a learner could change and see the effect; otherwise '
+                . 'leave it out.',
+        ];
     }
 
     /**

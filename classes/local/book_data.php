@@ -158,7 +158,8 @@ class book_data {
                 'gotfirst', 'gotnth', 'tapmatch', 'matchedof', 'tapsort', 'stilltosort', 'dropin', 'soundon',
                 'soundoff', 'yourresults', 'firsttry', 'ntries', 'rightfirst', 'answerstotal', 'timespent', 'notyet',
                 'startcheck', 'finishedall', 'teachersees', 'pickhint', 'timelabel', 'cardpicture', 'diagramlabel',
-                'animationreplay', 'animationstagereplay', 'animationnormal', 'tryagain', 'tryagaintext',
+                'animationreplay', 'animationstagereplay', 'animationnormal', 'animationscrub', 'animationtryit',
+                'animationtryitdone', 'tryagain', 'tryagaintext',
                 'zoomtitle', 'zoomin', 'zoomout', 'zoomclose', 'zoomopen'] as $key
         ) {
             $strings[$key] = get_string('player_' . strtolower($key), 'mod_visuallearning');
