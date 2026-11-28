@@ -103,9 +103,9 @@
 
 <g data-vl-show="3" data-vl-at="0 .12">
 <g data-vl-narration-only=""><rect x="140" y="276" width="18" height="4" rx="2" fill="#4338ca"/><text x="166" y="282" class="ey">COMPARE</text><text x="140" y="314" class="ti">Energy per gram</text><text x="140" y="338" class="mu">Kilojoules (kJ) in one gram of each</text></g>
-<g data-vl-try-only=""><rect x="140" y="276" width="18" height="4" rx="2" fill="#4338ca"/><text x="166" y="282" class="ey">TRY IT</text><text x="140" y="314" class="ti">Your snack's energy</text><text x="140" y="338" class="mu">Move the sliders under the picture</text></g>
+<g data-vl-try-only=""><rect x="140" y="262" width="18" height="4" rx="2" fill="#4338ca"/><text x="166" y="268" class="ey">TRY IT</text><text x="140" y="300" class="ti">Your snack's energy</text><text x="140" y="324" class="mu">Drag the sliders to see the energy change</text></g>
 <g data-vl-narration-only=""><rect x="260" y="399" width="232" height="22" rx="11" fill="#e2e8f0"/><rect x="260" y="439" width="232" height="22" rx="11" fill="#e2e8f0"/><rect x="260" y="479" width="232" height="22" rx="11" fill="#e2e8f0"/></g>
-<g data-vl-try-only=""><rect x="260" y="399" width="180" height="22" rx="11" fill="#e2e8f0"/><rect x="260" y="439" width="180" height="22" rx="11" fill="#e2e8f0"/></g>
+<g data-vl-try-only=""><rect x="260" y="353" width="180" height="22" rx="11" fill="#e2e8f0"/><rect x="260" y="393" width="180" height="22" rx="11" fill="#e2e8f0"/></g>
 </g>
 <g data-vl-narration-only="">
 <g data-vl-show="3" data-vl-at=".02 .12">
@@ -121,18 +121,18 @@
 <text x="494" y="495" class="vl" data-vl-show="3" data-vl-at=".55 .6" data-vl-count="3" data-vl-from="0" data-vl-to="37" data-vl-suffix=" kJ/g">37 kJ/g</text>
 </g>
 <g data-vl-try-only="">
-<text x="244" y="415" text-anchor="end" class="rl">Carbohydrate</text>
-<text x="244" y="455" text-anchor="end" class="rl">Fat</text>
-<line x1="271" y1="410" x2="351" y2="410" stroke="#f59e0b" stroke-width="22" stroke-linecap="round" data-vl-bind="carbs:x2:0=271,100=429"/>
-<line x1="271" y1="450" x2="351" y2="450" stroke="#16a34a" stroke-width="22" stroke-linecap="round" data-vl-bind="fat:x2:0=271,50=429"/>
-<text x="452" y="415" class="vl" data-vl-text="carbs*17" data-vl-suffix=" kJ">680 kJ</text>
-<text x="452" y="455" class="vl" data-vl-text="fat*37" data-vl-suffix=" kJ">370 kJ</text>
-<line x1="150" y1="478" x2="510" y2="478" stroke="#cbd5e1" stroke-width="1.5"/>
-<text x="244" y="503" text-anchor="end" class="bb">Total</text>
-<text x="260" y="504" class="big" data-vl-text="carbs*17+fat*37" data-vl-suffix=" kJ">1,050 kJ</text>
+<text x="244" y="369" text-anchor="end" class="rl">Carbohydrate</text>
+<text x="244" y="409" text-anchor="end" class="rl">Fat</text>
+<line x1="271" y1="364" x2="351" y2="364" stroke="#f59e0b" stroke-width="22" stroke-linecap="round" data-vl-bind="carbs:x2:0=271,100=429"/>
+<line x1="271" y1="404" x2="351" y2="404" stroke="#16a34a" stroke-width="22" stroke-linecap="round" data-vl-bind="fat:x2:0=271,50=429"/>
+<text x="452" y="369" class="vl" data-vl-text="carbs*17" data-vl-suffix=" kJ">680 kJ</text>
+<text x="452" y="409" class="vl" data-vl-text="fat*37" data-vl-suffix=" kJ">370 kJ</text>
+<line x1="150" y1="428" x2="500" y2="428" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="244" y="452" text-anchor="end" class="bb">Total</text>
+<text x="260" y="453" class="big" data-vl-text="carbs*17+fat*37" data-vl-suffix=" kJ">1,050 kJ</text>
 </g>
 
-<g data-vl-guide="" data-vl-scale=".7" data-vl-pos-0="900 300" data-vl-pos-1="712 300" data-vl-pos-2="650 440" data-vl-pos-3="514 320" data-vl-pos-try="514 320" data-vl-point-1="210 168; 400 168; 590 168" data-vl-point-2="210 316; 400 316; 590 316" data-vl-point-3="355 410; 475 490" data-vl-point-try="330 498" data-vl-mood-1="happy" data-vl-mood-2="happy thinking" data-vl-mood-3="happy happy wow" transform="translate(900 300) scale(.7)">
+<g data-vl-guide="" data-vl-scale=".7" data-vl-pos-0="900 300" data-vl-pos-1="712 300" data-vl-pos-2="650 440" data-vl-pos-3="514 320" data-vl-pos-try="514 306" data-vl-point-1="210 168; 400 168; 590 168" data-vl-point-2="210 316; 400 316; 590 316" data-vl-point-3="355 410; 475 490" data-vl-point-try="330 446" data-vl-mood-1="happy" data-vl-mood-2="happy thinking" data-vl-mood-3="happy happy wow" transform="translate(900 300) scale(.7)">
 <ellipse cx="0" cy="186" rx="40" ry="8" fill="#0f172a" opacity=".14" filter="url(#soft)"/>
 <rect x="-6" y="40" width="12" height="104" rx="6" fill="url(#steel)" stroke="#64748b" stroke-width="1.2"/>
 <path d="M-16,140 H16 V150 H-16 Z" fill="#94a3b8"/>

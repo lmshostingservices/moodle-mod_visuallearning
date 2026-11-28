@@ -433,7 +433,13 @@ export const render = (container, spec, options = {}) => {
             verdict.className = 'vl-svgscene-verdict';
             verdict.setAttribute('aria-live', 'polite');
             tryPanel.appendChild(verdict);
-            container.appendChild(tryPanel);
+            // The sliders float over the bottom of the scene (svg-2 keeps that strip clear in try it), so the page's
+            // fixed-height slide never has to grow.
+            const stageBox = document.createElement('div');
+            stageBox.className = 'vl-svgscene-stage';
+            svg.parentNode.insertBefore(stageBox, svg);
+            stageBox.appendChild(svg);
+            stageBox.appendChild(tryPanel);
             tryButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (motion.trying) {

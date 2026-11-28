@@ -158,7 +158,8 @@ point, not everywhere.
     At most two controls; ids are short letters; values and ranges only from the cards or the plain facts of the
     topic. Rules are checked in order (first match wins); "when" holds [low, high] per control (null = open end);
     "say" is one short sentence the player shows; tone ok, warn or bad. Cover every value with some rule.
-  - In try it the scene shows its stage-3 view (at data-vl-camera-try, or the root viewBox), and:
+  - In try it the scene shows its stage-3 view (at data-vl-camera-try, or the root viewBox). The player lays the
+    sliders over the bottom 30% of that view: keep that strip free of anything that must be read. Then:
     data-vl-bind="temp:y:-5=474,75=90" moves an attribute along straight stops as the value changes (attributes x y
     cx cy r rx ry width height x1 x2 y1 y2 opacity, or tx ty rotate for a transform; several separated by ";");
     data-vl-when="temp:5..60&hours:2.." shows a shape only while every range holds;
